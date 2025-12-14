@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JAMA 臨床理學檢查 | EBM 教學</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--pri:#0077B6;--pri2:#00B4D8;--acc:#FF6B35;--suc:#2EC4B6;--warn:#FFBE0B;--err:#EF476F;--pur:#7209B7;--bg:#FAFBFC;--txt:#1A1A2E;--txt2:#6B7280}
+        body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+        .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,119,182,0.08)}
+        .btn{padding:14px 24px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+        .btn-pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}
+        .btn-acc{background:linear-gradient(135deg,var(--acc),#F7931E);color:#fff}
+        table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+        th,td{padding:10px;text-align:center;border-bottom:1px solid #eee}
+        th{background:#F0F7FF;font-weight:600}
+        .formula{background:linear-gradient(135deg,#F0F7FF,#E8F4FD);border:2px solid var(--pri2);border-radius:12px;padding:16px;margin:12px 0;text-align:center;font-family:serif;font-size:17px;color:#03045E}
+        .tip{background:#FFF9F0;border-left:4px solid var(--acc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .good{background:#F0FFF4;border-left:4px solid var(--suc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState}=React;
+
+const lessons=[
+    {id:1,title:'敏感度與特異度',sub:'Sensitivity & Specificity',color:'#0077B6'},
+    {id:2,title:'似然比',sub:'Likelihood Ratio',color:'#7209B7'},
+    {id:3,title:'前測與後測機率',sub:'Pre & Post-test Probability',color:'#2EC4B6'},
+    {id:4,title:'臨床應用案例',sub:'Clinical Application',color:'#FF6B35'}
+];
+
+const quiz=[
+    {q:'敏感度的定義是什麼？',o:['所有陰性病人中，檢驗陰性的比例','所有陽性病人中，檢驗陽性的比例','所有檢驗陽性者中，真正有病的比例','所有檢驗陰性者中，真正沒病的比例'],c:1,e:'敏感度是在所有真正有病的人中，檢查陽性的比例。公式：TP/(TP+FN)。記憶口訣：SnNOut'},
+    {q:'特異度的臨床意義為何？',o:['用來排除疾病','用來確認疾病','評估疾病嚴重度','評估治療效果'],c:1,e:'高特異度檢查適合確認診斷(Rule In)。記憶口訣：SpPIn'},
+    {q:'LR+的公式為何？',o:['特異度/(1-敏感度)','敏感度/特異度','敏感度/(1-特異度)','(1-敏感度)/特異度'],c:2,e:'LR+ = Sensitivity/(1-Specificity)。LR+ > 10是強力診斷證據'},
+    {q:'當LR+=10時，代表什麼？',o:['陽性結果在有病者是無病者的10倍','後測機率是前測的10倍','敏感度是特異度的10倍','有病機率是90%'],c:0,e:'LR+=10代表陽性結果在有病者出現機率是無病者的10倍'},
+    {q:'LR-的公式為何？',o:['敏感度/(1-特異度)','(1-敏感度)/特異度','特異度/(1-敏感度)','(1-特異度)/敏感度'],c:1,e:'LR- = (1-Sensitivity)/Specificity。LR- < 0.1是強力排除證據'},
+    {q:'何者最適合「排除」疾病？',o:['高敏感度、高LR+','高敏感度、低LR-','高特異度、高LR+','高特異度、低LR-'],c:1,e:'高敏感度+低LR-可有效排除疾病。SnNOut口訣'},
+    {q:'前測機率主要取決於？',o:['檢查的敏感度','檢查的特異度','疾病盛行率與臨床判斷','實驗室標準值'],c:2,e:'前測機率由盛行率與臨床判斷決定'},
+    {q:'Fagan nomogram需要哪三要素？',o:['敏感度、特異度、盛行率','前測機率、似然比、後測機率','TP、FP、TN、FN','PPV、NPV、準確度'],c:1,e:'Fagan圖需要：前測機率、似然比、後測機率'},
+    {q:'敏感度90%、特異度80%，LR+為多少？',o:['4.5','0.125','7.2','1.125'],c:0,e:'LR+ = 0.90/(1-0.80) = 0.90/0.20 = 4.5'},
+    {q:'關於似然比，何者錯誤？',o:['不受盛行率影響','LR+>10或LR-<0.1為強力證據','LR=1表示不影響診斷','似然比可直接換算為後測機率'],c:3,e:'似然比需結合前測機率才能計算後測機率'}
+];
+
+const App=()=>{
+    const[page,setPage]=useState('home');
+    const[lessonId,setLessonId]=useState(1);
+    const[qIdx,setQIdx]=useState(0);
+    const[score,setScore]=useState(0);
+    const[sel,setSel]=useState(null);
+    const[show,setShow]=useState(false);
+    const[done,setDone]=useState(false);
+
+    const Header=({title})=>(
+        <header style={{background:'#fff',borderBottom:'1px solid #eee',padding:'12px 16px',position:'sticky',top:0,zIndex:10}}>
+            <div style={{maxWidth:480,margin:'0 auto',display:'flex',alignItems:'center',gap:12}}>
+                <button onClick={()=>page==='home'?window.location.href='index.html':setPage('home')} style={{background:'#F0F7FF',border:'none',borderRadius:10,width:40,height:40,cursor:'pointer',color:'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style={{fontWeight:700,color:'#03045E'}}>{title}</span>
+            </div>
+        </header>
+    );
+
+    const Home=()=>(
+        <div>
+            <Header title="JAMA 臨床理學檢查"/>
+            <div style={{background:'linear-gradient(135deg,#0077B6,#00B4D8)',padding:'32px 20px',color:'#fff'}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div style={{background:'rgba(255,255,255,0.2)',display:'inline-block',padding:'6px 14px',borderRadius:50,fontSize:12,fontWeight:600,marginBottom:16}}>📖 JAMA Rational Clinical Examination</div>
+                    <h1 style={{fontSize:26,fontWeight:700,marginBottom:12}}>理學檢查的診斷價值評估</h1>
+                    <p style={{opacity:0.9,fontSize:14}}>學習敏感度、特異度、似然比的計算與應用</p>
+                </div>
+            </div>
+            <div style={{padding:'0 16px',marginTop:-20}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div className="card">
+                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🎯 學習目標</h3>
+                        {['理解敏感度與特異度的定義','計算並解讀似然比LR+/LR-','運用似然比調整機率','應用於臨床檢查評估'].map((t,i)=>(
+                            <div key={i} style={{display:'flex',gap:10,marginBottom:8,fontSize:14}}>
+                                <span style={{background:'var(--suc)',color:'#fff',borderRadius:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,flexShrink:0}}>{i+1}</span>
+                                <span style={{color:'var(--txt2)'}}>{t}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>📚 課程內容</h3>
+                    {lessons.map(l=>(
+                        <div key={l.id} className="card" onClick={()=>{setLessonId(l.id);setPage('lesson')}} style={{cursor:'pointer'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:16}}>
+                                <div style={{width:48,height:48,borderRadius:12,background:`linear-gradient(135deg,${l.color},${l.color}88)`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}}>{l.id}</div>
+                                <div style={{flex:1}}>
+                                    <div style={{fontSize:11,color:l.color,fontWeight:600}}>Lesson {l.id}</div>
+                                    <div style={{fontSize:16,fontWeight:700}}>{l.title}</div>
+                                    <div style={{fontSize:13,color:'var(--txt2)'}}>{l.sub}</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" fill={l.color} width="20" height="20"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/></svg>
+                            </div>
+                        </div>
+                    ))}
+                    <button className="btn btn-acc" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}} style={{width:'100%',justifyContent:'center',marginTop:20,marginBottom:32}}>
+                        📝 開始測驗 (10題)
+                    </button>
+                </div>
+            </div>
+            <footer style={{background:'#F0F7FF',padding:'24px 16px',textAlign:'center'}}>
+                <p style={{fontSize:13,color:'var(--txt2)'}}>新竹台大分院教學部</p>
+                <p style={{fontSize:12,color:'var(--txt2)'}}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+        </div>
+    );
+
+    const L1=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>📊 2x2 列聯表</h3>
+                <table><thead><tr><th></th><th style={{background:'#E8F5E9'}}>有病 D+</th><th style={{background:'#FFEBEE'}}>無病 D-</th></tr></thead>
+                <tbody>
+                    <tr><td style={{fontWeight:600,background:'#E3F2FD'}}>檢查陽性 T+</td><td style={{color:'var(--suc)',fontWeight:700}}>TP 真陽性</td><td style={{color:'var(--err)',fontWeight:700}}>FP 偽陽性</td></tr>
+                    <tr><td style={{fontWeight:600,background:'#E3F2FD'}}>檢查陰性 T-</td><td style={{color:'var(--err)',fontWeight:700}}>FN 偽陰性</td><td style={{color:'var(--suc)',fontWeight:700}}>TN 真陰性</td></tr>
+                </tbody></table>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--suc)',marginBottom:12}}>🎯 敏感度 Sensitivity</h3>
+                <div className="formula">Sensitivity = TP / (TP + FN)</div>
+                <p style={{fontSize:14,color:'var(--txt2)',marginTop:8}}>在有病的人中，檢查結果為陽性的比例</p>
+                <div className="tip"><strong style={{color:'var(--acc)'}}>💡 SnNOut</strong><br/>Sensitivity high → Negative → Rules Out disease<br/><span style={{fontSize:13,color:'var(--txt2)'}}>高敏感度的陰性結果可排除疾病</span></div>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>🔬 特異度 Specificity</h3>
+                <div className="formula" style={{borderColor:'var(--pur)',background:'linear-gradient(135deg,#F3E5F5,#E1BEE7)'}}>Specificity = TN / (TN + FP)</div>
+                <p style={{fontSize:14,color:'var(--txt2)',marginTop:8}}>在沒病的人中，檢查結果為陰性的比例</p>
+                <div className="good"><strong style={{color:'var(--suc)'}}>💡 SpPIn</strong><br/>Specificity high → Positive → Rules In disease<br/><span style={{fontSize:13,color:'var(--txt2)'}}>高特異度的陽性結果可確認疾病</span></div>
+            </div>
+        </div>
+    );
+
+    const L2=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>📈 似然比概念</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>某檢查結果在有病者中出現的機率，相對於在無病者中出現的機率。不受盛行率影響。</p>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--suc)',marginBottom:12}}>➕ 正似然比 LR+</h3>
+                <div className="formula">LR+ = Sensitivity / (1 - Specificity)</div>
+                <table><thead><tr><th>LR+</th><th>價值</th><th>機率改變</th></tr></thead>
+                <tbody>
+                    <tr><td>&gt;10</td><td style={{color:'var(--suc)'}}>強力</td><td>大幅增加</td></tr>
+                    <tr><td>5-10</td><td style={{color:'var(--pri)'}}>中度</td><td>中度增加</td></tr>
+                    <tr><td>2-5</td><td style={{color:'var(--warn)'}}>弱</td><td>輕微增加</td></tr>
+                    <tr><td>1-2</td><td style={{color:'var(--txt2)'}}>無</td><td>幾乎不變</td></tr>
+                </tbody></table>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--err)',marginBottom:12}}>➖ 負似然比 LR-</h3>
+                <div className="formula" style={{borderColor:'var(--err)',background:'linear-gradient(135deg,#FFEBEE,#FFCDD2)'}}>LR- = (1 - Sensitivity) / Specificity</div>
+                <table><thead><tr><th>LR-</th><th>排除價值</th><th>機率改變</th></tr></thead>
+                <tbody>
+                    <tr><td>&lt;0.1</td><td style={{color:'var(--suc)'}}>強力排除</td><td>大幅降低</td></tr>
+                    <tr><td>0.1-0.2</td><td style={{color:'var(--pri)'}}>中度排除</td><td>中度降低</td></tr>
+                    <tr><td>0.2-0.5</td><td style={{color:'var(--warn)'}}>弱排除</td><td>輕微降低</td></tr>
+                    <tr><td>0.5-1</td><td style={{color:'var(--txt2)'}}>無價值</td><td>幾乎不變</td></tr>
+                </tbody></table>
+            </div>
+        </div>
+    );
+
+    const L3=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--suc)',marginBottom:12}}>🎲 機率轉換</h3>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:16,background:'#F0F7FF',borderRadius:12,flexWrap:'wrap'}}>
+                    <span style={{background:'var(--pri)',color:'#fff',padding:'8px 12px',borderRadius:8,fontSize:12,fontWeight:600}}>前測機率</span>
+                    <span style={{fontSize:20}}>×</span>
+                    <span style={{background:'var(--pur)',color:'#fff',padding:'8px 12px',borderRadius:8,fontSize:12,fontWeight:600}}>似然比</span>
+                    <span style={{fontSize:20}}>→</span>
+                    <span style={{background:'var(--suc)',color:'#fff',padding:'8px 12px',borderRadius:8,fontSize:12,fontWeight:600}}>後測機率</span>
+                </div>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>📐 計算公式</h3>
+                <div className="formula">
+                    <div style={{marginBottom:8}}>Pre-test Odds = Prob / (1 - Prob)</div>
+                    <div style={{marginBottom:8}}>Post-test Odds = Pre-test Odds × LR</div>
+                    <div>Post-test Prob = Odds / (1 + Odds)</div>
+                </div>
+            </div>
+            <div className="good">
+                <strong style={{color:'var(--suc)'}}>💡 實用估算</strong><br/>
+                • LR+ = 2 → 約增加 15% 後測機率<br/>
+                • LR+ = 5 → 約增加 30% 後測機率<br/>
+                • LR+ = 10 → 約增加 45% 後測機率
+            </div>
+        </div>
+    );
+
+    const L4=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--acc)',marginBottom:12}}>🩺 案例：急性闌尾炎</h3>
+                <div style={{background:'#F0F7FF',padding:12,borderRadius:10,marginBottom:12}}>
+                    <p><strong>病患：</strong>25歲男性</p>
+                    <p><strong>主訴：</strong>右下腹痛12小時</p>
+                    <p><strong>前測機率：</strong>30%</p>
+                </div>
+                <table><thead><tr><th>徵象</th><th>LR+</th><th>LR-</th></tr></thead>
+                <tbody>
+                    <tr><td style={{textAlign:'left'}}>McBurney's point</td><td style={{color:'var(--suc)',fontWeight:600}}>3.4</td><td>0.4</td></tr>
+                    <tr><td style={{textAlign:'left'}}>Rebound tenderness</td><td style={{color:'var(--suc)',fontWeight:600}}>2.3</td><td>0.5</td></tr>
+                    <tr><td style={{textAlign:'left'}}>Psoas sign</td><td style={{color:'var(--pri)',fontWeight:600}}>2.4</td><td>0.9</td></tr>
+                </tbody></table>
+            </div>
+            <div className="card" style={{background:'#F0FFF4'}}>
+                <h3 style={{fontSize:16,fontWeight:700,color:'var(--suc)',marginBottom:12}}>📊 計算範例</h3>
+                <p>McBurney's point陽性：</p>
+                <div style={{background:'#fff',padding:12,borderRadius:8,fontSize:14,lineHeight:2,marginTop:8}}>
+                    1. 前測機率 = 30% = 0.30<br/>
+                    2. 前測勝算 = 0.30/0.70 = 0.43<br/>
+                    3. LR+ = 3.4<br/>
+                    4. 後測勝算 = 0.43 × 3.4 = 1.46<br/>
+                    5. <strong style={{color:'var(--suc)'}}>後測機率 = 1.46/2.46 = 59%</strong>
+                </div>
+            </div>
+            <div className="tip">
+                <strong style={{color:'var(--acc)'}}>🔑 臨床要點</strong><br/>
+                • 單一檢查LR通常不夠大<br/>
+                • 需結合多個檢查結果<br/>
+                • 前測機率估計很重要
+            </div>
+        </div>
+    );
+
+    const Lesson=()=>{
+        const l=lessons.find(x=>x.id===lessonId);
+        return(
+            <div>
+                <Header title={l.title}/>
+                <div style={{background:`linear-gradient(135deg,${l.color},${l.color}88)`,padding:'20px',color:'#fff'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{fontSize:12,opacity:0.9}}>Lesson {l.id} • {l.sub}</div>
+                        <h1 style={{fontSize:24,fontWeight:700}}>{l.title}</h1>
+                    </div>
+                </div>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        {lessonId===1&&<L1/>}{lessonId===2&&<L2/>}{lessonId===3&&<L3/>}{lessonId===4&&<L4/>}
+                        <div style={{display:'flex',gap:12,marginTop:24}}>
+                            {lessonId>1&&<button className="btn" style={{flex:1,background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setLessonId(lessonId-1)}>← 上一課</button>}
+                            {lessonId<4?<button className="btn btn-pri" style={{flex:1}} onClick={()=>setLessonId(lessonId+1)}>下一課 →</button>
+                            :<button className="btn btn-acc" style={{flex:1}} onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}}>開始測驗 📝</button>}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const Quiz=()=>{
+        const pick=(i)=>{if(show)return;setSel(i);setShow(true);if(i===quiz[qIdx].c)setScore(score+1)};
+        const next=()=>{if(qIdx<quiz.length-1){setQIdx(qIdx+1);setSel(null);setShow(false)}else setDone(true)};
+
+        if(done){
+            const pct=Math.round((score/quiz.length)*100);
+            return(
+                <div>
+                    <Header title="測驗結果"/>
+                    <div style={{padding:'40px 16px',textAlign:'center'}}>
+                        <div style={{width:140,height:140,borderRadius:'50%',background:`conic-gradient(${pct>=80?'var(--suc)':pct>=60?'var(--warn)':'var(--err)'} ${pct*3.6}deg,#E5E5E5 0deg)`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 24px'}}>
+                            <div style={{width:120,height:120,borderRadius:'50%',background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                                <div style={{fontSize:36,fontWeight:700}}>{pct}%</div>
+                                <div style={{fontSize:14,color:'var(--txt2)'}}>{score}/{quiz.length}</div>
+                            </div>
+                        </div>
+                        <h2 style={{fontSize:24,fontWeight:700,marginBottom:8}}>{pct>=80?'🎉 太棒了！':pct>=60?'👍 不錯！':'💪 加油！'}</h2>
+                        <p style={{color:'var(--txt2)',marginBottom:32}}>{pct>=80?'你對此主題掌握良好！':pct>=60?'再複習可以更進步！':'建議重新閱讀課程'}</p>
+                        <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+                            <button className="btn btn-pri" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false)}}>重新測驗</button>
+                            <button className="btn" style={{background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setPage('home')}>返回課程</button>
+                        </div>
+                    </div>
+                    <footer style={{background:'#F0F7FF',padding:'24px 16px',textAlign:'center',marginTop:40}}>
+                        <p style={{fontSize:12,color:'var(--txt2)'}}>新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        const q=quiz[qIdx];
+        return(
+            <div>
+                <Header title="自我測驗"/>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:14}}>
+                            <span style={{color:'var(--txt2)'}}>進度</span>
+                            <span style={{fontWeight:600,color:'var(--pri)'}}>{qIdx+1}/{quiz.length}</span>
+                        </div>
+                        <div style={{height:8,background:'#E5E5E5',borderRadius:4,marginBottom:20}}>
+                            <div style={{height:'100%',width:`${((qIdx+1)/quiz.length)*100}%`,background:'linear-gradient(90deg,var(--pri),var(--pri2))',borderRadius:4,transition:'width 0.3s'}}/>
+                        </div>
+                        <div className="card">
+                            <h3 style={{fontSize:16,fontWeight:600,lineHeight:1.6,marginBottom:20}}>{q.q}</h3>
+                            {q.o.map((opt,i)=>{
+                                let bg='#fff',bd='#E5E5E5';
+                                if(show){
+                                    if(i===q.c){bg='#F0FFF4';bd='var(--suc)'}
+                                    else if(i===sel){bg='#FFEBEE';bd='var(--err)'}
+                                }else if(i===sel){bg='#F0F7FF';bd='var(--pri)'}
+                                return(
+                                    <button key={i} onClick={()=>pick(i)} disabled={show} style={{width:'100%',padding:'12px 14px',marginBottom:10,background:bg,border:`2px solid ${bd}`,borderRadius:12,textAlign:'left',fontSize:14,cursor:show?'default':'pointer',display:'flex',alignItems:'center',gap:12}}>
+                                        <span style={{width:26,height:26,borderRadius:8,background:show&&i===q.c?'var(--suc)':show&&i===sel?'var(--err)':'#F0F7FF',color:show&&(i===q.c||i===sel)?'#fff':'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13,flexShrink:0}}>
+                                            {show&&i===q.c?'✓':show&&i===sel&&i!==q.c?'✗':String.fromCharCode(65+i)}
+                                        </span>
+                                        <span style={{lineHeight:1.5}}>{opt}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {show&&(
+                            <div className={sel===q.c?'good':'tip'}>
+                                <strong style={{color:sel===q.c?'var(--suc)':'var(--acc)'}}>{sel===q.c?'✓ 正確！':'✗ 答錯了'}</strong>
+                                <p style={{fontSize:14,color:'var(--txt2)',marginTop:8,lineHeight:1.7}}>{q.e}</p>
+                            </div>
+                        )}
+                        {show&&<button className="btn btn-pri" style={{width:'100%',justifyContent:'center',marginTop:16}} onClick={next}>{qIdx<quiz.length-1?'下一題 →':'查看結果'}</button>}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return <div style={{maxWidth:'100%',minHeight:'100vh',background:'var(--bg)'}}>{page==='home'?<Home/>:page==='lesson'?<Lesson/>:<Quiz/>}</div>;
+};
+
+ReactDOM.render(<App/>,document.getElementById('root'));
+</script>
+</body>
+</html>
