@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文獻評讀基礎 | EBM 教學平台</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--pri:#7209B7;--pri2:#B5179E;--acc:#FF6B35;--suc:#2EC4B6;--warn:#FFBE0B;--err:#EF476F;--blue:#0077B6;--bg:#FAFBFC;--txt:#1A1A2E;--txt2:#6B7280}
+        body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+        .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(114,9,183,0.08)}
+        .btn{padding:14px 24px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+        .btn-pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}
+        .btn-acc{background:linear-gradient(135deg,var(--acc),#F7931E);color:#fff}
+        table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+        th,td{padding:10px;text-align:left;border-bottom:1px solid #eee}
+        th{background:#F3E5F5;font-weight:600;color:var(--pri)}
+        .formula{background:linear-gradient(135deg,#F3E5F5,#E1BEE7);border:2px solid var(--pri2);border-radius:12px;padding:16px;margin:12px 0;text-align:center;font-size:16px;color:#4A148C;font-weight:600}
+        .tip{background:#FFF9F0;border-left:4px solid var(--acc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .good{background:#F0FFF4;border-left:4px solid var(--suc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .info{background:#F0F7FF;border-left:4px solid var(--blue);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .purple{background:#F3E5F5;border-left:4px solid var(--pri);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .pyramid{display:flex;flex-direction:column;align-items:center;gap:4px;margin:16px 0}
+        .pyramid-level{padding:10px;text-align:center;color:#fff;font-weight:600;font-size:12px;border-radius:6px}
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState}=React;
+
+const lessons=[
+    {id:1,title:'研究設計類型',sub:'Study Design Types',color:'#7209B7'},
+    {id:2,title:'PICO 臨床問題架構',sub:'PICO Framework',color:'#B5179E'},
+    {id:3,title:'偏差與干擾因子',sub:'Bias & Confounding',color:'#0077B6'},
+    {id:4,title:'統計學基礎概念',sub:'Basic Statistics',color:'#2EC4B6'}
+];
+
+const quiz=[
+    {q:'下列何種研究設計的證據等級最高？',o:['病例報告','橫斷性研究','隨機對照試驗','世代研究'],c:2,e:'隨機對照試驗(RCT)是評估治療效果的黃金標準，因為隨機分派可以減少選擇偏差和干擾因子的影響。'},
+    {q:'PICO中的「I」代表什麼？',o:['Indication 適應症','Intervention 介入措施','Investigation 調查','Incidence 發生率'],c:1,e:'PICO架構：P=Patient/Population, I=Intervention, C=Comparison, O=Outcome。I代表我們想評估的介入措施或暴露因子。'},
+    {q:'下列何者屬於選擇偏差(Selection Bias)？',o:['觀察者知道分組導致評估偏差','失去追蹤的病人特性不同','使用不精確的測量工具','回憶過去暴露的準確度不同'],c:1,e:'選擇偏差發生在研究對象的選取或追蹤過程。失去追蹤偏差(attrition bias)是常見的選擇偏差，可能導致結果失真。'},
+    {q:'「雙盲」設計主要是為了減少什麼偏差？',o:['選擇偏差','資訊偏差','干擾因子','發表偏差'],c:1,e:'雙盲設計讓研究者和受試者都不知道分組，可以減少資訊偏差(information bias)，包括測量偏差和安慰劑效應。'},
+    {q:'下列關於P值的敘述，何者正確？',o:['P<0.05代表臨床上有意義','P值代表研究結果為真的機率','P值越小代表效果量越大','P<0.05代表在虛無假設為真時，觀察到此結果的機率<5%'],c:3,e:'P值是在虛無假設為真的前提下，觀察到目前或更極端結果的機率。P值不代表效果大小或臨床意義。'},
+    {q:'95%信賴區間的正確解釋為何？',o:['有95%機率真值落在此區間','若重複抽樣100次，約95次的區間會包含真值','此區間包含95%的樣本值','有95%機率此研究結果正確'],c:1,e:'信賴區間是頻率學派的概念，表示若以相同方法重複抽樣無限多次，約95%的信賴區間會包含真正的母群體參數。'},
+    {q:'世代研究(Cohort Study)的主要特點為何？',o:['從疾病追溯暴露','隨機分配介入措施','從暴露追蹤到結果','在同一時間點收集資料'],c:2,e:'世代研究是觀察性研究，從有暴露和無暴露的群體開始，往前追蹤觀察疾病發生。可以計算相對風險(RR)和發生率。'},
+    {q:'病例對照研究適合用於研究什麼類型的疾病？',o:['常見疾病','罕見疾病','傳染性疾病','慢性疾病'],c:1,e:'病例對照研究從已有疾病的病例組和無疾病的對照組開始，回溯比較暴露史。因為不需要等待疾病發生，特別適合研究罕見疾病。'},
+    {q:'干擾因子(Confounder)必須符合的條件不包括？',o:['與暴露因子相關','是結果的危險因子','是暴露與結果的中間變項','不是暴露的結果'],c:2,e:'干擾因子必須：(1)與暴露相關、(2)是結果的獨立危險因子、(3)不是暴露與結果的中間變項(mediator)。若是中間變項則不應該控制。'},
+    {q:'下列何者可以用來控制干擾因子？',o:['增加樣本數','隨機分派','使用更精確的儀器','增加追蹤時間'],c:1,e:'控制干擾因子的方法包括：隨機分派、配對、限制、分層分析、多變量分析等。隨機分派是最有效的方法，可平衡已知和未知的干擾因子。'}
+];
+
+const App=()=>{
+    const[page,setPage]=useState('home');
+    const[lessonId,setLessonId]=useState(1);
+    const[qIdx,setQIdx]=useState(0);
+    const[score,setScore]=useState(0);
+    const[sel,setSel]=useState(null);
+    const[show,setShow]=useState(false);
+    const[done,setDone]=useState(false);
+
+    const Header=({title})=>(
+        <header style={{background:'#fff',borderBottom:'1px solid #eee',padding:'12px 16px',position:'sticky',top:0,zIndex:10}}>
+            <div style={{maxWidth:480,margin:'0 auto',display:'flex',alignItems:'center',gap:12}}>
+                <button onClick={()=>page==='home'?window.location.href='index.html':setPage('home')} style={{background:'#F3E5F5',border:'none',borderRadius:10,width:40,height:40,cursor:'pointer',color:'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style={{fontWeight:700,color:'#4A148C'}}>{title}</span>
+            </div>
+        </header>
+    );
+
+    const Home=()=>(
+        <div>
+            <Header title="文獻評讀基礎"/>
+            <div style={{background:'linear-gradient(135deg,#7209B7,#B5179E)',padding:'32px 20px',color:'#fff'}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div style={{background:'rgba(255,255,255,0.2)',display:'inline-block',padding:'6px 14px',borderRadius:50,fontSize:12,fontWeight:600,marginBottom:16}}>📚 Critical Appraisal Skills</div>
+                    <h1 style={{fontSize:26,fontWeight:700,marginBottom:12}}>文獻評讀基礎</h1>
+                    <p style={{opacity:0.9,fontSize:14}}>學習如何系統性評估研究文獻的品質與適用性</p>
+                </div>
+            </div>
+            <div style={{padding:'0 16px',marginTop:-20}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div className="card">
+                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🎯 學習目標</h3>
+                        {['認識不同研究設計類型與證據等級','掌握PICO臨床問題架構','了解常見偏差與干擾因子','熟悉基礎統計概念與解讀'].map((t,i)=>(
+                            <div key={i} style={{display:'flex',gap:10,marginBottom:8,fontSize:14}}>
+                                <span style={{background:'var(--suc)',color:'#fff',borderRadius:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,flexShrink:0}}>{i+1}</span>
+                                <span style={{color:'var(--txt2)'}}>{t}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>📖 課程內容</h3>
+                    {lessons.map(l=>(
+                        <div key={l.id} className="card" onClick={()=>{setLessonId(l.id);setPage('lesson')}} style={{cursor:'pointer'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:16}}>
+                                <div style={{width:48,height:48,borderRadius:12,background:`linear-gradient(135deg,${l.color},${l.color}88)`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}}>{l.id}</div>
+                                <div style={{flex:1}}>
+                                    <div style={{fontSize:11,color:l.color,fontWeight:600}}>Lesson {l.id}</div>
+                                    <div style={{fontSize:16,fontWeight:700}}>{l.title}</div>
+                                    <div style={{fontSize:13,color:'var(--txt2)'}}>{l.sub}</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" fill={l.color} width="20" height="20"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/></svg>
+                            </div>
+                        </div>
+                    ))}
+                    <button className="btn btn-acc" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}} style={{width:'100%',justifyContent:'center',marginTop:20,marginBottom:32}}>
+                        📝 開始測驗 (10題)
+                    </button>
+                </div>
+            </div>
+            <footer style={{background:'#F3E5F5',padding:'24px 16px',textAlign:'center'}}>
+                <p style={{fontSize:13,color:'var(--txt2)'}}>新竹台大分院教學部</p>
+                <p style={{fontSize:12,color:'var(--txt2)'}}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+        </div>
+    );
+
+    const L1=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:16}}>📊 證據金字塔</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>不同研究設計具有不同的證據強度，由高至低排列：</p>
+                <div className="pyramid">
+                    <div className="pyramid-level" style={{width:'50%',background:'#1B5E20'}}>系統性回顧/統合分析</div>
+                    <div className="pyramid-level" style={{width:'60%',background:'#2E7D32'}}>隨機對照試驗 RCT</div>
+                    <div className="pyramid-level" style={{width:'70%',background:'#43A047'}}>世代研究 Cohort</div>
+                    <div className="pyramid-level" style={{width:'80%',background:'#66BB6A'}}>病例對照研究 Case-Control</div>
+                    <div className="pyramid-level" style={{width:'90%',background:'#81C784'}}>橫斷性研究 Cross-sectional</div>
+                    <div className="pyramid-level" style={{width:'100%',background:'#A5D6A7',color:'#1B5E20'}}>病例報告/專家意見</div>
+                </div>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>🔬 研究設計分類</h3>
+                <table>
+                    <thead><tr><th>類型</th><th>特點</th><th>適用情境</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{fontWeight:600,color:'var(--pri)'}}>RCT</td><td>隨機分派、介入性</td><td>治療效果評估</td></tr>
+                        <tr><td style={{fontWeight:600,color:'var(--pri)'}}>世代研究</td><td>從暴露追蹤結果</td><td>危險因子、預後</td></tr>
+                        <tr><td style={{fontWeight:600,color:'var(--pri)'}}>病例對照</td><td>從疾病回溯暴露</td><td>罕見疾病、多重暴露</td></tr>
+                        <tr><td style={{fontWeight:600,color:'var(--pri)'}}>橫斷性</td><td>同一時間點測量</td><td>盛行率、現況調查</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="good">
+                <strong style={{color:'var(--suc)'}}>💡 選擇研究設計的原則</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                • 治療效果 → RCT<br/>
+                • 危險因子/預後 → 世代研究<br/>
+                • 罕見疾病 → 病例對照研究<br/>
+                • 診斷準確度 → 橫斷性研究
+                </span>
+            </div>
+            <div className="info">
+                <strong style={{color:'var(--blue)'}}>📌 觀察性 vs 介入性研究</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                <strong>觀察性：</strong>研究者只觀察，不介入（世代、病例對照、橫斷性）<br/>
+                <strong>介入性：</strong>研究者主動給予處置（RCT、非隨機試驗）
+                </span>
+            </div>
+        </div>
+    );
+
+    const L2=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🎯 PICO 架構</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>PICO是提出可回答臨床問題的標準架構，幫助我們精確定義問題並搜尋文獻。</p>
+                <div className="formula">P + I + C + O = 好的臨床問題</div>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:16,fontWeight:700,color:'#B5179E',marginBottom:12}}>📋 PICO 各元素說明</h3>
+                <table>
+                    <tbody>
+                        <tr style={{background:'#FCE4EC'}}><td style={{fontWeight:700,color:'#C2185B',width:'30%'}}>P - Patient<br/>病人/族群</td><td>我的病人是誰？<br/>年齡、性別、疾病、嚴重度</td></tr>
+                        <tr style={{background:'#E1BEE7'}}><td style={{fontWeight:700,color:'#7B1FA2'}}>I - Intervention<br/>介入措施</td><td>我想評估什麼治療/暴露？<br/>藥物、手術、診斷工具</td></tr>
+                        <tr style={{background:'#D1C4E9'}}><td style={{fontWeight:700,color:'#512DA8'}}>C - Comparison<br/>比較對象</td><td>與什麼比較？<br/>安慰劑、標準治療、無治療</td></tr>
+                        <tr style={{background:'#C5CAE9'}}><td style={{fontWeight:700,color:'#303F9F'}}>O - Outcome<br/>結果</td><td>我關心什麼結果？<br/>死亡率、症狀改善、生活品質</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="tip">
+                <strong style={{color:'var(--acc)'}}>📝 PICO 範例</strong><br/>
+                <p style={{fontSize:14,color:'var(--txt2)',marginTop:8,lineHeight:1.8}}>
+                <strong>問題：</strong>對於急性心肌梗塞的病人，使用新型P2Y12抑制劑相較於Clopidogrel，是否能降低心血管事件？<br/><br/>
+                <strong>P：</strong>急性心肌梗塞病人<br/>
+                <strong>I：</strong>新型P2Y12抑制劑（Ticagrelor或Prasugrel）<br/>
+                <strong>C：</strong>Clopidogrel<br/>
+                <strong>O：</strong>主要心血管不良事件（MACE）
+                </p>
+            </div>
+            <div className="good">
+                <strong style={{color:'var(--suc)'}}>💡 不同問題類型的PICO</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                • <strong>治療：</strong>P + I + C + O（完整PICO）<br/>
+                • <strong>診斷：</strong>P + Index test + Reference standard + Accuracy<br/>
+                • <strong>預後：</strong>P + Prognostic factor + Outcome + Time
+                </span>
+            </div>
+        </div>
+    );
+
+    const L3=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>⚠️ 偏差的類型</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>偏差(Bias)是系統性誤差，會導致研究結果偏離真實值。</p>
+                <table>
+                    <thead><tr><th>偏差類型</th><th>說明</th><th>解決方法</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{fontWeight:600}}>選擇偏差</td><td>研究對象選取有問題</td><td>隨機抽樣、隨機分派</td></tr>
+                        <tr><td style={{fontWeight:600}}>資訊偏差</td><td>資料收集或測量有誤</td><td>盲化、標準化測量</td></tr>
+                        <tr><td style={{fontWeight:600}}>回憶偏差</td><td>回憶過去暴露不準確</td><td>使用客觀記錄</td></tr>
+                        <tr><td style={{fontWeight:600}}>失訪偏差</td><td>追蹤流失不隨機</td><td>減少失訪、ITT分析</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🔗 干擾因子 Confounding</h3>
+                <div style={{background:'#F3E5F5',padding:16,borderRadius:12,marginBottom:16}}>
+                    <p style={{fontSize:14,textAlign:'center'}}>
+                        <span style={{display:'inline-block',background:'var(--pri)',color:'#fff',padding:'4px 12px',borderRadius:6,margin:'4px'}}>暴露 E</span>
+                        <span style={{margin:'0 8px'}}>→</span>
+                        <span style={{display:'inline-block',background:'var(--suc)',color:'#fff',padding:'4px 12px',borderRadius:6,margin:'4px'}}>結果 O</span>
+                        <br/>
+                        <span style={{fontSize:24}}>↖</span>
+                        <span style={{display:'inline-block',background:'var(--acc)',color:'#fff',padding:'4px 12px',borderRadius:6,margin:'8px'}}>干擾因子 C</span>
+                        <span style={{fontSize:24}}>↗</span>
+                    </p>
+                </div>
+                <p style={{fontSize:14,color:'var(--txt2)'}}>干擾因子必須同時滿足三個條件：</p>
+                <ol style={{fontSize:14,color:'var(--txt2)',paddingLeft:20,lineHeight:2,marginTop:8}}>
+                    <li>與暴露因子相關（但非暴露的結果）</li>
+                    <li>是結果的獨立危險因子</li>
+                    <li>不是暴露與結果的中間變項</li>
+                </ol>
+            </div>
+            <div className="purple">
+                <strong style={{color:'var(--pri)'}}>🛠️ 控制干擾的方法</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                <strong>設計階段：</strong>隨機分派、配對、限制納入條件<br/>
+                <strong>分析階段：</strong>分層分析、多變量迴歸、傾向分數
+                </span>
+            </div>
+            <div className="tip">
+                <strong style={{color:'var(--acc)'}}>📌 經典範例：咖啡與肺癌</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                早期研究發現喝咖啡與肺癌相關，但「吸菸」是干擾因子：<br/>
+                • 吸菸者較常喝咖啡（與暴露相關）<br/>
+                • 吸菸是肺癌的危險因子<br/>
+                控制吸菸後，咖啡與肺癌的關聯消失。
+                </span>
+            </div>
+        </div>
+    );
+
+    const L4=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--suc)',marginBottom:12}}>📊 P值的正確理解</h3>
+                <div className="formula" style={{background:'linear-gradient(135deg,#E0F2F1,#B2DFDB)',borderColor:'var(--suc)'}}>
+                    P值 = P(觀察到的結果 | H₀為真)
+                </div>
+                <div className="info">
+                    <strong style={{color:'var(--blue)'}}>✓ P值是什麼</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>在虛無假設為真的前提下，觀察到目前或更極端結果的機率</span>
+                </div>
+                <div className="tip">
+                    <strong style={{color:'var(--acc)'}}>✗ P值不是什麼</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    • 不是「研究結果為真」的機率<br/>
+                    • 不是「虛無假設為真」的機率<br/>
+                    • 不代表效果量大小<br/>
+                    • 不等於臨床重要性
+                    </span>
+                </div>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>📏 信賴區間 Confidence Interval</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>95% CI 的正確解釋：</p>
+                <div className="good">
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    若以相同方法重複抽樣無限多次，約有95%的信賴區間會包含真正的母群體參數值。
+                    </span>
+                </div>
+                <table>
+                    <thead><tr><th>CI 包含</th><th>統計意義</th><th>臨床解讀</th></tr></thead>
+                    <tbody>
+                        <tr><td>不包含無效值</td><td>P &lt; 0.05</td><td>統計顯著</td></tr>
+                        <tr><td>包含無效值</td><td>P ≥ 0.05</td><td>統計不顯著</td></tr>
+                        <tr><td>區間很窄</td><td>精確度高</td><td>估計可靠</td></tr>
+                        <tr><td>區間很寬</td><td>精確度低</td><td>需更多樣本</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🎯 常見效果量指標</h3>
+                <table>
+                    <thead><tr><th>指標</th><th>計算</th><th>適用</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{fontWeight:600}}>RR 相對風險</td><td>暴露組風險/對照組風險</td><td>世代研究、RCT</td></tr>
+                        <tr><td style={{fontWeight:600}}>OR 勝算比</td><td>暴露組勝算/對照組勝算</td><td>病例對照研究</td></tr>
+                        <tr><td style={{fontWeight:600}}>ARR 絕對風險差</td><td>對照組風險-治療組風險</td><td>治療效益</td></tr>
+                        <tr><td style={{fontWeight:600}}>NNT</td><td>1/ARR</td><td>臨床決策</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="purple">
+                <strong style={{color:'var(--pri)'}}>💡 統計顯著 ≠ 臨床重要</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                判斷研究結果時要同時考慮：<br/>
+                • 統計顯著性（P值）<br/>
+                • 效果量大小（RR, OR, NNT）<br/>
+                • 精確度（信賴區間寬度）<br/>
+                • 臨床相關性（對病人的意義）
+                </span>
+            </div>
+        </div>
+    );
+
+    const Lesson=()=>{
+        const l=lessons.find(x=>x.id===lessonId);
+        return(
+            <div>
+                <Header title={l.title}/>
+                <div style={{background:`linear-gradient(135deg,${l.color},${l.color}88)`,padding:'20px',color:'#fff'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{fontSize:12,opacity:0.9}}>Lesson {l.id} • {l.sub}</div>
+                        <h1 style={{fontSize:24,fontWeight:700}}>{l.title}</h1>
+                    </div>
+                </div>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        {lessonId===1&&<L1/>}{lessonId===2&&<L2/>}{lessonId===3&&<L3/>}{lessonId===4&&<L4/>}
+                        <div style={{display:'flex',gap:12,marginTop:24}}>
+                            {lessonId>1&&<button className="btn" style={{flex:1,background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setLessonId(lessonId-1)}>← 上一課</button>}
+                            {lessonId<4?<button className="btn btn-pri" style={{flex:1}} onClick={()=>setLessonId(lessonId+1)}>下一課 →</button>
+                            :<button className="btn btn-acc" style={{flex:1}} onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}}>開始測驗 📝</button>}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const Quiz=()=>{
+        const pick=(i)=>{if(show)return;setSel(i);setShow(true);if(i===quiz[qIdx].c)setScore(score+1)};
+        const next=()=>{if(qIdx<quiz.length-1){setQIdx(qIdx+1);setSel(null);setShow(false)}else setDone(true)};
+
+        if(done){
+            const pct=Math.round((score/quiz.length)*100);
+            return(
+                <div>
+                    <Header title="測驗結果"/>
+                    <div style={{padding:'40px 16px',textAlign:'center'}}>
+                        <div style={{width:140,height:140,borderRadius:'50%',background:`conic-gradient(${pct>=80?'var(--suc)':pct>=60?'var(--warn)':'var(--err)'} ${pct*3.6}deg,#E5E5E5 0deg)`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 24px'}}>
+                            <div style={{width:120,height:120,borderRadius:'50%',background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                                <div style={{fontSize:36,fontWeight:700}}>{pct}%</div>
+                                <div style={{fontSize:14,color:'var(--txt2)'}}>{score}/{quiz.length}</div>
+                            </div>
+                        </div>
+                        <h2 style={{fontSize:24,fontWeight:700,marginBottom:8}}>{pct>=80?'🎉 太棒了！':pct>=60?'👍 不錯！':'💪 加油！'}</h2>
+                        <p style={{color:'var(--txt2)',marginBottom:32}}>{pct>=80?'你對文獻評讀有很好的基礎！':pct>=60?'再複習可以更進步！':'建議重新閱讀課程'}</p>
+                        <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+                            <button className="btn btn-pri" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false)}}>重新測驗</button>
+                            <button className="btn" style={{background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setPage('home')}>返回課程</button>
+                        </div>
+                    </div>
+                    <footer style={{background:'#F3E5F5',padding:'24px 16px',textAlign:'center',marginTop:40}}>
+                        <p style={{fontSize:12,color:'var(--txt2)'}}>新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        const q=quiz[qIdx];
+        return(
+            <div>
+                <Header title="自我測驗"/>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:14}}>
+                            <span style={{color:'var(--txt2)'}}>進度</span>
+                            <span style={{fontWeight:600,color:'var(--pri)'}}>{qIdx+1}/{quiz.length}</span>
+                        </div>
+                        <div style={{height:8,background:'#E5E5E5',borderRadius:4,marginBottom:20}}>
+                            <div style={{height:'100%',width:`${((qIdx+1)/quiz.length)*100}%`,background:'linear-gradient(90deg,var(--pri),var(--pri2))',borderRadius:4,transition:'width 0.3s'}}/>
+                        </div>
+                        <div className="card">
+                            <h3 style={{fontSize:16,fontWeight:600,lineHeight:1.6,marginBottom:20}}>{q.q}</h3>
+                            {q.o.map((opt,i)=>{
+                                let bg='#fff',bd='#E5E5E5';
+                                if(show){
+                                    if(i===q.c){bg='#F0FFF4';bd='var(--suc)'}
+                                    else if(i===sel){bg='#FFEBEE';bd='var(--err)'}
+                                }else if(i===sel){bg='#F3E5F5';bd='var(--pri)'}
+                                return(
+                                    <button key={i} onClick={()=>pick(i)} disabled={show} style={{width:'100%',padding:'12px 14px',marginBottom:10,background:bg,border:`2px solid ${bd}`,borderRadius:12,textAlign:'left',fontSize:14,cursor:show?'default':'pointer',display:'flex',alignItems:'center',gap:12}}>
+                                        <span style={{width:26,height:26,borderRadius:8,background:show&&i===q.c?'var(--suc)':show&&i===sel?'var(--err)':'#F3E5F5',color:show&&(i===q.c||i===sel)?'#fff':'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13,flexShrink:0}}>
+                                            {show&&i===q.c?'✓':show&&i===sel&&i!==q.c?'✗':String.fromCharCode(65+i)}
+                                        </span>
+                                        <span style={{lineHeight:1.5}}>{opt}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {show&&(
+                            <div className={sel===q.c?'good':'tip'}>
+                                <strong style={{color:sel===q.c?'var(--suc)':'var(--acc)'}}>{sel===q.c?'✓ 正確！':'✗ 答錯了'}</strong>
+                                <p style={{fontSize:14,color:'var(--txt2)',marginTop:8,lineHeight:1.7}}>{q.e}</p>
+                            </div>
+                        )}
+                        {show&&<button className="btn btn-pri" style={{width:'100%',justifyContent:'center',marginTop:16}} onClick={next}>{qIdx<quiz.length-1?'下一題 →':'查看結果'}</button>}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return <div style={{maxWidth:'100%',minHeight:'100vh',background:'var(--bg)'}}>{page==='home'?<Home/>:page==='lesson'?<Lesson/>:<Quiz/>}</div>;
+};
+
+ReactDOM.render(<App/>,document.getElementById('root'));
+</script>
+</body>
+</html>
