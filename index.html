@@ -179,6 +179,11 @@
                 <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
                     <path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/>
                 </svg>
+            ),
+            TrendingUp: () => (
+                <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                    <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                </svg>
             )
         };
 
@@ -245,7 +250,6 @@
                 color: '#F72585',
                 gradient: 'linear-gradient(135deg, #F72585 0%, #B5179E 100%)',
                 status: 'active',
-                isNew: true,
                 topics: ['STARD指引', 'ROC曲線', '診斷閾值', '臨床適用性'],
                 link: 'diagnostic-study.html'
             },
@@ -255,11 +259,13 @@
                 title: '預後研究評讀',
                 subtitle: 'Prognosis Study Appraisal',
                 description: '學習評估預後因子與風險預測模型',
-                icon: 'Chart',
+                icon: 'TrendingUp',
                 color: '#4361EE',
                 gradient: 'linear-gradient(135deg, #4361EE 0%, #3A0CA3 100%)',
-                status: 'coming',
-                topics: ['Kaplan-Meier曲線', 'Cox迴歸', '風險因子', '預測模型']
+                status: 'active',
+                isNew: true,
+                topics: ['Kaplan-Meier曲線', 'Cox迴歸', '風險因子', '預測模型'],
+                link: 'prognosis-study.html'
             }
         ];
 
@@ -314,7 +320,7 @@
                                 <div style={{ fontSize: '11px', color: 'var(--text-light)' }}>新竹台大分院教學部</div>
                             </div>
                         </div>
-                        <div style={{ padding: '6px 12px', background: 'var(--bg-blue)', borderRadius: '20px', fontSize: '11px', fontWeight: '600', color: 'var(--primary)' }}>v1.3</div>
+                        <div style={{ padding: '6px 12px', background: 'var(--bg-blue)', borderRadius: '20px', fontSize: '11px', fontWeight: '600', color: 'var(--primary)' }}>v2.0</div>
                     </div>
                 </header>
             );
