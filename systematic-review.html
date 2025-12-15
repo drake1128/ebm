@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系統性回顧與統合分析 | EBM 教學平台</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --pri:#FF6B35;
+            --pri2:#F7931E;
+            --blue:#0077B6;
+            --pur:#7209B7;
+            --teal:#2EC4B6;
+            --suc:#38A169;
+            --warn:#D69E2E;
+            --err:#E53E3E;
+            --bg:#FFFAF5;
+            --txt:#1A1A2E;
+            --txt2:#6B7280
+        }
+        body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+        .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(255,107,53,0.08)}
+        .btn{padding:14px 24px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all 0.3s}
+        .btn-pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}
+        .btn-pri:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(255,107,53,0.3)}
+        table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+        th,td{padding:10px;text-align:center;border-bottom:1px solid #eee}
+        th{background:#FFF5F0;font-weight:600;color:var(--pri)}
+        .formula{background:linear-gradient(135deg,#FFF5F0,#FFEDE5);border:2px solid var(--pri);border-radius:12px;padding:16px;margin:12px 0;text-align:center;font-size:16px;color:#C53D00;font-weight:600}
+        .tip{background:#FFFBEB;border-left:4px solid var(--warn);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .good{background:#F0FFF4;border-left:4px solid var(--suc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .info{background:#EBF8FF;border-left:4px solid var(--blue);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .warn{background:#FFF5F5;border-left:4px solid var(--err);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .purple{background:#FAF5FF;border-left:4px solid var(--pur);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .forest-plot{background:#fff;border:2px solid #E2E8F0;border-radius:12px;padding:16px;margin:12px 0}
+        .forest-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #F0F0F0}
+        .forest-row:last-child{border-bottom:none;font-weight:700;background:#FFF5F0;margin:8px -16px -16px;padding:12px 16px;border-radius:0 0 10px 10px}
+        .forest-study{width:100px;font-size:12px;text-align:left}
+        .forest-bar{flex:1;position:relative;height:24px;display:flex;align-items:center}
+        .forest-line{position:absolute;left:50%;width:2px;height:100%;background:#E53E3E;transform:translateX(-50%)}
+        .forest-point{position:absolute;width:10px;height:10px;background:var(--blue);border-radius:50%;transform:translateX(-50%)}
+        .forest-ci{position:absolute;height:4px;background:var(--blue);border-radius:2px}
+        .forest-diamond{position:absolute;width:16px;height:16px;background:var(--pri);transform:translateX(-50%) rotate(45deg)}
+        .forest-value{width:80px;font-size:11px;text-align:right}
+        .funnel-plot{width:100%;max-width:280px;margin:16px auto;position:relative}
+        .grade-table td:first-child{text-align:left;font-weight:600}
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState}=React;
+
+const lessons=[
+    {id:1,title:'系統性回顧基礎',sub:'Systematic Review Basics',color:'#FF6B35'},
+    {id:2,title:'Forest Plot 解讀',sub:'Understanding Forest Plots',color:'#0077B6'},
+    {id:3,title:'異質性評估',sub:'Heterogeneity Assessment',color:'#7209B7'},
+    {id:4,title:'發表偏差與漏斗圖',sub:'Publication Bias & Funnel Plot',color:'#2EC4B6'},
+    {id:5,title:'GRADE 證據評級',sub:'GRADE Evidence Rating',color:'#D69E2E'}
+];
+
+const quiz=[
+    {q:'系統性回顧與傳統文獻回顧的最大差異為何？',o:['納入文獻數量較多','有明確的研究方法學','只納入RCT','必須進行統合分析'],c:1,e:'系統性回顧的核心特色是有明確、可重複的方法學，包括搜尋策略、納入排除標準、品質評估等，而非只是文獻數量或研究類型的差異。'},
+    {q:'Forest plot 中，若某研究的信賴區間橫跨無效線（OR=1或RR=1），代表什麼意義？',o:['該研究顯示治療有效','該研究結果未達統計顯著','該研究品質較差','該研究樣本數最大'],c:1,e:'信賴區間橫跨無效線（OR=1或RR=1）表示該研究的結果在統計上未達顯著差異，無法排除治療效果為零的可能性。'},
+    {q:'I² 統計量的意義為何？',o:['衡量效果量大小','衡量發表偏差程度','衡量異質性比例','衡量統計檢定力'],c:2,e:'I² 代表總變異中可歸因於異質性（而非抽樣誤差）的比例。I²=0% 表示無異質性，>75% 表示高度異質性。'},
+    {q:'當 I² = 85% 時，應如何解讀？',o:['研究間同質性高，可合併','研究間有高度異質性，需謹慎解讀','樣本數不足','發表偏差嚴重'],c:1,e:'I² = 85% 屬於高度異質性（>75%），表示研究間存在明顯差異，合併效果量的意義有限，應探討異質性來源或考慮不合併。'},
+    {q:'漏斗圖（Funnel Plot）主要用於評估什麼？',o:['效果量大小','研究品質','發表偏差','異質性程度'],c:2,e:'漏斗圖用於視覺化評估發表偏差。理想情況下應呈對稱倒漏斗狀，若不對稱（尤其左下缺角）可能暗示小型陰性研究未發表。'},
+    {q:'固定效果模型（Fixed-effect model）的假設為何？',o:['各研究有不同的真實效果量','各研究共享同一個真實效果量','研究間必有異質性','只適用於大型研究'],c:1,e:'固定效果模型假設所有研究估計同一個「真實效果量」，觀察到的差異僅來自抽樣誤差。適用於研究間同質性高的情況。'},
+    {q:'GRADE 系統中，RCT 的起始證據等級為何？',o:['非常低','低','中','高'],c:3,e:'在 GRADE 系統中，RCT 的起始證據等級為「高」，觀察性研究為「低」。之後根據五個降級因素和三個升級因素調整。'},
+    {q:'以下何者是 GRADE 的降級因素？',o:['效果量大','劑量反應關係','偏差風險高','干擾因素使效果低估'],c:2,e:'GRADE 的五個降級因素：偏差風險、不一致性、間接性、不精確性、發表偏差。效果量大、劑量反應、干擾因素是升級因素。'},
+    {q:'統合分析中，何時應優先選擇隨機效果模型？',o:['研究數量少於5篇','預期研究間存在異質性','只有RCT研究','效果量很大時'],c:1,e:'當預期研究間存在臨床或方法學異質性時，應使用隨機效果模型。此模型假設各研究有不同的真實效果量，並估計其分布。'},
+    {q:'Forest plot 中的菱形（Diamond）代表什麼？',o:['單一研究的效果量','合併後的整體效果量','異質性程度','發表偏差'],c:1,e:'菱形代表統合分析合併後的整體效果量估計。菱形的中心點是點估計值，寬度代表95%信賴區間。'}
+];
+
+const App=()=>{
+    const[page,setPage]=useState('home');
+    const[lessonId,setLessonId]=useState(1);
+    const[qIdx,setQIdx]=useState(0);
+    const[score,setScore]=useState(0);
+    const[sel,setSel]=useState(null);
+    const[show,setShow]=useState(false);
+    const[done,setDone]=useState(false);
+
+    const Header=({title})=>(
+        <header style={{background:'#fff',borderBottom:'1px solid #FFE4D6',padding:'12px 16px',position:'sticky',top:0,zIndex:10}}>
+            <div style={{maxWidth:480,margin:'0 auto',display:'flex',alignItems:'center',gap:12}}>
+                <button onClick={()=>page==='home'?window.location.href='index.html':setPage('home')} style={{background:'#FFF5F0',border:'none',borderRadius:10,width:40,height:40,cursor:'pointer',color:'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style={{fontWeight:700,color:'#C53D00'}}>{title}</span>
+            </div>
+        </header>
+    );
+
+    const Home=()=>(
+        <div>
+            <Header title="系統性回顧與統合分析"/>
+            <div style={{background:'linear-gradient(135deg,#FF6B35,#F7931E)',padding:'32px 20px',color:'#fff'}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div style={{background:'rgba(255,255,255,0.2)',display:'inline-block',padding:'6px 14px',borderRadius:50,fontSize:12,fontWeight:600,marginBottom:16}}>📊 Systematic Review & Meta-analysis</div>
+                    <h1 style={{fontSize:26,fontWeight:700,marginBottom:12}}>系統性回顧與統合分析</h1>
+                    <p style={{opacity:0.95,fontSize:14}}>學習如何評讀與理解最高等級的證據</p>
+                </div>
+            </div>
+            <div style={{padding:'0 16px',marginTop:-20}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div className="card">
+                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🎯 學習目標</h3>
+                        {['理解系統性回顧的方法學','正確解讀 Forest Plot','評估異質性與其臨床意義','識別發表偏差','應用 GRADE 評級系統'].map((t,i)=>(
+                            <div key={i} style={{display:'flex',gap:10,marginBottom:8,fontSize:14}}>
+                                <span style={{background:'var(--suc)',color:'#fff',borderRadius:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,flexShrink:0}}>{i+1}</span>
+                                <span style={{color:'var(--txt2)'}}>{t}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>📚 課程內容</h3>
+                    {lessons.map(l=>(
+                        <div key={l.id} className="card" onClick={()=>{setLessonId(l.id);setPage('lesson')}} style={{cursor:'pointer'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:16}}>
+                                <div style={{width:48,height:48,borderRadius:12,background:`linear-gradient(135deg,${l.color},${l.color}88)`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}}>{l.id}</div>
+                                <div style={{flex:1}}>
+                                    <div style={{fontSize:11,color:l.color,fontWeight:600}}>Lesson {l.id}</div>
+                                    <div style={{fontSize:16,fontWeight:700}}>{l.title}</div>
+                                    <div style={{fontSize:13,color:'var(--txt2)'}}>{l.sub}</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" fill={l.color} width="20" height="20"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/></svg>
+                            </div>
+                        </div>
+                    ))}
+                    <button className="btn btn-pri" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}} style={{width:'100%',justifyContent:'center',marginTop:20,marginBottom:32}}>
+                        📝 開始測驗 (10題)
+                    </button>
+                </div>
+            </div>
+            <footer style={{background:'#FFF5F0',padding:'24px 16px',textAlign:'center'}}>
+                <p style={{fontSize:13,color:'var(--txt2)'}}>新竹台大分院教學部</p>
+                <p style={{fontSize:12,color:'var(--txt2)'}}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+        </div>
+    );
+
+    const L1=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>📖 什麼是系統性回顧？</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>系統性回顧是以<strong>明確、系統化的方法</strong>收集、評估並綜合所有相關研究證據，以回答特定的研究問題。</p>
+                <div className="info">
+                    <strong style={{color:'var(--blue)'}}>🔑 核心特色</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    • 明確的研究問題（PICO）<br/>
+                    • 預先定義的搜尋策略<br/>
+                    • 明確的納入/排除標準<br/>
+                    • 系統性的品質評估<br/>
+                    • 透明且可重複的過程
+                    </span>
+                </div>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>🔄 系統性回顧 vs 統合分析</h3>
+                <table>
+                    <thead><tr><th>項目</th><th>系統性回顧</th><th>統合分析</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{fontWeight:600}}>定義</td><td>系統性文獻回顧方法</td><td>統計合併技術</td></tr>
+                        <tr><td style={{fontWeight:600}}>必要性</td><td>必須進行</td><td>視情況決定</td></tr>
+                        <tr><td style={{fontWeight:600}}>產出</td><td>質性綜合</td><td>量化合併效果量</td></tr>
+                        <tr><td style={{fontWeight:600}}>關係</td><td colspan="2">統合分析是系統性回顧的一部分（若適合）</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>📋 系統性回顧步驟</h3>
+                <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                    {[
+                        {step:'1',title:'定義問題',desc:'使用 PICO 框架',color:'#FF6B35'},
+                        {step:'2',title:'制定計畫書',desc:'預先註冊於 PROSPERO',color:'#0077B6'},
+                        {step:'3',title:'文獻搜尋',desc:'多資料庫、灰色文獻',color:'#7209B7'},
+                        {step:'4',title:'篩選文獻',desc:'標題/摘要 → 全文',color:'#2EC4B6'},
+                        {step:'5',title:'資料萃取',desc:'標準化表格',color:'#D69E2E'},
+                        {step:'6',title:'品質評估',desc:'RoB 2.0 / ROBINS-I',color:'#E53E3E'},
+                        {step:'7',title:'資料合成',desc:'質性/量化（統合分析）',color:'#38A169'},
+                        {step:'8',title:'報告撰寫',desc:'遵循 PRISMA 指引',color:'#6B7280'}
+                    ].map((item,idx)=>(
+                        <div key={idx} style={{display:'flex',alignItems:'center',gap:12,padding:'10px',background:'#FAFAFA',borderRadius:10}}>
+                            <div style={{width:28,height:28,borderRadius:8,background:item.color,color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13,flexShrink:0}}>{item.step}</div>
+                            <div style={{flex:1}}>
+                                <div style={{fontSize:14,fontWeight:600}}>{item.title}</div>
+                                <div style={{fontSize:12,color:'var(--txt2)'}}>{item.desc}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <div className="good">
+                <strong style={{color:'var(--suc)'}}>💡 PRISMA 聲明</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                Preferred Reporting Items for Systematic Reviews and Meta-Analyses<br/>
+                系統性回顧的報告標準，包含 27 項檢核清單與流程圖
+                </span>
+            </div>
+        </div>
+    );
+
+    const L2=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>📊 Forest Plot 組成元素</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>Forest Plot（森林圖）是呈現統合分析結果最重要的視覺化工具。</p>
+                
+                <div className="forest-plot">
+                    <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:11,color:'var(--txt2)'}}>
+                        <span>研究</span>
+                        <span>有利對照 ←  → 有利介入</span>
+                        <span>RR [95% CI]</span>
+                    </div>
+                    <div className="forest-row">
+                        <div className="forest-study">Study A (2018)</div>
+                        <div className="forest-bar">
+                            <div className="forest-line"></div>
+                            <div className="forest-ci" style={{left:'55%',width:'20%'}}></div>
+                            <div className="forest-point" style={{left:'65%'}}></div>
+                        </div>
+                        <div className="forest-value">0.72 [0.55, 0.94]</div>
+                    </div>
+                    <div className="forest-row">
+                        <div className="forest-study">Study B (2019)</div>
+                        <div className="forest-bar">
+                            <div className="forest-line"></div>
+                            <div className="forest-ci" style={{left:'40%',width:'35%'}}></div>
+                            <div className="forest-point" style={{left:'58%'}}></div>
+                        </div>
+                        <div className="forest-value">0.85 [0.60, 1.20]</div>
+                    </div>
+                    <div className="forest-row">
+                        <div className="forest-study">Study C (2020)</div>
+                        <div className="forest-bar">
+                            <div className="forest-line"></div>
+                            <div className="forest-ci" style={{left:'52%',width:'18%'}}></div>
+                            <div className="forest-point" style={{left:'60%'}}></div>
+                        </div>
+                        <div className="forest-value">0.78 [0.62, 0.98]</div>
+                    </div>
+                    <div className="forest-row">
+                        <div className="forest-study">Overall</div>
+                        <div className="forest-bar">
+                            <div className="forest-line"></div>
+                            <div className="forest-diamond" style={{left:'62%'}}></div>
+                        </div>
+                        <div className="forest-value" style={{color:'var(--pri)',fontWeight:700}}>0.78 [0.68, 0.90]</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>🔍 關鍵元素解讀</h3>
+                <table>
+                    <thead><tr><th>元素</th><th>意義</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{fontWeight:600}}>方塊 ■</td><td>各研究的點估計值，大小反映權重</td></tr>
+                        <tr><td style={{fontWeight:600}}>橫線 —</td><td>95% 信賴區間</td></tr>
+                        <tr><td style={{fontWeight:600}}>垂直線 │</td><td>無效線（RR/OR=1 或 MD=0）</td></tr>
+                        <tr><td style={{fontWeight:600}}>菱形 ◆</td><td>合併效果量，寬度為 95% CI</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div className="info">
+                <strong style={{color:'var(--blue)'}}>📌 快速判讀技巧</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                1. <strong>菱形位置</strong>：在無效線哪側？→ 效果方向<br/>
+                2. <strong>菱形是否跨越無效線</strong>：→ 是否統計顯著<br/>
+                3. <strong>方塊散布</strong>：集中或分散？→ 異質性高低<br/>
+                4. <strong>權重分布</strong>：是否被單一研究主導？
+                </span>
+            </div>
+            
+            <div className="tip">
+                <strong style={{color:'var(--warn)'}}>⚠️ 注意事項</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                • 統計顯著 ≠ 臨床重要性<br/>
+                • 需同時考慮效果量大小與信賴區間<br/>
+                • 異質性高時，合併效果量意義有限
+                </span>
+            </div>
+        </div>
+    );
+
+    const L3=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>🔀 什麼是異質性？</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>異質性（Heterogeneity）指納入研究間結果的變異程度超過隨機誤差所能解釋的範圍。</p>
+                
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginTop:16}}>
+                    <div style={{background:'#F0FFF4',padding:12,borderRadius:10}}>
+                        <div style={{fontWeight:600,color:'var(--suc)',marginBottom:4}}>臨床異質性</div>
+                        <div style={{fontSize:12,color:'var(--txt2)'}}>族群、介入、結果測量的差異</div>
+                    </div>
+                    <div style={{background:'#EBF8FF',padding:12,borderRadius:10}}>
+                        <div style={{fontWeight:600,color:'var(--blue)',marginBottom:4}}>方法學異質性</div>
+                        <div style={{fontSize:12,color:'var(--txt2)'}}>研究設計、偏差風險的差異</div>
+                    </div>
+                    <div style={{background:'#FAF5FF',padding:12,borderRadius:10,gridColumn:'1/3'}}>
+                        <div style={{fontWeight:600,color:'var(--pur)',marginBottom:4}}>統計異質性</div>
+                        <div style={{fontSize:12,color:'var(--txt2)'}}>觀察到的效果量變異（用 I²、Q 統計量評估）</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>📐 I² 統計量</h3>
+                <div className="formula">I² = (Q - df) / Q × 100%</div>
+                <p style={{fontSize:13,color:'var(--txt2)',marginTop:12}}>代表總變異中可歸因於異質性的比例</p>
+                
+                <table style={{marginTop:16}}>
+                    <thead><tr><th>I² 範圍</th><th>異質性程度</th><th>建議</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{color:'var(--suc)',fontWeight:600}}>0-25%</td><td>低</td><td>可考慮固定效果模型</td></tr>
+                        <tr><td style={{color:'var(--warn)',fontWeight:600}}>25-50%</td><td>中等</td><td>需探討來源</td></tr>
+                        <tr><td style={{color:'var(--pri)',fontWeight:600}}>50-75%</td><td>高</td><td>需謹慎解讀合併結果</td></tr>
+                        <tr><td style={{color:'var(--err)',fontWeight:600}}>&gt;75%</td><td>極高</td><td>考慮不合併或次群組分析</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--teal)',marginBottom:12}}>🔧 處理異質性的策略</h3>
+                <div style={{fontSize:14,lineHeight:1.8}}>
+                    <div style={{marginBottom:8}}><strong>1. 探索來源</strong></div>
+                    <div style={{paddingLeft:16,marginBottom:12,color:'var(--txt2)'}}>
+                        • 次群組分析（預先設定）<br/>
+                        • Meta-regression<br/>
+                        • 敏感度分析
+                    </div>
+                    
+                    <div style={{marginBottom:8}}><strong>2. 選擇適當模型</strong></div>
+                    <table>
+                        <thead><tr><th>模型</th><th>假設</th><th>適用情境</th></tr></thead>
+                        <tbody>
+                            <tr><td style={{fontWeight:600}}>固定效果</td><td>研究估計同一效果量</td><td>同質性高</td></tr>
+                            <tr><td style={{fontWeight:600}}>隨機效果</td><td>效果量有分布</td><td>預期有異質性</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div className="warn">
+                <strong style={{color:'var(--err)'}}>🚨 重要提醒</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                I² 只是描述變異的「比例」，不代表變異的「程度」。<br/>
+                即使 I²=0%，仍需考慮臨床異質性是否適合合併。
+                </span>
+            </div>
+        </div>
+    );
+
+    const L4=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--teal)',marginBottom:12}}>📰 什麼是發表偏差？</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>發表偏差（Publication Bias）指研究結果的發表與否受到結果方向或統計顯著性影響。</p>
+                
+                <div className="warn">
+                    <strong style={{color:'var(--err)'}}>⚠️ 發表偏差的後果</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    • 正向結果較易發表 → 效果被高估<br/>
+                    • 小型陰性研究常被遺漏<br/>
+                    • 系統性回顧結論可能失真
+                    </span>
+                </div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>📈 漏斗圖 Funnel Plot</h3>
+                <p style={{fontSize:13,color:'var(--txt2)',marginBottom:12}}>以效果量為X軸、精確度（如標準誤倒數）為Y軸的散布圖</p>
+                
+                <svg viewBox="0 0 300 200" style={{width:'100%',maxWidth:300,display:'block',margin:'0 auto'}}>
+                    {/* 漏斗外框 */}
+                    <polygon points="150,20 50,180 250,180" fill="none" stroke="#E2E8F0" strokeWidth="2" strokeDasharray="5,5"/>
+                    {/* 中心線 */}
+                    <line x1="150" y1="20" x2="150" y2="180" stroke="#E53E3E" strokeWidth="2"/>
+                    {/* 對稱分布的點 */}
+                    <circle cx="150" cy="40" r="6" fill="var(--blue)"/>
+                    <circle cx="140" cy="55" r="5" fill="var(--blue)"/>
+                    <circle cx="160" cy="55" r="5" fill="var(--blue)"/>
+                    <circle cx="130" cy="75" r="5" fill="var(--blue)"/>
+                    <circle cx="170" cy="75" r="5" fill="var(--blue)"/>
+                    <circle cx="155" cy="70" r="5" fill="var(--blue)"/>
+                    <circle cx="145" cy="90" r="4" fill="var(--blue)"/>
+                    <circle cx="165" cy="95" r="4" fill="var(--blue)"/>
+                    <circle cx="125" cy="110" r="4" fill="var(--blue)"/>
+                    <circle cx="175" cy="115" r="4" fill="var(--blue)"/>
+                    <circle cx="140" cy="130" r="4" fill="var(--blue)"/>
+                    <circle cx="160" cy="135" r="4" fill="var(--blue)"/>
+                    {/* 標籤 */}
+                    <text x="150" y="195" textAnchor="middle" fontSize="11" fill="#6B7280">效果量</text>
+                    <text x="15" y="100" textAnchor="middle" fontSize="11" fill="#6B7280" transform="rotate(-90,15,100)">精確度</text>
+                </svg>
+                
+                <div style={{textAlign:'center',fontSize:12,color:'var(--suc)',fontWeight:600,marginTop:8}}>✓ 對稱分布 = 無明顯發表偏差</div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--err)',marginBottom:12}}>🚨 不對稱漏斗圖</h3>
+                
+                <svg viewBox="0 0 300 200" style={{width:'100%',maxWidth:300,display:'block',margin:'0 auto'}}>
+                    <polygon points="150,20 50,180 250,180" fill="none" stroke="#E2E8F0" strokeWidth="2" strokeDasharray="5,5"/>
+                    <line x1="150" y1="20" x2="150" y2="180" stroke="#E53E3E" strokeWidth="2"/>
+                    {/* 不對稱分布 - 左下缺角 */}
+                    <circle cx="150" cy="40" r="6" fill="var(--blue)"/>
+                    <circle cx="160" cy="55" r="5" fill="var(--blue)"/>
+                    <circle cx="155" cy="50" r="5" fill="var(--blue)"/>
+                    <circle cx="170" cy="75" r="5" fill="var(--blue)"/>
+                    <circle cx="165" cy="70" r="5" fill="var(--blue)"/>
+                    <circle cx="175" cy="95" r="4" fill="var(--blue)"/>
+                    <circle cx="180" cy="115" r="4" fill="var(--blue)"/>
+                    <circle cx="170" cy="130" r="4" fill="var(--blue)"/>
+                    <circle cx="185" cy="140" r="4" fill="var(--blue)"/>
+                    {/* 缺失區域標示 */}
+                    <ellipse cx="110" cy="140" rx="35" ry="30" fill="rgba(229,62,62,0.1)" stroke="var(--err)" strokeWidth="2" strokeDasharray="4,4"/>
+                    <text x="110" y="145" textAnchor="middle" fontSize="10" fill="var(--err)">缺失區域</text>
+                </svg>
+                
+                <div style={{textAlign:'center',fontSize:12,color:'var(--err)',fontWeight:600,marginTop:8}}>✗ 左下缺角 = 可能有發表偏差</div>
+            </div>
+            
+            <div className="info">
+                <strong style={{color:'var(--blue)'}}>📊 統計檢定方法</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                • <strong>Egger's test</strong>：迴歸法檢定不對稱<br/>
+                • <strong>Begg's test</strong>：等級相關法<br/>
+                • <strong>Trim and fill</strong>：估計遺漏研究數<br/>
+                <em>註：研究數 &lt;10 篇時檢定力不足</em>
+                </span>
+            </div>
+            
+            <div className="tip">
+                <strong style={{color:'var(--warn)'}}>💡 減少發表偏差的策略</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                • 搜尋灰色文獻（會議摘要、學位論文）<br/>
+                • 查詢試驗註冊平台（ClinicalTrials.gov）<br/>
+                • 聯繫相關領域專家<br/>
+                • 納入未發表的研究
+                </span>
+            </div>
+        </div>
+    );
+
+    const L5=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--warn)',marginBottom:12}}>⭐ GRADE 系統簡介</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>
+                    GRADE（Grading of Recommendations Assessment, Development and Evaluation）是目前最廣泛使用的證據品質評級系統。
+                </p>
+                
+                <div className="formula" style={{background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',borderColor:'var(--warn)'}}>
+                    證據品質 = 起始等級 ± 調整因素
+                </div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>📊 四個證據等級</h3>
+                <table className="grade-table">
+                    <thead><tr><th>等級</th><th>定義</th><th>信心程度</th></tr></thead>
+                    <tbody>
+                        <tr style={{background:'#F0FFF4'}}><td style={{color:'var(--suc)'}}>⊕⊕⊕⊕ 高</td><td>非常有信心效果估計接近真實效果</td><td>很高</td></tr>
+                        <tr style={{background:'#EBF8FF'}}><td style={{color:'var(--blue)'}}>⊕⊕⊕◯ 中</td><td>效果估計可能接近真實效果</td><td>中等</td></tr>
+                        <tr style={{background:'#FFFBEB'}}><td style={{color:'var(--warn)'}}>⊕⊕◯◯ 低</td><td>真實效果可能與估計有明顯不同</td><td>有限</td></tr>
+                        <tr style={{background:'#FFF5F5'}}><td style={{color:'var(--err)'}}>⊕◯◯◯ 極低</td><td>效果估計非常不確定</td><td>很低</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--err)',marginBottom:12}}>⬇️ 五個降級因素</h3>
+                <div style={{display:'grid',gap:8}}>
+                    {[
+                        {name:'偏差風險',desc:'Risk of Bias',detail:'隨機化、盲化、流失等問題'},
+                        {name:'不一致性',desc:'Inconsistency',detail:'研究間結果差異大（高 I²）'},
+                        {name:'間接性',desc:'Indirectness',detail:'PICO 與臨床問題不完全對應'},
+                        {name:'不精確性',desc:'Imprecision',detail:'信賴區間寬、樣本數小'},
+                        {name:'發表偏差',desc:'Publication Bias',detail:'漏斗圖不對稱、小型研究效應'}
+                    ].map((item,idx)=>(
+                        <div key={idx} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 12px',background:'#FFF5F5',borderRadius:10,borderLeft:'4px solid var(--err)'}}>
+                            <div style={{width:24,height:24,borderRadius:6,background:'var(--err)',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:12,flexShrink:0}}>{idx+1}</div>
+                            <div style={{flex:1}}>
+                                <div style={{fontSize:14,fontWeight:600}}>{item.name} <span style={{fontSize:11,color:'var(--txt2)'}}>({item.desc})</span></div>
+                                <div style={{fontSize:12,color:'var(--txt2)'}}>{item.detail}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--suc)',marginBottom:12}}>⬆️ 三個升級因素</h3>
+                <div style={{display:'grid',gap:8}}>
+                    {[
+                        {name:'效果量大',desc:'Large Effect',detail:'RR >2 或 <0.5（無干擾因素）'},
+                        {name:'劑量反應',desc:'Dose-response',detail:'明確的劑量反應關係'},
+                        {name:'干擾低估',desc:'Confounding',detail:'所有可能的干擾因素會減弱效果'}
+                    ].map((item,idx)=>(
+                        <div key={idx} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 12px',background:'#F0FFF4',borderRadius:10,borderLeft:'4px solid var(--suc)'}}>
+                            <div style={{width:24,height:24,borderRadius:6,background:'var(--suc)',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:12,flexShrink:0}}>+</div>
+                            <div style={{flex:1}}>
+                                <div style={{fontSize:14,fontWeight:600}}>{item.name} <span style={{fontSize:11,color:'var(--txt2)'}}>({item.desc})</span></div>
+                                <div style={{fontSize:12,color:'var(--txt2)'}}>{item.detail}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            
+            <div className="purple">
+                <strong style={{color:'var(--pur)'}}>🎯 GRADE 評級範例</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                <strong>情境：</strong>5 篇 RCT 的統合分析<br/>
+                • 起始等級：高 (RCT)<br/>
+                • 降級：-1（高偏差風險）、-1（I²=78% 高異質性）<br/>
+                • <strong>最終等級：低 ⊕⊕◯◯</strong>
+                </span>
+            </div>
+        </div>
+    );
+
+    const Lesson=()=>{
+        const l=lessons.find(x=>x.id===lessonId);
+        return(
+            <div>
+                <Header title={l.title}/>
+                <div style={{background:`linear-gradient(135deg,${l.color},${l.color}88)`,padding:'20px',color:'#fff'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{fontSize:12,opacity:0.9}}>Lesson {l.id} • {l.sub}</div>
+                        <h1 style={{fontSize:24,fontWeight:700}}>{l.title}</h1>
+                    </div>
+                </div>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        {lessonId===1&&<L1/>}{lessonId===2&&<L2/>}{lessonId===3&&<L3/>}{lessonId===4&&<L4/>}{lessonId===5&&<L5/>}
+                        <div style={{display:'flex',gap:12,marginTop:24}}>
+                            {lessonId>1&&<button className="btn" style={{flex:1,background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setLessonId(lessonId-1)}>← 上一課</button>}
+                            {lessonId<5?<button className="btn btn-pri" style={{flex:1}} onClick={()=>setLessonId(lessonId+1)}>下一課 →</button>
+                            :<button className="btn btn-pri" style={{flex:1}} onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}}>開始測驗 📝</button>}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const Quiz=()=>{
+        const pick=(i)=>{if(show)return;setSel(i);setShow(true);if(i===quiz[qIdx].c)setScore(score+1)};
+        const next=()=>{if(qIdx<quiz.length-1){setQIdx(qIdx+1);setSel(null);setShow(false)}else setDone(true)};
+
+        if(done){
+            const pct=Math.round((score/quiz.length)*100);
+            return(
+                <div>
+                    <Header title="測驗結果"/>
+                    <div style={{padding:'40px 16px',textAlign:'center'}}>
+                        <div style={{width:140,height:140,borderRadius:'50%',background:`conic-gradient(${pct>=80?'var(--suc)':pct>=60?'var(--warn)':'var(--err)'} ${pct*3.6}deg,#E5E5E5 0deg)`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 24px'}}>
+                            <div style={{width:120,height:120,borderRadius:'50%',background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                                <div style={{fontSize:36,fontWeight:700}}>{pct}%</div>
+                                <div style={{fontSize:14,color:'var(--txt2)'}}>{score}/{quiz.length}</div>
+                            </div>
+                        </div>
+                        <h2 style={{fontSize:24,fontWeight:700,marginBottom:8}}>{pct>=80?'🎉 太棒了！':pct>=60?'👍 不錯！':'💪 加油！'}</h2>
+                        <p style={{color:'var(--txt2)',marginBottom:32}}>{pct>=80?'你對統合分析有很好的掌握！':pct>=60?'再複習可以更進步！':'建議重新閱讀課程'}</p>
+                        <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+                            <button className="btn btn-pri" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false)}}>重新測驗</button>
+                            <button className="btn" style={{background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setPage('home')}>返回課程</button>
+                        </div>
+                    </div>
+                    <footer style={{background:'#FFF5F0',padding:'24px 16px',textAlign:'center',marginTop:40}}>
+                        <p style={{fontSize:12,color:'var(--txt2)'}}>新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        const q=quiz[qIdx];
+        return(
+            <div>
+                <Header title="自我測驗"/>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:14}}>
+                            <span style={{color:'var(--txt2)'}}>進度</span>
+                            <span style={{fontWeight:600,color:'var(--pri)'}}>{qIdx+1}/{quiz.length}</span>
+                        </div>
+                        <div style={{height:8,background:'#E5E5E5',borderRadius:4,marginBottom:20}}>
+                            <div style={{height:'100%',width:`${((qIdx+1)/quiz.length)*100}%`,background:'linear-gradient(90deg,var(--pri),var(--pri2))',borderRadius:4,transition:'width 0.3s'}}/>
+                        </div>
+                        <div className="card">
+                            <h3 style={{fontSize:16,fontWeight:600,lineHeight:1.6,marginBottom:20}}>{q.q}</h3>
+                            {q.o.map((opt,i)=>{
+                                let bg='#fff',bd='#E5E5E5';
+                                if(show){
+                                    if(i===q.c){bg='#F0FFF4';bd='var(--suc)'}
+                                    else if(i===sel){bg='#FFF5F5';bd='var(--err)'}
+                                }else if(i===sel){bg='#FFF5F0';bd='var(--pri)'}
+                                return(
+                                    <button key={i} onClick={()=>pick(i)} disabled={show} style={{width:'100%',padding:'12px 14px',marginBottom:10,background:bg,border:`2px solid ${bd}`,borderRadius:12,textAlign:'left',fontSize:14,cursor:show?'default':'pointer',display:'flex',alignItems:'center',gap:12}}>
+                                        <span style={{width:26,height:26,borderRadius:8,background:show&&i===q.c?'var(--suc)':show&&i===sel?'var(--err)':'#FFF5F0',color:show&&(i===q.c||i===sel)?'#fff':'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13,flexShrink:0}}>
+                                            {show&&i===q.c?'✔':show&&i===sel&&i!==q.c?'✗':String.fromCharCode(65+i)}
+                                        </span>
+                                        <span style={{lineHeight:1.5}}>{opt}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {show&&(
+                            <div className={sel===q.c?'good':'tip'}>
+                                <strong style={{color:sel===q.c?'var(--suc)':'var(--warn)'}}>{sel===q.c?'✔ 正確！':'✗ 答錯了'}</strong>
+                                <p style={{fontSize:14,color:'var(--txt2)',marginTop:8,lineHeight:1.7}}>{q.e}</p>
+                            </div>
+                        )}
+                        {show&&<button className="btn btn-pri" style={{width:'100%',justifyContent:'center',marginTop:16}} onClick={next}>{qIdx<quiz.length-1?'下一題 →':'查看結果'}</button>}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return <div style={{maxWidth:'100%',minHeight:'100vh',background:'var(--bg)'}}>{page==='home'?<Home/>:page==='lesson'?<Lesson/>:<Quiz/>}</div>;
+};
+
+ReactDOM.render(<App/>,document.getElementById('root'));
+</script>
+</body>
+</html>
