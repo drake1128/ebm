@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RCT 評讀 | EBM 教學平台</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --pri:#2EC4B6;
+            --pri2:#06D6A0;
+            --pri-dark:#1A936F;
+            --acc:#FF6B35;
+            --suc:#38A169;
+            --warn:#FFBE0B;
+            --err:#EF476F;
+            --blue:#0077B6;
+            --pur:#7209B7;
+            --bg:#FAFBFC;
+            --txt:#1A1A2E;
+            --txt2:#6B7280
+        }
+        body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+        .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(46,196,182,0.1)}
+        .btn{padding:14px 24px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all 0.3s}
+        .btn-pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}
+        .btn-pri:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(46,196,182,0.4)}
+        .btn-acc{background:linear-gradient(135deg,var(--acc),#F7931E);color:#fff}
+        table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+        th,td{padding:10px;text-align:left;border-bottom:1px solid #eee}
+        th{background:linear-gradient(135deg,#E6FAF8,#D4F5F2);font-weight:600;color:var(--pri-dark)}
+        .formula{background:linear-gradient(135deg,#E6FAF8,#D4F5F2);border:2px solid var(--pri);border-radius:12px;padding:16px;margin:12px 0;text-align:center;font-size:16px;color:var(--pri-dark);font-weight:600}
+        .tip{background:#FFF9F0;border-left:4px solid var(--acc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .good{background:#F0FFF4;border-left:4px solid var(--suc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .info{background:#E6FAF8;border-left:4px solid var(--pri);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .warn{background:#FFFBEB;border-left:4px solid var(--warn);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .err{background:#FFF5F5;border-left:4px solid var(--err);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
+        .flow-step{display:flex;align-items:center;gap:12px;padding:12px;background:#fff;border-radius:12px;margin-bottom:8px;border:1px solid #eee}
+        .flow-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+        .checklist-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0}
+        .checklist-item:last-child{border-bottom:none}
+        .icon-check{color:var(--suc);font-size:18px}
+        .icon-warn{color:var(--warn);font-size:18px}
+        .icon-err{color:var(--err);font-size:18px}
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState}=React;
+
+const lessons=[
+    {id:1,title:'RCT 基本概念',sub:'Study Design Basics',color:'#2EC4B6'},
+    {id:2,title:'隨機化與盲化',sub:'Randomization & Blinding',color:'#0077B6'},
+    {id:3,title:'偏差風險評估',sub:'Risk of Bias Assessment',color:'#7209B7'},
+    {id:4,title:'效果量與NNT',sub:'Effect Measures & NNT',color:'#FF6B35'},
+    {id:5,title:'評讀實務應用',sub:'Clinical Application',color:'#38A169'}
+];
+
+const quiz=[
+    {q:'RCT 被視為治療效果評估的黃金標準，主要原因為何？',
+     o:['樣本數最大','可以進行長期追蹤','隨機分派可平衡已知與未知干擾因子','費用最低'],
+     c:2,
+     e:'隨機對照試驗(RCT)透過隨機分派，可以平衡兩組間已知與未知的干擾因子(confounders)，使兩組在基線特性上具有可比性，因此能較準確評估介入措施的因果效應。'},
+    {q:'下列關於「分配隱匿(Allocation Concealment)」的敘述，何者正確？',
+     o:['與盲化(blinding)是相同概念','目的是防止研究者預測下一個受試者的分組','只在雙盲試驗中需要','分配隱匿失敗會導致資訊偏差'],
+     c:1,
+     e:'分配隱匿是在隨機分派時，確保研究人員無法預測下一位受試者會被分到哪一組。這與盲化不同：分配隱匿是在分派時防止選擇偏差，盲化是在分派後防止資訊偏差。'},
+    {q:'在評估RCT的偏差風險時，「Intention-to-Treat (ITT)」分析的主要優點為何？',
+     o:['可以增加統計檢定力','維持隨機化帶來的組間可比性','可以排除不遵從治療的受試者','減少樣本數需求'],
+     c:1,
+     e:'ITT分析將所有隨機分派的受試者依其原始分組進行分析，不論實際接受何種治療。這樣可以保持隨機化產生的組間可比性，反映真實世界的治療效果。'},
+    {q:'一項RCT顯示新藥組事件發生率15%，對照組25%。請問絕對風險降低(ARR)為多少？',
+     o:['10%','40%','60%','0.6'],
+     c:0,
+     e:'ARR = 對照組事件率 - 治療組事件率 = 25% - 15% = 10%。ARR表示絕對風險降低幅度，是計算NNT的基礎。'},
+    {q:'承上題，NNT (Number Needed to Treat) 為多少？',
+     o:['0.1','4','10','25'],
+     c:2,
+     e:'NNT = 1/ARR = 1/0.10 = 10。這表示需要治療10位病人，才能多預防1位發生不良事件。NNT越小代表治療效果越好。'},
+    {q:'下列何者是評估RCT內在效度(Internal Validity)的重要項目？',
+     o:['研究是否為多中心執行','是否有進行次族群分析','隨機分派序列的產生方式','研究經費來源'],
+     c:2,
+     e:'內在效度評估研究本身方法學的品質，包括：隨機序列產生、分配隱匿、盲化、結果資料完整性、選擇性報告等。這些都是Cochrane Risk of Bias工具的評估項目。'},
+    {q:'「Per-Protocol (PP)」分析相較於ITT分析，其主要問題為何？',
+     o:['統計檢定力降低','會高估治療效果','無法處理缺失資料','違反研究倫理'],
+     c:1,
+     e:'PP分析只納入完全遵從治療方案的受試者，這會破壞隨機化帶來的可比性。通常退出或不遵從的原因與預後相關，因此PP分析傾向高估治療效果。'},
+    {q:'評估RCT時，若對照組使用「活性對照(Active Control)」而非安慰劑，應注意什麼？',
+     o:['只能使用non-inferiority設計','需要更大的樣本數','研究結果無法推廣','需考慮對照藥物的已知效果大小'],
+     c:3,
+     e:'使用活性對照時，需要了解對照藥物相較於安慰劑的已知效果大小，才能正確解讀研究結果。若對照藥物效果本身不確定，可能難以判斷新藥的真實效益。'},
+    {q:'下列關於95%信賴區間(95% CI)的解讀，何者正確？',
+     o:['有95%機率真值落在此區間內','若重複抽樣100次，約95次的CI會包含真值','此區間包含95%的樣本值','P值小於0.05時CI才有意義'],
+     c:1,
+     e:'95% CI的正確解讀：若以相同方法重複抽樣無限多次，約有95%的信賴區間會包含真正的母群體參數值。單一CI不能說「有95%機率包含真值」。'},
+    {q:'評讀RCT時，下列何者最能反映研究結果的臨床重要性？',
+     o:['P值大小','95%信賴區間寬度','效果量(Effect Size)與NNT','樣本數大小'],
+     c:2,
+     e:'P值只說明統計顯著性，不代表臨床重要性。效果量(如RR、ARR)和NNT能直接反映治療效果的大小和臨床意義。大樣本研究可能發現統計顯著但臨床意義不大的差異。'}
+];
+
+const App=()=>{
+    const[page,setPage]=useState('home');
+    const[lessonId,setLessonId]=useState(1);
+    const[qIdx,setQIdx]=useState(0);
+    const[score,setScore]=useState(0);
+    const[sel,setSel]=useState(null);
+    const[show,setShow]=useState(false);
+    const[done,setDone]=useState(false);
+
+    const Header=({title})=>(
+        <header style={{background:'#fff',borderBottom:'1px solid #eee',padding:'12px 16px',position:'sticky',top:0,zIndex:10}}>
+            <div style={{maxWidth:480,margin:'0 auto',display:'flex',alignItems:'center',gap:12}}>
+                <button onClick={()=>page==='home'?window.location.href='index.html':setPage('home')} style={{background:'linear-gradient(135deg,#E6FAF8,#D4F5F2)',border:'none',borderRadius:10,width:40,height:40,cursor:'pointer',color:'var(--pri-dark)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style={{fontWeight:700,color:'var(--pri-dark)'}}>{title}</span>
+            </div>
+        </header>
+    );
+
+    const Home=()=>(
+        <div>
+            <Header title="RCT 評讀"/>
+            <div style={{background:'linear-gradient(135deg,#2EC4B6,#06D6A0)',padding:'32px 20px',color:'#fff'}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div style={{background:'rgba(255,255,255,0.2)',display:'inline-block',padding:'6px 14px',borderRadius:50,fontSize:12,fontWeight:600,marginBottom:16}}>🔬 Randomized Controlled Trial</div>
+                    <h1 style={{fontSize:26,fontWeight:700,marginBottom:12}}>隨機對照試驗評讀</h1>
+                    <p style={{opacity:0.9,fontSize:14}}>掌握RCT評讀要點，學習評估治療效果的黃金標準</p>
+                </div>
+            </div>
+            <div style={{padding:'0 16px',marginTop:-20}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div className="card">
+                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri-dark)',marginBottom:12}}>🎯 學習目標</h3>
+                        {['理解RCT設計原理與優勢','掌握隨機化與盲化的重要性','學會評估偏差風險(Risk of Bias)','計算並解讀效果量與NNT','應用CONSORT聲明評讀RCT'].map((t,i)=>(
+                            <div key={i} style={{display:'flex',gap:10,marginBottom:8,fontSize:14}}>
+                                <span style={{background:'var(--pri)',color:'#fff',borderRadius:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,flexShrink:0}}>{i+1}</span>
+                                <span style={{color:'var(--txt2)'}}>{t}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="info">
+                        <strong style={{color:'var(--pri-dark)'}}>💡 為什麼要學習RCT評讀？</strong><br/>
+                        <span style={{fontSize:14,color:'var(--txt2)'}}>
+                        RCT是評估治療效果最嚴謹的研究設計，正確評讀RCT能幫助您：<br/>
+                        • 判斷新療法是否真的有效<br/>
+                        • 避免被統計顯著性誤導<br/>
+                        • 做出以證據為基礎的臨床決策
+                        </span>
+                    </div>
+
+                    <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>📖 課程內容</h3>
+                    {lessons.map(l=>(
+                        <div key={l.id} className="card" onClick={()=>{setLessonId(l.id);setPage('lesson')}} style={{cursor:'pointer',transition:'all 0.3s'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:16}}>
+                                <div style={{width:48,height:48,borderRadius:12,background:`linear-gradient(135deg,${l.color},${l.color}88)`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}}>{l.id}</div>
+                                <div style={{flex:1}}>
+                                    <div style={{fontSize:11,color:l.color,fontWeight:600}}>Lesson {l.id}</div>
+                                    <div style={{fontSize:16,fontWeight:700}}>{l.title}</div>
+                                    <div style={{fontSize:13,color:'var(--txt2)'}}>{l.sub}</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" fill={l.color} width="20" height="20"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/></svg>
+                            </div>
+                        </div>
+                    ))}
+                    <button className="btn btn-acc" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}} style={{width:'100%',justifyContent:'center',marginTop:20,marginBottom:32}}>
+                        📝 開始測驗 (10題)
+                    </button>
+                </div>
+            </div>
+            <footer style={{background:'linear-gradient(135deg,#E6FAF8,#D4F5F2)',padding:'24px 16px',textAlign:'center'}}>
+                <p style={{fontSize:13,color:'var(--txt2)'}}>新竹台大分院教學部</p>
+                <p style={{fontSize:12,color:'var(--txt2)'}}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+        </div>
+    );
+
+    const L1=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri-dark)',marginBottom:16}}>🔬 什麼是 RCT？</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>
+                    <strong>隨機對照試驗 (Randomized Controlled Trial)</strong> 是評估治療效果最嚴謹的研究設計，被稱為「治療研究的黃金標準」。
+                </p>
+                <div className="formula">
+                    隨機分派 + 對照組 + 前瞻性追蹤 = RCT
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>📊 RCT 設計流程</h3>
+                {[
+                    {num:'1',title:'招募符合條件的受試者',desc:'設定納入/排除條件',color:'#2EC4B6'},
+                    {num:'2',title:'隨機分派 (Randomization)',desc:'隨機分配至治療組或對照組',color:'#0077B6'},
+                    {num:'3',title:'介入措施 (Intervention)',desc:'治療組接受新治療，對照組接受對照處置',color:'#7209B7'},
+                    {num:'4',title:'追蹤觀察 (Follow-up)',desc:'前瞻性追蹤預定結果指標',color:'#FF6B35'},
+                    {num:'5',title:'結果分析 (Analysis)',desc:'比較兩組結果差異',color:'#38A169'}
+                ].map((step,i)=>(
+                    <div key={i} className="flow-step">
+                        <div className="flow-num" style={{background:step.color,color:'#fff'}}>{step.num}</div>
+                        <div>
+                            <div style={{fontWeight:600,fontSize:14}}>{step.title}</div>
+                            <div style={{fontSize:13,color:'var(--txt2)'}}>{step.desc}</div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--suc)',marginBottom:12}}>✅ RCT 的優勢</h3>
+                <table>
+                    <thead><tr><th>特點</th><th>說明</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{fontWeight:600}}>減少選擇偏差</td><td>隨機分派使兩組基線特性相似</td></tr>
+                        <tr><td style={{fontWeight:600}}>控制干擾因子</td><td>平衡已知與未知的干擾因子</td></tr>
+                        <tr><td style={{fontWeight:600}}>因果推論</td><td>可建立介入與結果的因果關係</td></tr>
+                        <tr><td style={{fontWeight:600}}>前瞻性設計</td><td>資料收集標準化，減少回憶偏差</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="warn">
+                <strong style={{color:'#B7791F'}}>⚠️ RCT 的限制</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                • 耗時費用高<br/>
+                • 可能有外推性(External Validity)限制<br/>
+                • 部分研究問題無法進行隨機分派（如：吸菸致癌）<br/>
+                • 倫理考量可能限制研究設計
+                </span>
+            </div>
+
+            <div className="good">
+                <strong style={{color:'var(--suc)'}}>💡 記憶要點</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                RCT = <strong>R</strong>andomization (隨機) + <strong>C</strong>ontrol (對照) + <strong>T</strong>rial (試驗)<br/>
+                三大要素缺一不可！
+                </span>
+            </div>
+        </div>
+    );
+
+    const L2=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:16}}>🎲 隨機化 Randomization</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>
+                    隨機化是RCT的核心，確保每位受試者被分到各組的機會相等且不可預測。
+                </p>
+                
+                <h4 style={{fontSize:15,fontWeight:600,color:'var(--blue)',marginTop:16,marginBottom:8}}>隨機化的類型</h4>
+                <table>
+                    <thead><tr><th>類型</th><th>說明</th><th>優點</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{fontWeight:600}}>簡單隨機</td><td>如擲硬幣</td><td>最簡單</td></tr>
+                        <tr><td style={{fontWeight:600}}>區塊隨機</td><td>固定區塊內平衡分組</td><td>確保組別人數平衡</td></tr>
+                        <tr><td style={{fontWeight:600}}>分層隨機</td><td>依重要變項分層後隨機</td><td>控制重要預後因子</td></tr>
+                        <tr><td style={{fontWeight:600}}>適應性隨機</td><td>動態調整分派機率</td><td>即時平衡基線特性</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>🔐 分配隱匿 Allocation Concealment</h3>
+                <div className="formula" style={{background:'linear-gradient(135deg,#F3E5F5,#E1BEE7)',borderColor:'var(--pur)'}}>
+                    分配隱匿 ≠ 盲化
+                </div>
+                <div style={{fontSize:14,color:'var(--txt2)',marginTop:12}}>
+                    <strong>分配隱匿：</strong>確保在分派<strong>之前</strong>，研究人員無法預測下一位受試者會被分到哪一組。
+                </div>
+                
+                <div className="info" style={{marginTop:12}}>
+                    <strong style={{color:'var(--pri-dark)'}}>常見的分配隱匿方法</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    • 中央隨機系統（電話/網路）<br/>
+                    • 不透明密封信封<br/>
+                    • 藥局配藥系統
+                    </span>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'#E53E3E',marginBottom:12}}>👁️ 盲化 Blinding</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>
+                    盲化是在分派<strong>之後</strong>，隱藏分組訊息以減少資訊偏差。
+                </p>
+                <table>
+                    <thead><tr><th>盲化層級</th><th>不知道分組的人</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{fontWeight:600,color:'var(--pri)'}}>單盲</td><td>受試者</td></tr>
+                        <tr><td style={{fontWeight:600,color:'var(--blue)'}}>雙盲</td><td>受試者 + 研究人員</td></tr>
+                        <tr><td style={{fontWeight:600,color:'var(--pur)'}}>三盲</td><td>受試者 + 研究人員 + 資料分析者</td></tr>
+                    </tbody>
+                </table>
+
+                <div className="err" style={{marginTop:12}}>
+                    <strong style={{color:'var(--err)'}}>⚠️ 無法盲化的情況</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    • 手術 vs 藥物治療<br/>
+                    • 明顯可辨識的介入（如針灸、物理治療）<br/>
+                    → 此時應確保「結果評估者」盲化
+                    </span>
+                </div>
+            </div>
+
+            <div className="good">
+                <strong style={{color:'var(--suc)'}}>💡 關鍵比較</strong><br/>
+                <table style={{marginTop:8}}>
+                    <thead><tr><th></th><th>分配隱匿</th><th>盲化</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{fontWeight:600}}>時機</td><td>分派前</td><td>分派後</td></tr>
+                        <tr><td style={{fontWeight:600}}>目的</td><td>防止選擇偏差</td><td>防止資訊偏差</td></tr>
+                        <tr><td style={{fontWeight:600}}>適用性</td><td>所有RCT都需要</td><td>視情況而定</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+
+    const L3=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:16}}>⚖️ 偏差風險評估</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>
+                    <strong>Cochrane Risk of Bias (RoB 2.0)</strong> 是評估RCT偏差風險的標準工具。
+                </p>
+            </div>
+
+            <div className="card">
+                <h3 style={{fontSize:16,fontWeight:700,color:'var(--blue)',marginBottom:12}}>📋 RoB 2.0 五大評估領域</h3>
+                
+                {[
+                    {domain:'D1: 隨機化過程',items:['隨機序列產生方法','分配隱匿是否適當','基線特性是否平衡'],color:'#2EC4B6'},
+                    {domain:'D2: 偏離預定介入',items:['受試者是否知道分組','照護者是否知道分組','是否因此影響介入'],color:'#0077B6'},
+                    {domain:'D3: 結果資料缺失',items:['結果資料是否完整','缺失原因是否與結果相關','是否有適當處理方法'],color:'#7209B7'},
+                    {domain:'D4: 結果測量',items:['測量方法是否適當','評估者是否知道分組','測量是否可能受影響'],color:'#FF6B35'},
+                    {domain:'D5: 選擇性報告',items:['是否依預定計畫分析','是否報告所有結果','是否有選擇性呈現'],color:'#38A169'}
+                ].map((d,i)=>(
+                    <div key={i} style={{marginBottom:16,padding:12,background:'#f8f9fa',borderRadius:12,borderLeft:`4px solid ${d.color}`}}>
+                        <div style={{fontWeight:700,color:d.color,marginBottom:8}}>{d.domain}</div>
+                        {d.items.map((item,j)=>(
+                            <div key={j} style={{fontSize:13,color:'var(--txt2)',marginLeft:8,marginBottom:4}}>• {item}</div>
+                        ))}
+                    </div>
+                ))}
+            </div>
+
+            <div className="card">
+                <h3 style={{fontSize:16,fontWeight:700,color:'var(--suc)',marginBottom:12}}>🚦 偏差風險判定</h3>
+                <table>
+                    <thead><tr><th>判定</th><th style={{textAlign:'center'}}>顏色</th><th>說明</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td style={{fontWeight:600}}>Low risk</td>
+                            <td style={{textAlign:'center'}}><span style={{display:'inline-block',width:20,height:20,borderRadius:'50%',background:'#38A169'}}></span></td>
+                            <td>低偏差風險</td>
+                        </tr>
+                        <tr>
+                            <td style={{fontWeight:600}}>Some concerns</td>
+                            <td style={{textAlign:'center'}}><span style={{display:'inline-block',width:20,height:20,borderRadius:'50%',background:'#FFBE0B'}}></span></td>
+                            <td>有一些疑慮</td>
+                        </tr>
+                        <tr>
+                            <td style={{fontWeight:600}}>High risk</td>
+                            <td style={{textAlign:'center'}}><span style={{display:'inline-block',width:20,height:20,borderRadius:'50%',background:'#EF476F'}}></span></td>
+                            <td>高偏差風險</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="tip">
+                <strong style={{color:'var(--acc)'}}>📌 評讀重點檢核</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                閱讀RCT時，依序確認：<br/>
+                ✓ 隨機方法是否適當？<br/>
+                ✓ 分配隱匿是否執行？<br/>
+                ✓ 盲化是否成功？<br/>
+                ✓ 追蹤是否完整？<br/>
+                ✓ 是否使用ITT分析？
+                </span>
+            </div>
+        </div>
+    );
+
+    const L4=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--acc)',marginBottom:16}}>📊 效果量指標</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>
+                    評估治療效果不能只看P值，更要看效果量的大小和臨床意義。
+                </p>
+            </div>
+
+            <div className="card">
+                <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri-dark)',marginBottom:12}}>📈 常用效果量指標</h3>
+                <table>
+                    <thead><tr><th>指標</th><th>公式</th><th>用途</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{fontWeight:600}}>RR 相對風險</td><td>治療組事件率/對照組事件率</td><td>風險比較</td></tr>
+                        <tr><td style={{fontWeight:600}}>RRR 相對風險降低</td><td>1 - RR</td><td>相對效益</td></tr>
+                        <tr><td style={{fontWeight:600}}>ARR 絕對風險降低</td><td>對照組率 - 治療組率</td><td>絕對效益</td></tr>
+                        <tr><td style={{fontWeight:600}}>OR 勝算比</td><td>(a×d)/(b×c)</td><td>罕見事件</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--suc)',marginBottom:12}}>🎯 NNT 治療所需人數</h3>
+                <div className="formula">
+                    NNT = 1 / ARR = 1 / (CER - EER)
+                </div>
+                <p style={{fontSize:14,color:'var(--txt2)',marginTop:12}}>
+                    <strong>NNT 的意義：</strong>需要治療多少人，才能額外預防1人發生不良事件。
+                </p>
+                
+                <div className="good" style={{marginTop:12}}>
+                    <strong style={{color:'var(--suc)'}}>NNT 解讀範例</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    • NNT = 10：治療10人可多預防1人發生事件<br/>
+                    • NNT = 100：治療100人才能多預防1人<br/>
+                    • <strong>NNT 越小 = 治療效果越好</strong>
+                    </span>
+                </div>
+            </div>
+
+            <div className="card" style={{background:'linear-gradient(135deg,#FFF9F0,#FFF)'}}>
+                <h3 style={{fontSize:16,fontWeight:700,color:'var(--acc)',marginBottom:12}}>📝 計算範例</h3>
+                <div style={{background:'#fff',padding:16,borderRadius:12,border:'1px solid #eee'}}>
+                    <p style={{fontWeight:600,marginBottom:12}}>某心血管研究結果：</p>
+                    <table style={{marginBottom:12}}>
+                        <tbody>
+                            <tr><td>治療組事件率 (EER)</td><td style={{fontWeight:600}}>12%</td></tr>
+                            <tr><td>對照組事件率 (CER)</td><td style={{fontWeight:600}}>20%</td></tr>
+                        </tbody>
+                    </table>
+                    
+                    <div style={{background:'#E6FAF8',padding:12,borderRadius:8,fontSize:14}}>
+                        <strong>計算：</strong><br/>
+                        • RR = 12% / 20% = <strong>0.60</strong><br/>
+                        • RRR = 1 - 0.60 = <strong>40%</strong> (相對風險降低40%)<br/>
+                        • ARR = 20% - 12% = <strong>8%</strong> (絕對風險降低8%)<br/>
+                        • NNT = 1 / 0.08 = <strong>12.5 ≈ 13</strong>
+                    </div>
+                    
+                    <div className="info" style={{marginTop:12}}>
+                        <strong>臨床解讀：</strong>治療13位病人，可額外預防1位發生心血管事件。
+                    </div>
+                </div>
+            </div>
+
+            <div className="err">
+                <strong style={{color:'var(--err)'}}>⚠️ NNH 傷害所需人數</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                NNH = 1 / ARI (絕對風險增加)<br/>
+                用於評估副作用：治療多少人會多造成1人受害<br/>
+                <strong>NNT vs NNH 的權衡是臨床決策的關鍵！</strong>
+                </span>
+            </div>
+        </div>
+    );
+
+    const L5=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--suc)',marginBottom:16}}>📋 CONSORT 聲明</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>
+                    <strong>CONSORT (Consolidated Standards of Reporting Trials)</strong> 是RCT報告的國際標準，包含25項檢核項目。
+                </p>
+            </div>
+
+            <div className="card">
+                <h3 style={{fontSize:16,fontWeight:700,color:'var(--blue)',marginBottom:12}}>✅ 評讀RCT快速檢核表</h3>
+                
+                {[
+                    {cat:'方法學品質',items:[
+                        {q:'隨機方法是否明確描述？',good:'電腦亂數產生',bad:'未說明或便利抽樣'},
+                        {q:'分配隱匿是否適當？',good:'中央隨機系統',bad:'未隱匿或可預測'},
+                        {q:'盲化是否執行？',good:'雙盲或結果評估者盲化',bad:'開放標籤且結果主觀'}
+                    ]},
+                    {cat:'結果分析',items:[
+                        {q:'是否使用ITT分析？',good:'所有隨機者都納入分析',bad:'只分析完成者(PP)'},
+                        {q:'追蹤完整性如何？',good:'失訪率<20%且組間相近',bad:'大量失訪或組間不平衡'},
+                        {q:'是否有選擇性報告？',good:'依預註冊方案報告',bad:'只報告有利結果'}
+                    ]},
+                    {cat:'臨床適用性',items:[
+                        {q:'研究族群是否適用？',good:'與您的病人相似',bad:'嚴格排除條件'},
+                        {q:'介入措施是否可行？',good:'您的環境可執行',bad:'需特殊設備或專業'},
+                        {q:'結果是否有臨床意義？',good:'NNT合理、效果量大',bad:'統計顯著但效果微小'}
+                    ]}
+                ].map((section,i)=>(
+                    <div key={i} style={{marginBottom:16}}>
+                        <div style={{fontWeight:700,color:'var(--pri-dark)',marginBottom:8,fontSize:15}}>{section.cat}</div>
+                        {section.items.map((item,j)=>(
+                            <div key={j} className="checklist-item">
+                                <div style={{flex:1}}>
+                                    <div style={{fontWeight:600,fontSize:14,marginBottom:4}}>{item.q}</div>
+                                    <div style={{fontSize:12}}>
+                                        <span style={{color:'var(--suc)'}}>✓ {item.good}</span><br/>
+                                        <span style={{color:'var(--err)'}}>✗ {item.bad}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ))}
+            </div>
+
+            <div className="card" style={{background:'linear-gradient(135deg,#F0FFF4,#FFF)'}}>
+                <h3 style={{fontSize:16,fontWeight:700,color:'var(--suc)',marginBottom:12}}>🎯 實務評讀範例</h3>
+                <div style={{background:'#fff',padding:16,borderRadius:12,border:'1px solid #ddd'}}>
+                    <p style={{fontWeight:600,marginBottom:8}}>研究摘要：</p>
+                    <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>
+                        「一項雙盲RCT比較新藥A與安慰劑對心衰竭病人住院率的影響。500人隨機分派，追蹤1年。ITT分析顯示，新藥組住院率18% vs 對照組28%，RR 0.64 (95% CI 0.48-0.85)，P=0.002。」
+                    </p>
+                    
+                    <div style={{background:'#E6FAF8',padding:12,borderRadius:8}}>
+                        <strong style={{color:'var(--pri-dark)'}}>評讀要點：</strong><br/>
+                        <span style={{fontSize:14}}>
+                        ✓ 雙盲設計良好<br/>
+                        ✓ 使用ITT分析<br/>
+                        ✓ 95% CI不包含1，統計顯著<br/>
+                        ✓ ARR = 10%，NNT = 10<br/>
+                        → 臨床意義明確，治療效果佳
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="tip">
+                <strong style={{color:'var(--acc)'}}>📌 評讀三問</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                1. <strong>研究結果可信嗎？</strong>（內在效度）<br/>
+                2. <strong>結果是什麼？</strong>（效果量與精確度）<br/>
+                3. <strong>結果對我的病人有幫助嗎？</strong>（外在效度）
+                </span>
+            </div>
+        </div>
+    );
+
+    const Lesson=()=>{
+        const l=lessons.find(x=>x.id===lessonId);
+        return(
+            <div>
+                <Header title={l.title}/>
+                <div style={{background:`linear-gradient(135deg,${l.color},${l.color}88)`,padding:'20px',color:'#fff'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{fontSize:12,opacity:0.9}}>Lesson {l.id} • {l.sub}</div>
+                        <h1 style={{fontSize:24,fontWeight:700}}>{l.title}</h1>
+                    </div>
+                </div>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        {lessonId===1&&<L1/>}
+                        {lessonId===2&&<L2/>}
+                        {lessonId===3&&<L3/>}
+                        {lessonId===4&&<L4/>}
+                        {lessonId===5&&<L5/>}
+                        <div style={{display:'flex',gap:12,marginTop:24}}>
+                            {lessonId>1&&<button className="btn" style={{flex:1,background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setLessonId(lessonId-1)}>← 上一課</button>}
+                            {lessonId<5?<button className="btn btn-pri" style={{flex:1}} onClick={()=>setLessonId(lessonId+1)}>下一課 →</button>
+                            :<button className="btn btn-acc" style={{flex:1}} onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}}>開始測驗 📝</button>}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const Quiz=()=>{
+        const pick=(i)=>{if(show)return;setSel(i);setShow(true);if(i===quiz[qIdx].c)setScore(score+1)};
+        const next=()=>{if(qIdx<quiz.length-1){setQIdx(qIdx+1);setSel(null);setShow(false)}else setDone(true)};
+
+        if(done){
+            const pct=Math.round((score/quiz.length)*100);
+            return(
+                <div>
+                    <Header title="測驗結果"/>
+                    <div style={{padding:'40px 16px',textAlign:'center'}}>
+                        <div style={{width:140,height:140,borderRadius:'50%',background:`conic-gradient(${pct>=80?'var(--suc)':pct>=60?'var(--warn)':'var(--err)'} ${pct*3.6}deg,#E5E5E5 0deg)`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 24px'}}>
+                            <div style={{width:120,height:120,borderRadius:'50%',background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                                <div style={{fontSize:36,fontWeight:700}}>{pct}%</div>
+                                <div style={{fontSize:14,color:'var(--txt2)'}}>{score}/{quiz.length}</div>
+                            </div>
+                        </div>
+                        <h2 style={{fontSize:24,fontWeight:700,marginBottom:8}}>{pct>=80?'🎉 太棒了！':pct>=60?'👍 不錯！':'💪 加油！'}</h2>
+                        <p style={{color:'var(--txt2)',marginBottom:32}}>{pct>=80?'你對RCT評讀有很好的掌握！':pct>=60?'再複習可以更進步！':'建議重新閱讀課程'}</p>
+                        <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+                            <button className="btn btn-pri" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false)}}>重新測驗</button>
+                            <button className="btn" style={{background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setPage('home')}>返回課程</button>
+                        </div>
+                    </div>
+                    <footer style={{background:'linear-gradient(135deg,#E6FAF8,#D4F5F2)',padding:'24px 16px',textAlign:'center',marginTop:40}}>
+                        <p style={{fontSize:12,color:'var(--txt2)'}}>新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        const q=quiz[qIdx];
+        return(
+            <div>
+                <Header title="自我測驗"/>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:14}}>
+                            <span style={{color:'var(--txt2)'}}>進度</span>
+                            <span style={{fontWeight:600,color:'var(--pri)'}}>{qIdx+1}/{quiz.length}</span>
+                        </div>
+                        <div style={{height:8,background:'#E5E5E5',borderRadius:4,marginBottom:20}}>
+                            <div style={{height:'100%',width:`${((qIdx+1)/quiz.length)*100}%`,background:'linear-gradient(90deg,var(--pri),var(--pri2))',borderRadius:4,transition:'width 0.3s'}}/>
+                        </div>
+                        <div className="card">
+                            <h3 style={{fontSize:16,fontWeight:600,lineHeight:1.6,marginBottom:20}}>{q.q}</h3>
+                            {q.o.map((opt,i)=>{
+                                let bg='#fff',bd='#E5E5E5';
+                                if(show){
+                                    if(i===q.c){bg='#F0FFF4';bd='var(--suc)'}
+                                    else if(i===sel){bg='#FFF5F5';bd='var(--err)'}
+                                }else if(i===sel){bg='#E6FAF8';bd='var(--pri)'}
+                                return(
+                                    <button key={i} onClick={()=>pick(i)} disabled={show} style={{width:'100%',padding:'12px 14px',marginBottom:10,background:bg,border:`2px solid ${bd}`,borderRadius:12,textAlign:'left',fontSize:14,cursor:show?'default':'pointer',display:'flex',alignItems:'center',gap:12}}>
+                                        <span style={{width:26,height:26,borderRadius:8,background:show&&i===q.c?'var(--suc)':show&&i===sel?'var(--err)':'#E6FAF8',color:show&&(i===q.c||i===sel)?'#fff':'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13,flexShrink:0}}>
+                                            {show&&i===q.c?'✔':show&&i===sel&&i!==q.c?'✗':String.fromCharCode(65+i)}
+                                        </span>
+                                        <span style={{lineHeight:1.5}}>{opt}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {show&&(
+                            <div className={sel===q.c?'good':'tip'}>
+                                <strong style={{color:sel===q.c?'var(--suc)':'var(--acc)'}}>{sel===q.c?'✔ 正確！':'✗ 答錯了'}</strong>
+                                <p style={{fontSize:14,color:'var(--txt2)',marginTop:8,lineHeight:1.7}}>{q.e}</p>
+                            </div>
+                        )}
+                        {show&&<button className="btn btn-pri" style={{width:'100%',justifyContent:'center',marginTop:16}} onClick={next}>{qIdx<quiz.length-1?'下一題 →':'查看結果'}</button>}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return <div style={{maxWidth:'100%',minHeight:'100vh',background:'var(--bg)'}}>{page==='home'?<Home/>:page==='lesson'?<Lesson/>:<Quiz/>}</div>;
+};
+
+ReactDOM.render(<App/>,document.getElementById('root'));
+</script>
+</body>
+</html>
