@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>診斷性研究評讀 | EBM 教學平台</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --pri:#F72585;
+            --pri2:#B5179E;
+            --blue:#0077B6;
+            --pur:#7209B7;
+            --teal:#2EC4B6;
+            --orange:#FF6B35;
+            --suc:#38A169;
+            --warn:#D69E2E;
+            --err:#E53E3E;
+            --bg:#FFF5F8;
+            --txt:#1A1A2E;
+            --txt2:#6B7280
+        }
+        body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+        .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(247,37,133,0.08)}
+        .btn{padding:14px 24px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all 0.3s}
+        .btn-pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}
+        .btn-pri:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(247,37,133,0.3)}
+        table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+        th,td{padding:10px;text-align:center;border-bottom:1px solid #eee}
+        th{background:#FFF0F5;font-weight:600;color:var(--pri)}
+        .formula{background:linear-gradient(135deg,#FFF0F5,#FFE4EC);border:2px solid var(--pri);border-radius:12px;padding:16px;margin:12px 0;text-align:center;font-size:16px;color:#9D174D;font-weight:600}
+        .tip{background:#FFFBEB;border-left:4px solid var(--warn);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .good{background:#F0FFF4;border-left:4px solid var(--suc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .info{background:#EBF8FF;border-left:4px solid var(--blue);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .warn{background:#FFF5F5;border-left:4px solid var(--err);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .purple{background:#FAF5FF;border-left:4px solid var(--pur);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .pink{background:#FFF0F5;border-left:4px solid var(--pri);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .roc-container{background:#fff;border:2px solid #E2E8F0;border-radius:12px;padding:16px;margin:12px 0}
+        .two-by-two{background:#F8F9FA;border-radius:12px;overflow:hidden;margin:12px 0}
+        .two-by-two table{margin:0}
+        .two-by-two th,.two-by-two td{border:1px solid #E2E8F0}
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState}=React;
+
+const lessons=[
+    {id:1,title:'診斷研究基本概念',sub:'Diagnostic Study Basics',color:'#F72585'},
+    {id:2,title:'敏感度、特異度與預測值',sub:'Sensitivity, Specificity & Predictive Values',color:'#0077B6'},
+    {id:3,title:'似然比與診斷勝算比',sub:'Likelihood Ratios & DOR',color:'#7209B7'},
+    {id:4,title:'ROC 曲線分析',sub:'ROC Curve Analysis',color:'#2EC4B6'},
+    {id:5,title:'STARD 指引與臨床應用',sub:'STARD Guidelines & Clinical Application',color:'#FF6B35'}
+];
+
+const quiz=[
+    {q:'診斷性研究中，「參考標準（Reference Standard）」的定義為何？',o:['最常使用的診斷方法','目前認定最能確認疾病狀態的方法','最新發展的診斷技術','成本最低的診斷方式'],c:1,e:'參考標準（又稱黃金標準）是目前認定最能正確判定疾病有無的方法，用來評估待測試驗的診斷準確度。'},
+    {q:'敏感度（Sensitivity）的正確定義為何？',o:['檢驗陽性者中，真正有病的比例','檢驗陰性者中，真正沒病的比例','有病者中，檢驗結果為陽性的比例','沒病者中，檢驗結果為陰性的比例'],c:2,e:'敏感度 = TP/(TP+FN)，代表所有真正有病的人中，被檢驗正確識別為陽性的比例。'},
+    {q:'特異度（Specificity）的正確定義為何？',o:['檢驗陽性者中，真正有病的比例','檢驗陰性者中，真正沒病的比例','有病者中，檢驗結果為陽性的比例','沒病者中，檢驗結果為陰性的比例'],c:3,e:'特異度 = TN/(TN+FP)，代表所有真正沒病的人中，被檢驗正確識別為陰性的比例。'},
+    {q:'陽性預測值（PPV）會受到下列何者影響最大？',o:['檢驗的敏感度','檢驗的特異度','疾病盛行率','檢驗成本'],c:2,e:'PPV 受盛行率影響極大。相同的敏感度和特異度，在低盛行率族群中 PPV 會明顯下降，高盛行率族群中 PPV 會提高。'},
+    {q:'LR+（正似然比）的計算公式為何？',o:['敏感度 / 特異度','敏感度 / (1-特異度)','(1-敏感度) / 特異度','特異度 / (1-敏感度)'],c:1,e:'LR+ = Sensitivity / (1-Specificity)。代表陽性結果在有病者出現的機率，相對於在無病者出現的機率。'},
+    {q:'當 LR+ = 1 時，代表什麼意義？',o:['檢驗非常有用','檢驗結果不影響疾病機率','可以確診疾病','可以排除疾病'],c:1,e:'LR+ = 1 表示陽性結果在有病和無病者中出現的機率相同，因此檢驗結果對於改變疾病機率沒有幫助。'},
+    {q:'ROC 曲線下面積（AUC）= 0.5 代表什麼意義？',o:['完美的診斷能力','診斷能力等同隨機猜測','中等的診斷能力','無法計算'],c:1,e:'AUC = 0.5 表示診斷能力等同於隨機猜測（擲硬幣）。AUC = 1.0 代表完美診斷，AUC > 0.9 通常視為優秀。'},
+    {q:'STARD 指引的主要目的為何？',o:['規範診斷試劑的生產標準','提升診斷研究報告的完整性與透明度','設定診斷閾值標準','評估診斷成本效益'],c:1,e:'STARD（Standards for Reporting of Diagnostic Accuracy Studies）旨在提升診斷準確度研究報告的品質，確保研究方法與結果的完整呈現。'},
+    {q:'下列何種偏差是診斷研究中最需要注意的？',o:['發表偏差','驗證偏差（Verification Bias）','語言偏差','時間偏差'],c:1,e:'驗證偏差（又稱 work-up bias）發生在並非所有受試者都接受參考標準檢驗時，這會導致敏感度被高估、特異度被低估。'},
+    {q:'關於診斷閾值（Cut-off value）的選擇，下列敘述何者正確？',o:['應選擇敏感度最高的閾值','應選擇特異度最高的閾值','應根據臨床情境與後果來決定','應選擇 ROC 曲線上離原點最近的點'],c:2,e:'診斷閾值的選擇應根據臨床情境。若漏診後果嚴重（如癌症篩檢），應選高敏感度閾值；若偽陽性後果嚴重（如侵入性治療），應選高特異度閾值。'}
+];
+
+const App=()=>{
+    const[page,setPage]=useState('home');
+    const[lessonId,setLessonId]=useState(1);
+    const[qIdx,setQIdx]=useState(0);
+    const[score,setScore]=useState(0);
+    const[sel,setSel]=useState(null);
+    const[show,setShow]=useState(false);
+    const[done,setDone]=useState(false);
+
+    const Header=({title})=>(
+        <header style={{background:'#fff',borderBottom:'1px solid #FFD6E8',padding:'12px 16px',position:'sticky',top:0,zIndex:10}}>
+            <div style={{maxWidth:480,margin:'0 auto',display:'flex',alignItems:'center',gap:12}}>
+                <button onClick={()=>page==='home'?window.location.href='index.html':setPage('home')} style={{background:'#FFF0F5',border:'none',borderRadius:10,width:40,height:40,cursor:'pointer',color:'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style={{fontWeight:700,color:'#9D174D'}}>{title}</span>
+            </div>
+        </header>
+    );
+
+    const Home=()=>(
+        <div>
+            <Header title="診斷性研究評讀"/>
+            <div style={{background:'linear-gradient(135deg,#F72585,#B5179E)',padding:'32px 20px',color:'#fff'}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div style={{background:'rgba(255,255,255,0.2)',display:'inline-block',padding:'6px 14px',borderRadius:50,fontSize:12,fontWeight:600,marginBottom:16}}>🎯 Diagnostic Study Appraisal</div>
+                    <h1 style={{fontSize:26,fontWeight:700,marginBottom:12}}>診斷性研究評讀</h1>
+                    <p style={{opacity:0.95,fontSize:14}}>學習評估診斷工具的準確度與臨床價值</p>
+                </div>
+            </div>
+            <div style={{padding:'0 16px',marginTop:-20}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div className="card">
+                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🎯 學習目標</h3>
+                        {['理解診斷研究的基本架構','計算與解讀敏感度、特異度、預測值','運用似然比調整診斷機率','解讀 ROC 曲線與 AUC','應用 STARD 指引評讀文獻'].map((t,i)=>(
+                            <div key={i} style={{display:'flex',gap:10,marginBottom:8,fontSize:14}}>
+                                <span style={{background:'var(--suc)',color:'#fff',borderRadius:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,flexShrink:0}}>{i+1}</span>
+                                <span style={{color:'var(--txt2)'}}>{t}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>📚 課程內容</h3>
+                    {lessons.map(l=>(
+                        <div key={l.id} className="card" onClick={()=>{setLessonId(l.id);setPage('lesson')}} style={{cursor:'pointer'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:16}}>
+                                <div style={{width:48,height:48,borderRadius:12,background:`linear-gradient(135deg,${l.color},${l.color}88)`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}}>{l.id}</div>
+                                <div style={{flex:1}}>
+                                    <div style={{fontSize:11,color:l.color,fontWeight:600}}>Lesson {l.id}</div>
+                                    <div style={{fontSize:16,fontWeight:700}}>{l.title}</div>
+                                    <div style={{fontSize:13,color:'var(--txt2)'}}>{l.sub}</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" fill={l.color} width="20" height="20"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/></svg>
+                            </div>
+                        </div>
+                    ))}
+                    <button className="btn btn-pri" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}} style={{width:'100%',justifyContent:'center',marginTop:20,marginBottom:32}}>
+                        📝 開始測驗 (10題)
+                    </button>
+                </div>
+            </div>
+            <footer style={{background:'#FFF0F5',padding:'24px 16px',textAlign:'center'}}>
+                <p style={{fontSize:13,color:'var(--txt2)'}}>新竹台大分院教學部</p>
+                <p style={{fontSize:12,color:'var(--txt2)'}}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+        </div>
+    );
+
+    const L1=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🔬 診斷性研究的目的</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>診斷性研究旨在評估某項<strong>診斷工具（Index Test）</strong>相對於<strong>參考標準（Reference Standard）</strong>的準確度。</p>
+                
+                <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12,padding:20,background:'#F8F9FA',borderRadius:12,flexWrap:'wrap'}}>
+                    <div style={{background:'var(--pri)',color:'#fff',padding:'12px 16px',borderRadius:10,textAlign:'center'}}>
+                        <div style={{fontSize:12,opacity:0.9}}>Index Test</div>
+                        <div style={{fontWeight:700}}>待評估檢驗</div>
+                    </div>
+                    <div style={{fontSize:24}}>→</div>
+                    <div style={{background:'var(--blue)',color:'#fff',padding:'12px 16px',borderRadius:10,textAlign:'center'}}>
+                        <div style={{fontSize:12,opacity:0.9}}>vs</div>
+                        <div style={{fontWeight:700}}>比較</div>
+                    </div>
+                    <div style={{fontSize:24}}>→</div>
+                    <div style={{background:'var(--suc)',color:'#fff',padding:'12px 16px',borderRadius:10,textAlign:'center'}}>
+                        <div style={{fontSize:12,opacity:0.9}}>Reference Standard</div>
+                        <div style={{fontWeight:700}}>黃金標準</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>📋 診斷研究的關鍵要素</h3>
+                <div style={{display:'grid',gap:10}}>
+                    {[
+                        {title:'研究族群',desc:'應代表臨床實際會接受檢驗的病人',icon:'👥'},
+                        {title:'Index Test',desc:'待評估的診斷工具，需標準化執行',icon:'🔬'},
+                        {title:'Reference Standard',desc:'目前最佳的疾病確認方法',icon:'🏆'},
+                        {title:'盲化',desc:'判讀者不應知道另一檢驗結果',icon:'🙈'},
+                        {title:'時序',desc:'兩項檢驗應在適當時間內完成',icon:'⏱️'}
+                    ].map((item,idx)=>(
+                        <div key={idx} style={{display:'flex',alignItems:'flex-start',gap:12,padding:'12px',background:'#F8F9FA',borderRadius:10}}>
+                            <div style={{fontSize:24}}>{item.icon}</div>
+                            <div>
+                                <div style={{fontWeight:600,color:'var(--txt)'}}>{item.title}</div>
+                                <div style={{fontSize:13,color:'var(--txt2)'}}>{item.desc}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            
+            <div className="warn">
+                <strong style={{color:'var(--err)'}}>⚠️ 常見偏差類型</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                • <strong>選樣偏差</strong>：只納入特定嚴重度的病人<br/>
+                • <strong>驗證偏差</strong>：並非所有人都接受參考標準<br/>
+                • <strong>判讀偏差</strong>：判讀者知道其他檢驗結果<br/>
+                • <strong>疾病進展偏差</strong>：兩檢驗間隔過長
+                </span>
+            </div>
+            
+            <div className="good">
+                <strong style={{color:'var(--suc)'}}>💡 理想的診斷研究設計</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                • 連續或隨機收案<br/>
+                • 所有受試者都接受 Index Test 和 Reference Standard<br/>
+                • 判讀者相互盲化<br/>
+                • 預先定義診斷閾值
+                </span>
+            </div>
+        </div>
+    );
+
+    const L2=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>📊 2×2 列聯表</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>診斷研究的核心是將檢驗結果與疾病狀態交叉分類</p>
+                
+                <div className="two-by-two">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style={{background:'#F8F9FA'}}></th>
+                                <th style={{background:'#E8F5E9',color:'var(--suc)'}}>有病 (D+)</th>
+                                <th style={{background:'#FFEBEE',color:'var(--err)'}}>無病 (D-)</th>
+                                <th style={{background:'#F3E5F5',color:'var(--pur)'}}>合計</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style={{fontWeight:600,background:'#E3F2FD'}}>檢驗陽性 (T+)</td>
+                                <td style={{background:'#C8E6C9',fontWeight:700,color:'var(--suc)'}}>TP<br/><span style={{fontSize:11}}>真陽性</span></td>
+                                <td style={{background:'#FFCDD2',fontWeight:700,color:'var(--err)'}}>FP<br/><span style={{fontSize:11}}>偽陽性</span></td>
+                                <td style={{background:'#E1BEE7'}}>TP+FP</td>
+                            </tr>
+                            <tr>
+                                <td style={{fontWeight:600,background:'#E3F2FD'}}>檢驗陰性 (T-)</td>
+                                <td style={{background:'#FFCDD2',fontWeight:700,color:'var(--err)'}}>FN<br/><span style={{fontSize:11}}>偽陰性</span></td>
+                                <td style={{background:'#C8E6C9',fontWeight:700,color:'var(--suc)'}}>TN<br/><span style={{fontSize:11}}>真陰性</span></td>
+                                <td style={{background:'#E1BEE7'}}>FN+TN</td>
+                            </tr>
+                            <tr>
+                                <td style={{fontWeight:600,background:'#E3F2FD'}}>合計</td>
+                                <td style={{background:'#F3E5F5'}}>TP+FN</td>
+                                <td style={{background:'#F3E5F5'}}>FP+TN</td>
+                                <td style={{background:'#CE93D8',color:'#fff',fontWeight:700}}>N</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--suc)',marginBottom:12}}>🎯 敏感度 Sensitivity</h3>
+                <div className="formula">Sensitivity = TP / (TP + FN)</div>
+                <p style={{fontSize:14,color:'var(--txt2)',marginTop:12}}>
+                    <strong>定義：</strong>在所有<span style={{color:'var(--suc)',fontWeight:600}}>有病</span>的人中，檢驗結果為陽性的比例<br/>
+                    <strong>意義：</strong>檢驗「找出病人」的能力
+                </p>
+                <div className="pink" style={{marginTop:12}}>
+                    <strong style={{color:'var(--pri)'}}>🔑 SnNOut 口訣</strong><br/>
+                    <span style={{fontSize:14}}>
+                    <strong>S</strong>ensitivity high → <strong>N</strong>egative → Rules <strong>Out</strong><br/>
+                    高敏感度的<strong>陰性</strong>結果可排除疾病
+                    </span>
+                </div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>🔒 特異度 Specificity</h3>
+                <div className="formula" style={{background:'linear-gradient(135deg,#FAF5FF,#F3E5F5)',borderColor:'var(--pur)'}}>Specificity = TN / (TN + FP)</div>
+                <p style={{fontSize:14,color:'var(--txt2)',marginTop:12}}>
+                    <strong>定義：</strong>在所有<span style={{color:'var(--err)',fontWeight:600}}>沒病</span>的人中，檢驗結果為陰性的比例<br/>
+                    <strong>意義：</strong>檢驗「排除健康人」的能力
+                </p>
+                <div className="purple" style={{marginTop:12}}>
+                    <strong style={{color:'var(--pur)'}}>🔑 SpPIn 口訣</strong><br/>
+                    <span style={{fontSize:14}}>
+                    <strong>Sp</strong>ecificity high → <strong>P</strong>ositive → Rules <strong>In</strong><br/>
+                    高特異度的<strong>陽性</strong>結果可確認疾病
+                    </span>
+                </div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--orange)',marginBottom:12}}>📈 預測值 Predictive Values</h3>
+                <table>
+                    <thead>
+                        <tr><th>指標</th><th>公式</th><th>臨床問題</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{fontWeight:600,color:'var(--suc)'}}>PPV<br/>陽性預測值</td>
+                            <td>TP/(TP+FP)</td>
+                            <td style={{textAlign:'left',fontSize:12}}>檢驗陽性時，真的有病的機率？</td>
+                        </tr>
+                        <tr>
+                            <td style={{fontWeight:600,color:'var(--blue)'}}>NPV<br/>陰性預測值</td>
+                            <td>TN/(TN+FN)</td>
+                            <td style={{textAlign:'left',fontSize:12}}>檢驗陰性時，真的沒病的機率？</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div className="tip" style={{marginTop:12}}>
+                    <strong style={{color:'var(--warn)'}}>⚠️ 預測值受盛行率影響</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    相同的敏感度和特異度：<br/>
+                    • 低盛行率 → PPV ↓↓、NPV ↑<br/>
+                    • 高盛行率 → PPV ↑、NPV ↓↓
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+
+    const L3=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>⚖️ 似然比 Likelihood Ratio</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>
+                    似然比表示某檢驗結果在<strong>有病者</strong>出現的機率，相對於在<strong>無病者</strong>出現的機率。<br/>
+                    <strong>優點：</strong>不受盛行率影響，可直接調整診斷機率。
+                </p>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--suc)',marginBottom:12}}>➕ 正似然比 LR+</h3>
+                <div className="formula" style={{background:'linear-gradient(135deg,#F0FFF4,#C6F6D5)',borderColor:'var(--suc)'}}>
+                    LR+ = Sensitivity / (1 - Specificity)
+                </div>
+                <p style={{fontSize:14,color:'var(--txt2)',marginTop:12}}>
+                    <strong>意義：</strong>陽性結果使疾病機率<strong>增加</strong>的幅度
+                </p>
+                <table style={{marginTop:12}}>
+                    <thead><tr><th>LR+ 值</th><th>診斷價值</th><th>機率變化</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{color:'var(--suc)',fontWeight:700}}>&gt;10</td><td>極佳</td><td>大幅增加 (~+45%)</td></tr>
+                        <tr><td style={{color:'var(--blue)',fontWeight:700}}>5-10</td><td>良好</td><td>中度增加 (~+30%)</td></tr>
+                        <tr><td style={{color:'var(--warn)',fontWeight:700}}>2-5</td><td>普通</td><td>輕度增加 (~+15%)</td></tr>
+                        <tr><td style={{color:'var(--txt2)'}}>1-2</td><td>微弱</td><td>幾乎不變</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--err)',marginBottom:12}}>➖ 負似然比 LR-</h3>
+                <div className="formula" style={{background:'linear-gradient(135deg,#FFF5F5,#FED7D7)',borderColor:'var(--err)'}}>
+                    LR- = (1 - Sensitivity) / Specificity
+                </div>
+                <p style={{fontSize:14,color:'var(--txt2)',marginTop:12}}>
+                    <strong>意義：</strong>陰性結果使疾病機率<strong>降低</strong>的幅度
+                </p>
+                <table style={{marginTop:12}}>
+                    <thead><tr><th>LR- 值</th><th>排除價值</th><th>機率變化</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{color:'var(--suc)',fontWeight:700}}>&lt;0.1</td><td>極佳排除</td><td>大幅降低 (~-45%)</td></tr>
+                        <tr><td style={{color:'var(--blue)',fontWeight:700}}>0.1-0.2</td><td>良好排除</td><td>中度降低 (~-30%)</td></tr>
+                        <tr><td style={{color:'var(--warn)',fontWeight:700}}>0.2-0.5</td><td>普通排除</td><td>輕度降低 (~-15%)</td></tr>
+                        <tr><td style={{color:'var(--txt2)'}}>0.5-1</td><td>無排除價值</td><td>幾乎不變</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--orange)',marginBottom:12}}>🎲 機率轉換公式</h3>
+                <div style={{background:'#FFF9F0',padding:16,borderRadius:12,fontSize:14,lineHeight:2}}>
+                    <strong>Step 1：</strong>前測機率 → 前測勝算<br/>
+                    <div className="formula" style={{margin:'8px 0',fontSize:14,padding:10}}>Pre-test Odds = Prob / (1 - Prob)</div>
+                    
+                    <strong>Step 2：</strong>前測勝算 × LR → 後測勝算<br/>
+                    <div className="formula" style={{margin:'8px 0',fontSize:14,padding:10}}>Post-test Odds = Pre-test Odds × LR</div>
+                    
+                    <strong>Step 3：</strong>後測勝算 → 後測機率<br/>
+                    <div className="formula" style={{margin:'8px 0',fontSize:14,padding:10}}>Post-test Prob = Odds / (1 + Odds)</div>
+                </div>
+            </div>
+            
+            <div className="info">
+                <strong style={{color:'var(--blue)'}}>📊 診斷勝算比 DOR</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                <strong>DOR = LR+ / LR- = (TP × TN) / (FP × FN)</strong><br/>
+                綜合反映診斷能力的單一指標，常用於統合分析。<br/>
+                DOR = 1 表示無診斷能力，越大越好。
+                </span>
+            </div>
+        </div>
+    );
+
+    const L4=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--teal)',marginBottom:12}}>📈 ROC 曲線簡介</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>
+                    ROC（Receiver Operating Characteristic）曲線是以<strong>假陽性率（1-特異度）</strong>為X軸、<strong>真陽性率（敏感度）</strong>為Y軸繪製的曲線。
+                </p>
+                
+                <div className="roc-container">
+                    <svg viewBox="0 0 300 280" style={{width:'100%',maxWidth:300,display:'block',margin:'0 auto'}}>
+                        {/* 背景網格 */}
+                        <defs>
+                            <pattern id="grid" width="30" height="25" patternUnits="userSpaceOnUse">
+                                <path d="M 30 0 L 0 0 0 25" fill="none" stroke="#E2E8F0" strokeWidth="0.5"/>
+                            </pattern>
+                        </defs>
+                        <rect x="50" y="20" width="240" height="200" fill="url(#grid)"/>
+                        
+                        {/* 座標軸 */}
+                        <line x1="50" y1="220" x2="290" y2="220" stroke="#333" strokeWidth="2"/>
+                        <line x1="50" y1="20" x2="50" y2="220" stroke="#333" strokeWidth="2"/>
+                        
+                        {/* 對角線（隨機猜測） */}
+                        <line x1="50" y1="220" x2="290" y2="20" stroke="#E53E3E" strokeWidth="2" strokeDasharray="5,5"/>
+                        
+                        {/* ROC 曲線（優秀） */}
+                        <path d="M 50 220 Q 60 80 100 50 Q 150 30 200 25 L 290 20" fill="none" stroke="#2EC4B6" strokeWidth="3"/>
+                        
+                        {/* ROC 曲線（普通） */}
+                        <path d="M 50 220 Q 100 150 150 100 Q 200 60 290 20" fill="none" stroke="#F7931E" strokeWidth="2" strokeDasharray="8,4"/>
+                        
+                        {/* AUC 區域標示 */}
+                        <text x="120" y="130" fontSize="12" fill="var(--teal)" fontWeight="600">AUC = 0.92</text>
+                        <text x="180" y="95" fontSize="11" fill="#F7931E">AUC = 0.75</text>
+                        <text x="200" y="160" fontSize="11" fill="var(--err)">AUC = 0.50</text>
+                        
+                        {/* 軸標籤 */}
+                        <text x="170" y="250" textAnchor="middle" fontSize="12" fill="#333">1 - Specificity (FPR)</text>
+                        <text x="15" y="120" textAnchor="middle" fontSize="12" fill="#333" transform="rotate(-90,15,120)">Sensitivity (TPR)</text>
+                        
+                        {/* 刻度 */}
+                        <text x="50" y="235" textAnchor="middle" fontSize="10" fill="#666">0</text>
+                        <text x="170" y="235" textAnchor="middle" fontSize="10" fill="#666">0.5</text>
+                        <text x="290" y="235" textAnchor="middle" fontSize="10" fill="#666">1.0</text>
+                        <text x="40" y="220" textAnchor="end" fontSize="10" fill="#666">0</text>
+                        <text x="40" y="120" textAnchor="end" fontSize="10" fill="#666">0.5</text>
+                        <text x="40" y="25" textAnchor="end" fontSize="10" fill="#666">1.0</text>
+                    </svg>
+                    
+                    <div style={{display:'flex',justifyContent:'center',gap:16,marginTop:12,fontSize:12}}>
+                        <span><span style={{color:'var(--teal)'}}>━━</span> 優秀檢驗</span>
+                        <span><span style={{color:'#F7931E'}}>╌╌</span> 普通檢驗</span>
+                        <span><span style={{color:'var(--err)'}}>╌╌</span> 隨機猜測</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>🎯 AUC 解讀標準</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>AUC（Area Under Curve）代表曲線下面積，反映整體診斷能力</p>
+                
+                <table>
+                    <thead><tr><th>AUC 範圍</th><th>診斷能力</th><th>臨床意義</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{color:'var(--suc)',fontWeight:700}}>0.9 - 1.0</td><td>優秀</td><td>可作為主要診斷工具</td></tr>
+                        <tr><td style={{color:'var(--blue)',fontWeight:700}}>0.8 - 0.9</td><td>良好</td><td>有實用診斷價值</td></tr>
+                        <tr><td style={{color:'var(--warn)',fontWeight:700}}>0.7 - 0.8</td><td>普通</td><td>可作為輔助參考</td></tr>
+                        <tr><td style={{color:'var(--orange)',fontWeight:700}}>0.6 - 0.7</td><td>較差</td><td>診斷價值有限</td></tr>
+                        <tr><td style={{color:'var(--err)',fontWeight:700}}>0.5 - 0.6</td><td>無效</td><td>等同隨機猜測</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>✂️ 診斷閾值選擇</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>ROC 曲線上每個點代表一個可能的診斷閾值</p>
+                
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                    <div style={{background:'#F0FFF4',padding:12,borderRadius:10}}>
+                        <div style={{fontWeight:600,color:'var(--suc)',marginBottom:4}}>高敏感度閾值</div>
+                        <div style={{fontSize:12,color:'var(--txt2)'}}>
+                            • 減少漏診<br/>
+                            • 適合：嚴重疾病篩檢<br/>
+                            • 代價：較多偽陽性
+                        </div>
+                    </div>
+                    <div style={{background:'#FAF5FF',padding:12,borderRadius:10}}>
+                        <div style={{fontWeight:600,color:'var(--pur)',marginBottom:4}}>高特異度閾值</div>
+                        <div style={{fontSize:12,color:'var(--txt2)'}}>
+                            • 減少誤診<br/>
+                            • 適合：侵入性治療前<br/>
+                            • 代價：較多偽陰性
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="tip" style={{marginTop:12}}>
+                    <strong style={{color:'var(--warn)'}}>💡 Youden's Index</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    <strong>J = Sensitivity + Specificity - 1</strong><br/>
+                    最大化 J 值的點通常作為「最佳」閾值（平衡敏感度與特異度）
+                    </span>
+                </div>
+            </div>
+            
+            <div className="info">
+                <strong style={{color:'var(--blue)'}}>📊 比較兩個 ROC 曲線</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                可使用 <strong>DeLong's test</strong> 比較兩條 ROC 曲線的 AUC 是否有統計顯著差異，用於評估新舊診斷工具的優劣。
+                </span>
+            </div>
+        </div>
+    );
+
+    const L5=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--orange)',marginBottom:12}}>📋 STARD 指引簡介</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>
+                    <strong>STARD</strong>（Standards for Reporting of Diagnostic Accuracy Studies）是診斷準確度研究的報告標準，包含 <strong>30 項</strong>檢核清單。
+                </p>
+                
+                <div style={{background:'#FFF9F0',padding:16,borderRadius:12}}>
+                    <div style={{fontWeight:600,marginBottom:12,color:'var(--orange)'}}>📌 STARD 2015 主要章節</div>
+                    <div style={{display:'grid',gap:8}}>
+                        {[
+                            {section:'標題/摘要',items:'研究設計、主要發現'},
+                            {section:'前言',items:'科學背景、研究目的'},
+                            {section:'方法',items:'研究設計、參與者、檢驗方法、分析'},
+                            {section:'結果',items:'參與者流程、診斷準確度估計'},
+                            {section:'討論',items:'限制、應用性、意涵'}
+                        ].map((item,idx)=>(
+                            <div key={idx} style={{display:'flex',gap:8,fontSize:13}}>
+                                <span style={{background:'var(--orange)',color:'#fff',padding:'2px 8px',borderRadius:4,fontWeight:600,flexShrink:0}}>{idx+1}</span>
+                                <span><strong>{item.section}</strong>：{item.items}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🔍 STARD 流程圖</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>每篇診斷研究都應包含標準化流程圖</p>
+                
+                <div style={{background:'#F8F9FA',padding:16,borderRadius:12}}>
+                    <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
+                        <div style={{background:'var(--blue)',color:'#fff',padding:'8px 16px',borderRadius:8,fontWeight:600}}>符合資格的病人 (n=?)</div>
+                        <div style={{fontSize:20}}>↓</div>
+                        <div style={{display:'flex',gap:16,alignItems:'center'}}>
+                            <div style={{background:'var(--err)',color:'#fff',padding:'6px 12px',borderRadius:6,fontSize:12}}>排除 (n=?)</div>
+                            <div style={{background:'var(--teal)',color:'#fff',padding:'8px 16px',borderRadius:8,fontWeight:600}}>納入研究 (n=?)</div>
+                        </div>
+                        <div style={{fontSize:20}}>↓</div>
+                        <div style={{background:'var(--pur)',color:'#fff',padding:'8px 16px',borderRadius:8,fontWeight:600}}>接受 Index Test (n=?)</div>
+                        <div style={{fontSize:20}}>↓</div>
+                        <div style={{background:'var(--suc)',color:'#fff',padding:'8px 16px',borderRadius:8,fontWeight:600}}>接受 Reference Standard (n=?)</div>
+                        <div style={{fontSize:20}}>↓</div>
+                        <div style={{display:'flex',gap:12}}>
+                            <div style={{background:'#C8E6C9',padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600}}>D+ (n=?)</div>
+                            <div style={{background:'#FFCDD2',padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600}}>D- (n=?)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>✅ 診斷研究評讀檢核表</h3>
+                <div style={{display:'grid',gap:8}}>
+                    {[
+                        {q:'研究族群是否代表目標族群？',key:'外推性'},
+                        {q:'Index test 是否標準化執行？',key:'再現性'},
+                        {q:'Reference standard 是否適當？',key:'效度'},
+                        {q:'所有受試者是否都接受參考標準？',key:'驗證偏差'},
+                        {q:'判讀者是否相互盲化？',key:'判讀偏差'},
+                        {q:'診斷閾值是否預先設定？',key:'選擇性報告'},
+                        {q:'是否報告不確定或無法判讀的結果？',key:'完整性'},
+                        {q:'是否提供足夠資訊計算 LR？',key:'實用性'}
+                    ].map((item,idx)=>(
+                        <div key={idx} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:'#F8F9FA',borderRadius:8}}>
+                            <div style={{width:24,height:24,borderRadius:6,border:'2px solid var(--blue)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                                <span style={{color:'var(--blue)',fontWeight:700,fontSize:12}}>✓</span>
+                            </div>
+                            <div style={{flex:1,fontSize:13}}>{item.q}</div>
+                            <span style={{background:'#E3F2FD',color:'var(--blue)',padding:'2px 8px',borderRadius:4,fontSize:11,fontWeight:600}}>{item.key}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            
+            <div className="good">
+                <strong style={{color:'var(--suc)'}}>💡 臨床應用要點</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                1. 確認研究族群與您的病人相似<br/>
+                2. 使用 LR 而非 PPV/NPV（因後者受盛行率影響）<br/>
+                3. 結合臨床判斷估計前測機率<br/>
+                4. 根據後測機率決定下一步處置<br/>
+                5. 考慮檢驗的風險、成本與可近性
+                </span>
+            </div>
+            
+            <div className="purple">
+                <strong style={{color:'var(--pur)'}}>🎯 診斷策略思考</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                • <strong>篩檢目的</strong>：選高敏感度、低 LR- 的檢驗<br/>
+                • <strong>確診目的</strong>：選高特異度、高 LR+ 的檢驗<br/>
+                • <strong>連續檢驗</strong>：先篩檢後確診，逐步提高確定性
+                </span>
+            </div>
+        </div>
+    );
+
+    const Lesson=()=>{
+        const l=lessons.find(x=>x.id===lessonId);
+        return(
+            <div>
+                <Header title={l.title}/>
+                <div style={{background:`linear-gradient(135deg,${l.color},${l.color}88)`,padding:'20px',color:'#fff'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{fontSize:12,opacity:0.9}}>Lesson {l.id} • {l.sub}</div>
+                        <h1 style={{fontSize:24,fontWeight:700}}>{l.title}</h1>
+                    </div>
+                </div>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        {lessonId===1&&<L1/>}{lessonId===2&&<L2/>}{lessonId===3&&<L3/>}{lessonId===4&&<L4/>}{lessonId===5&&<L5/>}
+                        <div style={{display:'flex',gap:12,marginTop:24}}>
+                            {lessonId>1&&<button className="btn" style={{flex:1,background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setLessonId(lessonId-1)}>← 上一課</button>}
+                            {lessonId<5?<button className="btn btn-pri" style={{flex:1}} onClick={()=>setLessonId(lessonId+1)}>下一課 →</button>
+                            :<button className="btn btn-pri" style={{flex:1}} onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}}>開始測驗 📝</button>}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const Quiz=()=>{
+        const pick=(i)=>{if(show)return;setSel(i);setShow(true);if(i===quiz[qIdx].c)setScore(score+1)};
+        const next=()=>{if(qIdx<quiz.length-1){setQIdx(qIdx+1);setSel(null);setShow(false)}else setDone(true)};
+
+        if(done){
+            const pct=Math.round((score/quiz.length)*100);
+            return(
+                <div>
+                    <Header title="測驗結果"/>
+                    <div style={{padding:'40px 16px',textAlign:'center'}}>
+                        <div style={{width:140,height:140,borderRadius:'50%',background:`conic-gradient(${pct>=80?'var(--suc)':pct>=60?'var(--warn)':'var(--err)'} ${pct*3.6}deg,#E5E5E5 0deg)`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 24px'}}>
+                            <div style={{width:120,height:120,borderRadius:'50%',background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                                <div style={{fontSize:36,fontWeight:700}}>{pct}%</div>
+                                <div style={{fontSize:14,color:'var(--txt2)'}}>{score}/{quiz.length}</div>
+                            </div>
+                        </div>
+                        <h2 style={{fontSize:24,fontWeight:700,marginBottom:8}}>{pct>=80?'🎉 太棒了！':pct>=60?'👍 不錯！':'💪 加油！'}</h2>
+                        <p style={{color:'var(--txt2)',marginBottom:32}}>{pct>=80?'你對診斷研究有很好的掌握！':pct>=60?'再複習可以更進步！':'建議重新閱讀課程'}</p>
+                        <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+                            <button className="btn btn-pri" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false)}}>重新測驗</button>
+                            <button className="btn" style={{background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setPage('home')}>返回課程</button>
+                        </div>
+                    </div>
+                    <footer style={{background:'#FFF0F5',padding:'24px 16px',textAlign:'center',marginTop:40}}>
+                        <p style={{fontSize:12,color:'var(--txt2)'}}>新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        const q=quiz[qIdx];
+        return(
+            <div>
+                <Header title="自我測驗"/>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:14}}>
+                            <span style={{color:'var(--txt2)'}}>進度</span>
+                            <span style={{fontWeight:600,color:'var(--pri)'}}>{qIdx+1}/{quiz.length}</span>
+                        </div>
+                        <div style={{height:8,background:'#E5E5E5',borderRadius:4,marginBottom:20}}>
+                            <div style={{height:'100%',width:`${((qIdx+1)/quiz.length)*100}%`,background:'linear-gradient(90deg,var(--pri),var(--pri2))',borderRadius:4,transition:'width 0.3s'}}/>
+                        </div>
+                        <div className="card">
+                            <h3 style={{fontSize:16,fontWeight:600,lineHeight:1.6,marginBottom:20}}>{q.q}</h3>
+                            {q.o.map((opt,i)=>{
+                                let bg='#fff',bd='#E5E5E5';
+                                if(show){
+                                    if(i===q.c){bg='#F0FFF4';bd='var(--suc)'}
+                                    else if(i===sel){bg='#FFF5F5';bd='var(--err)'}
+                                }else if(i===sel){bg='#FFF0F5';bd='var(--pri)'}
+                                return(
+                                    <button key={i} onClick={()=>pick(i)} disabled={show} style={{width:'100%',padding:'12px 14px',marginBottom:10,background:bg,border:`2px solid ${bd}`,borderRadius:12,textAlign:'left',fontSize:14,cursor:show?'default':'pointer',display:'flex',alignItems:'center',gap:12}}>
+                                        <span style={{width:26,height:26,borderRadius:8,background:show&&i===q.c?'var(--suc)':show&&i===sel?'var(--err)':'#FFF0F5',color:show&&(i===q.c||i===sel)?'#fff':'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13,flexShrink:0}}>
+                                            {show&&i===q.c?'✔':show&&i===sel&&i!==q.c?'✗':String.fromCharCode(65+i)}
+                                        </span>
+                                        <span style={{lineHeight:1.5}}>{opt}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {show&&(
+                            <div className={sel===q.c?'good':'tip'}>
+                                <strong style={{color:sel===q.c?'var(--suc)':'var(--warn)'}}>{sel===q.c?'✔ 正確！':'✗ 答錯了'}</strong>
+                                <p style={{fontSize:14,color:'var(--txt2)',marginTop:8,lineHeight:1.7}}>{q.e}</p>
+                            </div>
+                        )}
+                        {show&&<button className="btn btn-pri" style={{width:'100%',justifyContent:'center',marginTop:16}} onClick={next}>{qIdx<quiz.length-1?'下一題 →':'查看結果'}</button>}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return <div style={{maxWidth:'100%',minHeight:'100vh',background:'var(--bg)'}}>{page==='home'?<Home/>:page==='lesson'?<Lesson/>:<Quiz/>}</div>;
+};
+
+ReactDOM.render(<App/>,document.getElementById('root'));
+</script>
+</body>
+</html>
