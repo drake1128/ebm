@@ -74,9 +74,21 @@ const App=()=>{
             <Header title="JAMA 臨床理學檢查"/>
             <div style={{background:'linear-gradient(135deg,#0077B6,#00B4D8)',padding:'32px 20px',color:'#fff'}}>
                 <div style={{maxWidth:480,margin:'0 auto'}}>
-                    <div style={{background:'rgba(255,255,255,0.2)',display:'inline-block',padding:'6px 14px',borderRadius:50,fontSize:12,fontWeight:600,marginBottom:16}}>📖 JAMA Rational Clinical Examination</div>
-                    <h1 style={{fontSize:26,fontWeight:700,marginBottom:12}}>理學檢查的診斷價值評估</h1>
-                    <p style={{opacity:0.9,fontSize:14}}>學習敏感度、特異度、似然比的計算與應用</p>
+                    <div style={{background:'rgba(255,255,255,0.2)',display:'inline-block',padding:'6px 14px',borderRadius:50,fontSize:12,fontWeight:600,marginBottom:16}}>📖 JAMA Rational Clinical Examination Series</div>
+                    <h1 style={{fontSize:26,fontWeight:700,marginBottom:8}}>The Rational Clinical Examination</h1>
+                    <h2 style={{fontSize:16,fontWeight:500,marginBottom:12,opacity:0.95}}>JAMA 臨床理學檢查系列</h2>
+                    <p style={{opacity:0.9,fontSize:14,marginBottom:16}}>系統性學習診斷學核心概念與臨床應用</p>
+                    <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+                        <div style={{background:'rgba(255,255,255,0.2)',padding:'8px 14px',borderRadius:20,fontSize:12,display:'flex',alignItems:'center',gap:6}}>
+                            <span>📊</span> 敏感度/特異度
+                        </div>
+                        <div style={{background:'rgba(255,255,255,0.2)',padding:'8px 14px',borderRadius:20,fontSize:12,display:'flex',alignItems:'center',gap:6}}>
+                            <span>📈</span> 似然比
+                        </div>
+                        <div style={{background:'rgba(255,255,255,0.2)',padding:'8px 14px',borderRadius:20,fontSize:12,display:'flex',alignItems:'center',gap:6}}>
+                            <span>🎯</span> 前後測機率
+                        </div>
+                    </div>
                 </div>
             </div>
             <div style={{padding:'0 16px',marginTop:-20}}>
@@ -90,7 +102,66 @@ const App=()=>{
                             </div>
                         ))}
                     </div>
-                    <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>📚 課程內容</h3>
+                    {/* JAMA 系列文章區塊 */}
+                    <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>📑 JAMA 系列文章</h3>
+                    <p style={{fontSize:13,color:'var(--txt2)',marginBottom:16}}>點擊進入各主題的深入學習模組</p>
+                    
+                    <a href="jama-hypertension.html" style={{textDecoration:'none'}}>
+                        <div className="card" style={{cursor:'pointer',border:'2px solid #E63946',background:'linear-gradient(135deg,#FFF5F5,#FFF)'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:16}}>
+                                <div style={{width:56,height:56,borderRadius:14,background:'linear-gradient(135deg,#E63946,#F4A261)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:24}}>
+                                    🩺
+                                </div>
+                                <div style={{flex:1}}>
+                                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                                        <span style={{background:'linear-gradient(135deg,#E63946,#F4A261)',color:'#fff',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>🆕 NEW</span>
+                                        <span style={{fontSize:11,color:'#E63946',fontWeight:600}}>JAMA 2021</span>
+                                    </div>
+                                    <div style={{fontSize:16,fontWeight:700,color:'var(--txt)'}}>高血壓診斷評估</div>
+                                    <div style={{fontSize:13,color:'var(--txt2)'}}>Does This Adult Have Hypertension?</div>
+                                    <div style={{fontSize:11,color:'var(--txt2)',marginTop:4}}>Viera AJ, et al. JAMA 2021;326(4):339-347</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" fill="#E63946" width="20" height="20"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/></svg>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    {/* 即將推出的模組預告 */}
+                    <div className="card" style={{opacity:0.6,border:'1px dashed #ccc'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:16}}>
+                            <div style={{width:56,height:56,borderRadius:14,background:'#E5E5E5',display:'flex',alignItems:'center',justifyContent:'center',color:'#999',fontSize:24}}>
+                                🫁
+                            </div>
+                            <div style={{flex:1}}>
+                                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                                    <span style={{background:'#FFD166',color:'#333',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>即將推出</span>
+                                </div>
+                                <div style={{fontSize:16,fontWeight:700,color:'#999'}}>肺栓塞臨床診斷</div>
+                                <div style={{fontSize:13,color:'#bbb'}}>Does This Patient Have Pulmonary Embolism?</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="card" style={{opacity:0.6,border:'1px dashed #ccc'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:16}}>
+                            <div style={{width:56,height:56,borderRadius:14,background:'#E5E5E5',display:'flex',alignItems:'center',justifyContent:'center',color:'#999',fontSize:24}}>
+                                🦴
+                            </div>
+                            <div style={{flex:1}}>
+                                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                                    <span style={{background:'#FFD166',color:'#333',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>即將推出</span>
+                                </div>
+                                <div style={{fontSize:16,fontWeight:700,color:'#999'}}>深部靜脈栓塞評估</div>
+                                <div style={{fontSize:13,color:'#bbb'}}>Does This Patient Have Deep Vein Thrombosis?</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{height:24}}></div>
+                    
+                    {/* 基礎課程區塊 */}
+                    <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>📚 診斷學基礎課程</h3>
+                    <p style={{fontSize:13,color:'var(--txt2)',marginBottom:16}}>學習敏感度、特異度、似然比等核心概念</p>
                     {lessons.map(l=>(
                         <div key={l.id} className="card" onClick={()=>{setLessonId(l.id);setPage('lesson')}} style={{cursor:'pointer'}}>
                             <div style={{display:'flex',alignItems:'center',gap:16}}>
