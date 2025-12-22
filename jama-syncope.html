@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>暈厥的臨床診斷 | JAMA Rational Clinical Examination</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Crimson+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --pri: #E63946;
+            --pri2: #F4A261;
+            --sec: #457B9D;
+            --sec2: #1D3557;
+            --suc: #2A9D8F;
+            --warn: #E9C46A;
+            --info: #264653;
+            --bg: #FEFAF6;
+            --txt: #1D3557;
+            --txt2: #6B7280;
+            --card-shadow: 0 4px 20px rgba(230, 57, 70, 0.08);
+        }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--bg);
+            color: var(--txt);
+            line-height: 1.8;
+            -webkit-font-smoothing: antialiased;
+        }
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(230, 57, 70, 0.08);
+        }
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        .btn-pri { background: linear-gradient(135deg, var(--pri), var(--pri2)); color: #fff; }
+        .btn-pri:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(230, 57, 70, 0.3); }
+        .btn-sec { background: linear-gradient(135deg, var(--sec), var(--sec2)); color: #fff; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: linear-gradient(135deg, #FEF3E9, #FDE8E0); font-weight: 600; color: var(--pri); }
+        .formula {
+            background: linear-gradient(135deg, #FEF3E9, #FDE8E0);
+            border: 2px solid var(--pri2);
+            border-radius: 16px;
+            padding: 18px;
+            margin: 14px 0;
+            text-align: center;
+            font-family: 'Crimson Pro', serif;
+            font-size: 18px;
+            color: var(--sec2);
+            font-weight: 600;
+        }
+        .tip {
+            background: linear-gradient(135deg, #FFF9E6, #FEF3CD);
+            border-left: 4px solid var(--warn);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        .good {
+            background: linear-gradient(135deg, #E8F5F3, #D1F2EB);
+            border-left: 4px solid var(--suc);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        .danger {
+            background: linear-gradient(135deg, #FDECEA, #FBDBD7);
+            border-left: 4px solid var(--pri);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        .info {
+            background: linear-gradient(135deg, #EBF4F8, #D6E8F0);
+            border-left: 4px solid var(--sec);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .pulse { animation: pulse 2s infinite; }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+const lessons = [
+    { id: 1, title: '暈厥概論與病因分類', sub: 'Syncope Overview', color: '#E63946' },
+    { id: 2, title: '心因性暈厥的臨床特徵', sub: 'Cardiac Syncope Features', color: '#457B9D' },
+    { id: 3, title: '臨床病史與理學檢查', sub: 'History & Physical Exam', color: '#2A9D8F' },
+    { id: 4, title: 'EGSYS評分系統', sub: 'EGSYS Score', color: '#F4A261' },
+    { id: 5, title: '暈厥 vs 癲癇的鑑別', sub: 'Syncope vs Seizure', color: '#E9C46A' }
+];
+
+const quiz = [
+    {
+        q: '根據JAMA系統性回顧，下列哪個病史特徵與心因性暈厥最相關？',
+        o: ['發作前感覺溫暖', '發作前頭痛', '發作時目擊者觀察到發紺', '發作後情緒改變'],
+        c: 2,
+        e: '目擊者觀察到發紺 (cyanosis) 與心因性暈厥高度相關，LR+ = 6.2。這是因為心因性暈厥會導致心輸出量急遽下降，造成組織灌流不足而發紺。'
+    },
+    {
+        q: '下列哪個特徵可以有效「排除」心因性暈厥？',
+        o: ['年齡 ≥ 35歲', '發作前情緒改變或專注於細節', '發作前心悸', '有心房顫動病史'],
+        c: 1,
+        e: '發作前情緒改變或專注於細節 (mood change/prodromal preoccupation) 的 LR- = 0.09，是排除心因性暈厥的強力指標，提示反射性暈厥可能性高。'
+    },
+    {
+        q: '關於心因性暈厥的人口學特徵，何者正確？',
+        o: ['年齡 < 35歲發作者心因性風險高', '年齡 ≥ 35歲首次發作，LR+ = 3.3', '性別對診斷無影響', '年輕人更常有心律不整'],
+        c: 1,
+        e: '年齡 ≥ 35歲首次發作暈厥與心因性暈厥相關 (LR+ = 3.3)，而年齡 < 35歲則可排除 (LR- = 0.13)。'
+    },
+    {
+        q: 'EGSYS評分系統中，下列哪個特徵得分最高？',
+        o: ['心悸 (+4分)', '運動中發作 (+3分)', '平躺時發作 (+2分)', '神經自主症狀 (-1分)'],
+        c: 0,
+        e: 'EGSYS評分中，心悸 (palpitations) 得4分是最高分項目。運動中發作和異常心電圖/心臟疾病各得3分。'
+    },
+    {
+        q: 'EGSYS評分 < 3 分時，對於心因性暈厥的診斷意義為何？',
+        o: ['可確認心因性暈厥', 'LR- 約 0.12-0.17，可排除心因性暈厥', '需要進一步侵入性檢查', '無診斷價值'],
+        c: 1,
+        e: 'EGSYS < 3 的 LR- 範圍為 0.12-0.17，表示可有效降低心因性暈厥的可能性，是良好的排除工具。'
+    },
+    {
+        q: '下列哪個發作前症狀與心因性暈厥相關性最強？',
+        o: ['呼吸困難', '冒汗', '噁心', '頭暈'],
+        c: 0,
+        e: '發作前呼吸困難 (dyspnea) 的 LR+ = 3.5，是與心因性暈厥相關的重要症狀。冒汗、噁心等則與反射性暈厥較相關。'
+    },
+    {
+        q: '關於鑑別暈厥與癲癇，下列何者最支持癲癇診斷？',
+        o: ['發作時四肢抽動', '發作前心悸', '久站後發作', '咬傷舌頭'],
+        c: 3,
+        e: '咬傷舌頭 (cut tongue) 對癲癇的 LR+ = 17，是最強的鑑別指標。四肢抽動雖也支持癲癇(LR+ = 5.6)，但暈厥也可能有短暫抽動。'
+    },
+    {
+        q: '下列哪個臨床特徵支持反射性暈厥而非心因性暈厥？',
+        o: ['運動中發作', '平躺時發作', '久站後發作', '發作時發紺'],
+        c: 2,
+        e: '久站後發作 (prolonged sitting/standing) 是典型的血管迷走性暈厥特徵，LR for cardiac syncope = 0.54，可降低心因性暈厥可能性。'
+    },
+    {
+        q: '心因性暈厥患者的生物標記，下列敘述何者正確？',
+        o: ['Troponin對排除心因性暈厥無幫助', 'NT-proBNP < 69 pg/mL可排除心因性暈厥', 'BNP > 100 pg/mL可確診心因性暈厥', '生物標記優於臨床評估'],
+        c: 1,
+        e: 'NT-proBNP < 69 pg/mL 的 LR- = 0.16，可有效排除心因性暈厥。但生物標記應結合臨床評估使用，約65%患者結果在中間值。'
+    },
+    {
+        q: '下列關於暈厥的流行病學，何者正確？',
+        o: ['成人暈厥年發生率約 6%', '心因性暈厥佔所有暈厥約 50%', '血管迷走性暈厥是最常見類型', '暈厥比癲癇罕見'],
+        c: 2,
+        e: '血管迷走性暈厥(vasovagal syncope)佔21-48%是最常見類型。心因性暈厥約5-21%，成人暈厥年發生率約0.6%，暈厥比癲癇更常見。'
+    }
+];
+
+const App = () => {
+    const [page, setPage] = useState('home');
+    const [lessonId, setLessonId] = useState(1);
+    const [qIdx, setQIdx] = useState(0);
+    const [score, setScore] = useState(0);
+    const [sel, setSel] = useState(null);
+    const [show, setShow] = useState(false);
+    const [done, setDone] = useState(false);
+
+    const Header = ({ title }) => (
+        <header style={{ 
+            background: '#fff', 
+            borderBottom: '1px solid rgba(230, 57, 70, 0.1)', 
+            padding: '14px 16px', 
+            position: 'sticky', 
+            top: 0, 
+            zIndex: 10,
+            backdropFilter: 'blur(10px)'
+        }}>
+            <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <button 
+                    onClick={() => page === 'home' ? window.location.href = 'jama-rational-exam.html' : setPage('home')} 
+                    style={{ 
+                        background: 'linear-gradient(135deg, #FEF3E9, #FDE8E0)', 
+                        border: 'none', 
+                        borderRadius: 12, 
+                        width: 42, 
+                        height: 42, 
+                        cursor: 'pointer', 
+                        color: 'var(--pri)', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 8px rgba(230, 57, 70, 0.1)'
+                    }}
+                >
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <span style={{ fontWeight: 700, color: 'var(--sec2)', fontSize: 16 }}>{title}</span>
+            </div>
+        </header>
+    );
+
+    const Home = () => (
+        <div className="fade-in">
+            <Header title="暈厥的臨床診斷" />
+            <div style={{ 
+                background: 'linear-gradient(135deg, #E63946 0%, #F4A261 50%, #E9C46A 100%)', 
+                padding: '36px 20px 44px', 
+                color: '#fff',
+                position: 'relative',
+                overflow: 'hidden'
+            }}>
+                <div style={{
+                    position: 'absolute',
+                    top: -30,
+                    right: -30,
+                    width: 150,
+                    height: 150,
+                    borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.1)'
+                }} />
+                <div style={{ maxWidth: 480, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+                    <div style={{ 
+                        background: 'rgba(255,255,255,0.2)', 
+                        display: 'inline-block', 
+                        padding: '8px 16px', 
+                        borderRadius: 50, 
+                        fontSize: 12, 
+                        fontWeight: 600, 
+                        marginBottom: 16,
+                        backdropFilter: 'blur(10px)'
+                    }}>
+                        🫀 JAMA Rational Clinical Examination
+                    </div>
+                    <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 12, lineHeight: 1.3 }}>
+                        Did This Patient Have<br/>Cardiac Syncope?
+                    </h1>
+                    <p style={{ opacity: 0.95, fontSize: 14, lineHeight: 1.7 }}>
+                        暈厥的臨床診斷 - 區分心因性暈厥與其他原因
+                    </p>
+                    <p style={{ opacity: 0.8, fontSize: 12, marginTop: 8 }}>
+                        JAMA. 2019;321(24):2448-2457
+                    </p>
+                </div>
+            </div>
+            
+            <div style={{ padding: '0 16px', marginTop: -24 }}>
+                <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                    <div className="card">
+                        <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--pri)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 22 }}>🎯</span> 學習目標
+                        </h3>
+                        {[
+                            '了解暈厥的病因分類與生理機轉',
+                            '識別心因性暈厥的高危險特徵',
+                            '應用EGSYS評分系統評估心因性暈厥風險',
+                            '掌握暈厥與癲癇的臨床鑑別要點'
+                        ].map((t, i) => (
+                            <div key={i} style={{ display: 'flex', gap: 12, marginBottom: 10, fontSize: 14 }}>
+                                <span style={{ 
+                                    background: 'linear-gradient(135deg, var(--suc), #20C997)', 
+                                    color: '#fff', 
+                                    borderRadius: 8, 
+                                    width: 26, 
+                                    height: 26, 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    fontSize: 13, 
+                                    flexShrink: 0,
+                                    fontWeight: 600
+                                }}>{i + 1}</span>
+                                <span style={{ color: 'var(--txt2)', lineHeight: 1.6 }}>{t}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="danger" style={{ marginBottom: 20 }}>
+                        <strong style={{ color: 'var(--pri)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            ⚠️ 臨床重要性
+                        </strong>
+                        <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 8, lineHeight: 1.7 }}>
+                            心因性暈厥可能源自心律不整或結構性心臟病，具有較高的死亡風險。準確區分心因性與非心因性暈厥對於決定後續處置至關重要。
+                        </p>
+                    </div>
+
+                    <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: 'var(--sec2)' }}>📚 課程內容</h3>
+                    {lessons.map(l => (
+                        <div 
+                            key={l.id} 
+                            className="card" 
+                            onClick={() => { setLessonId(l.id); setPage('lesson'); }} 
+                            style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                <div style={{ 
+                                    width: 52, 
+                                    height: 52, 
+                                    borderRadius: 14, 
+                                    background: `linear-gradient(135deg, ${l.color}, ${l.color}99)`, 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    color: '#fff', 
+                                    fontWeight: 700,
+                                    fontSize: 18,
+                                    boxShadow: `0 4px 12px ${l.color}33`
+                                }}>{l.id}</div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: 11, color: l.color, fontWeight: 600, marginBottom: 2 }}>Lesson {l.id}</div>
+                                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--txt)' }}>{l.title}</div>
+                                    <div style={{ fontSize: 13, color: 'var(--txt2)' }}>{l.sub}</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" fill={l.color} width="22" height="22">
+                                    <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/>
+                                </svg>
+                            </div>
+                        </div>
+                    ))}
+                    
+                    <button 
+                        className="btn btn-pri" 
+                        onClick={() => { setQIdx(0); setScore(0); setSel(null); setShow(false); setDone(false); setPage('quiz'); }} 
+                        style={{ width: '100%', justifyContent: 'center', marginTop: 24, marginBottom: 16, padding: '16px 24px' }}
+                    >
+                        📝 開始測驗 (10題)
+                    </button>
+
+                    <a 
+                        href="https://jamanetwork.com/journals/jama/article-abstract/2736576"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 8,
+                            padding: '14px 20px',
+                            background: 'linear-gradient(135deg, #F8F9FA, #E9ECEF)',
+                            borderRadius: 14,
+                            textDecoration: 'none',
+                            color: 'var(--sec)',
+                            fontSize: 14,
+                            fontWeight: 600,
+                            marginBottom: 32,
+                            border: '1px solid rgba(69, 123, 157, 0.2)'
+                        }}
+                    >
+                        📄 閱讀原文 (JAMA 2019)
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                            <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            
+            <footer style={{ background: 'linear-gradient(135deg, #FEF3E9, #FDE8E0)', padding: '28px 16px', textAlign: 'center' }}>
+                <p style={{ fontSize: 13, color: 'var(--txt2)', fontWeight: 600 }}>新竹台大分院教學部</p>
+                <p style={{ fontSize: 12, color: 'var(--txt2)', marginTop: 4 }}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+        </div>
+    );
+
+    // Lesson 1: Overview
+    const L1 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>🫀 什麼是暈厥？</h3>
+                <div className="formula">
+                    暈厥 (Syncope) = 腦部灌流不足 → 短暫意識喪失 + 自發性恢復
+                </div>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', lineHeight: 1.8 }}>
+                    暈厥是由於全腦血流灌注減少所導致的短暫意識喪失，特點是發作突然、持續時間短、且能自發性完全恢復。
+                </p>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>📊 暈厥的病因分類</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>類型</th>
+                            <th>盛行率</th>
+                            <th>機轉</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{ fontWeight: 600, color: 'var(--pri)' }}>心因性暈厥</td>
+                            <td>5-21%</td>
+                            <td>心輸出量急遽下降</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600, color: 'var(--suc)' }}>血管迷走性暈厥</td>
+                            <td>21-48%</td>
+                            <td>中樞介導的反射</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600, color: 'var(--sec)' }}>姿態性低血壓</td>
+                            <td>4-24%</td>
+                            <td>自主神經功能異常</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600, color: '#6B7280' }}>原因不明</td>
+                            <td>17-37%</td>
+                            <td>—</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="danger">
+                <strong style={{ color: 'var(--pri)' }}>⚠️ 心因性暈厥的危險性</strong>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 8, lineHeight: 1.7 }}>
+                    心因性暈厥可能由以下原因引起：<br/>
+                    • <strong>心律不整</strong>：心室頻脈、心房顫動、傳導阻滯<br/>
+                    • <strong>結構性心臟病</strong>：主動脈狹窄、肥厚性心肌病變<br/>
+                    • <strong>肺栓塞</strong>：急性右心衰竭
+                </p>
+            </div>
+
+            <div className="good">
+                <strong style={{ color: 'var(--suc)' }}>💚 反射性暈厥的機轉</strong>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 8, lineHeight: 1.7 }}>
+                    <strong>觸發因素：</strong>久站、疼痛、情緒刺激、頸動脈竇壓迫<br/>
+                    <strong>反射弧：</strong>迷走神經張力↑ + 交感神經張力↓<br/>
+                    <strong>結果：</strong>心率↓ + 血管擴張 → 血壓↓ → 腦灌流不足
+                </p>
+            </div>
+
+            <div className="info">
+                <strong style={{ color: 'var(--sec)' }}>📈 流行病學</strong>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 8, lineHeight: 1.7 }}>
+                    • 成人暈厥年發生率：約 0.6%<br/>
+                    • 老年人年發生率：2-6%<br/>
+                    • 暈厥終生盛行率：18-47%<br/>
+                    • 暈厥比癲癇更常見（癲癇年發生率僅 0.05%）
+                </p>
+            </div>
+        </div>
+    );
+
+    // Lesson 2: Cardiac Syncope Features
+    const L2 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>🔍 提高心因性暈厥可能性的特徵</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>臨床特徵</th>
+                            <th>LR+</th>
+                            <th>解讀</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#FDECEA' }}>
+                            <td>心房顫動/撲動病史</td>
+                            <td style={{ color: 'var(--pri)', fontWeight: 700 }}>7.3</td>
+                            <td>強力提示</td>
+                        </tr>
+                        <tr style={{ background: '#FDECEA' }}>
+                            <td>發作時發紺 (cyanosis)</td>
+                            <td style={{ color: 'var(--pri)', fontWeight: 700 }}>6.2</td>
+                            <td>強力提示</td>
+                        </tr>
+                        <tr>
+                            <td>嚴重結構性心臟病</td>
+                            <td style={{ fontWeight: 600 }}>3.3-4.8</td>
+                            <td>中度提示</td>
+                        </tr>
+                        <tr>
+                            <td>發作前呼吸困難</td>
+                            <td style={{ fontWeight: 600 }}>3.5</td>
+                            <td>中度提示</td>
+                        </tr>
+                        <tr>
+                            <td>發作前胸痛</td>
+                            <td style={{ fontWeight: 600 }}>3.4-3.8</td>
+                            <td>中度提示</td>
+                        </tr>
+                        <tr>
+                            <td>≥35歲首次發作</td>
+                            <td style={{ fontWeight: 600 }}>3.3</td>
+                            <td>中度提示</td>
+                        </tr>
+                        <tr>
+                            <td>心衰竭病史</td>
+                            <td style={{ fontWeight: 600 }}>2.7-3.4</td>
+                            <td>弱至中度</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--suc)', marginBottom: 14 }}>✅ 降低心因性暈厥可能性的特徵</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>臨床特徵</th>
+                            <th>LR-</th>
+                            <th>排除效力</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#E8F5F3' }}>
+                            <td>發作前情緒改變/專注細節</td>
+                            <td style={{ color: 'var(--suc)', fontWeight: 700 }}>0.09</td>
+                            <td>強力排除</td>
+                        </tr>
+                        <tr style={{ background: '#E8F5F3' }}>
+                            <td>&lt;35歲首次發作</td>
+                            <td style={{ color: 'var(--suc)', fontWeight: 700 }}>0.13</td>
+                            <td>強力排除</td>
+                        </tr>
+                        <tr>
+                            <td>發作前感覺冷</td>
+                            <td style={{ fontWeight: 600 }}>0.16</td>
+                            <td>中度排除</td>
+                        </tr>
+                        <tr>
+                            <td>發作前頭痛</td>
+                            <td style={{ fontWeight: 600 }}>0.17</td>
+                            <td>中度排除</td>
+                        </tr>
+                        <tr>
+                            <td>發作後情緒改變</td>
+                            <td style={{ fontWeight: 600 }}>0.21</td>
+                            <td>中度排除</td>
+                        </tr>
+                        <tr>
+                            <td>無法回憶發作前行為</td>
+                            <td style={{ fontWeight: 600 }}>0.25</td>
+                            <td>弱至中度</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="tip">
+                <strong style={{ color: '#B8860B' }}>💡 LR解讀口訣</strong>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 8, lineHeight: 1.8 }}>
+                    • LR+ &gt; 10 或 LR- &lt; 0.1：<strong>強力</strong>改變診斷機率<br/>
+                    • LR+ 5-10 或 LR- 0.1-0.2：<strong>中度</strong>改變診斷機率<br/>
+                    • LR+ 2-5 或 LR- 0.2-0.5：<strong>輕微</strong>改變診斷機率<br/>
+                    • LR+ 1-2 或 LR- 0.5-1：幾乎不改變診斷機率
+                </p>
+            </div>
+        </div>
+    );
+
+    // Lesson 3: History & Physical
+    const L3 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--suc)', marginBottom: 14 }}>📋 病史詢問重點</h3>
+                
+                <div style={{ marginBottom: 16 }}>
+                    <h4 style={{ fontSize: 15, fontWeight: 600, color: 'var(--pri)', marginBottom: 8 }}>🔴 發作前 (Before)</h4>
+                    <div style={{ background: '#F8F9FA', padding: 12, borderRadius: 10, fontSize: 14, lineHeight: 1.8 }}>
+                        <strong>情境因素：</strong><br/>
+                        • 姿勢（站立、坐著、躺著）<br/>
+                        • 活動（休息、運動中、排尿後）<br/>
+                        • 誘發因素（溫暖環境、疼痛、情緒壓力）<br/><br/>
+                        <strong>前驅症狀：</strong><br/>
+                        • 心悸、胸痛、呼吸困難 → 心因性<br/>
+                        • 噁心、冒汗、溫暖感 → 反射性
+                    </div>
+                </div>
+
+                <div style={{ marginBottom: 16 }}>
+                    <h4 style={{ fontSize: 15, fontWeight: 600, color: 'var(--sec)', marginBottom: 8 }}>🔵 發作中 (During)</h4>
+                    <div style={{ background: '#F8F9FA', padding: 12, borderRadius: 10, fontSize: 14, lineHeight: 1.8 }}>
+                        <strong>目擊者描述非常重要：</strong><br/>
+                        • 發紺 (cyanosis) → 心因性<br/>
+                        • 抽搐動作（短暫 &lt;15秒）→ 暈厥也可有<br/>
+                        • 持續性肢體僵直抽搐 → 癲癇
+                    </div>
+                </div>
+
+                <div>
+                    <h4 style={{ fontSize: 15, fontWeight: 600, color: 'var(--suc)', marginBottom: 8 }}>🟢 發作後 (After)</h4>
+                    <div style={{ background: '#F8F9FA', padding: 12, borderRadius: 10, fontSize: 14, lineHeight: 1.8 }}>
+                        • 快速恢復清醒 → 暈厥<br/>
+                        • 持續意識混亂（postictal）→ 癲癇<br/>
+                        • 情緒改變 → 反射性暈厥
+                    </div>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>🩺 理學檢查重點</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>檢查項目</th>
+                            <th>異常發現</th>
+                            <th>可能診斷</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>姿態性血壓</td>
+                            <td>站立後SBP↓≥20mmHg</td>
+                            <td>姿態性低血壓</td>
+                        </tr>
+                        <tr>
+                            <td>心臟聽診</td>
+                            <td>收縮期雜音</td>
+                            <td>主動脈狹窄、HOCM</td>
+                        </tr>
+                        <tr>
+                            <td>心律</td>
+                            <td>不規則脈搏</td>
+                            <td>心房顫動</td>
+                        </tr>
+                        <tr>
+                            <td>舌頭檢查</td>
+                            <td>咬傷</td>
+                            <td>癲癇（LR+=17）</td>
+                        </tr>
+                        <tr>
+                            <td>頸動脈聽診</td>
+                            <td>雜音</td>
+                            <td>頸動脈狹窄</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="good">
+                <strong style={{ color: 'var(--suc)' }}>💡 臨床要點</strong>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 8, lineHeight: 1.8 }}>
+                    <strong>「無心臟病史 + 正常心電圖」</strong> 時心因性暈厥可能性低<br/>
+                    LR- = 0.20（可有效降低心因性暈厥機率）
+                </p>
+            </div>
+
+            <div className="info">
+                <strong style={{ color: 'var(--sec)' }}>📊 心電圖異常定義</strong>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 8, lineHeight: 1.7 }}>
+                    • 心跳 &lt; 40次/分<br/>
+                    • 竇性停止 &gt; 3秒<br/>
+                    • QT間期延長 ≥ 440ms<br/>
+                    • 二度或三度房室傳導阻滯<br/>
+                    • 束支傳導阻滯或ST變化
+                </p>
+            </div>
+        </div>
+    );
+
+    // Lesson 4: EGSYS Score
+    const L4 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>📊 EGSYS 評分系統</h3>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginBottom: 16, lineHeight: 1.7 }}>
+                    EGSYS (Evaluation of Guidelines in Syncope Study) 是一個經過驗證的多變項評分工具，用於評估心因性暈厥的可能性。
+                </p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th style={{ width: '70%' }}>臨床變項</th>
+                            <th style={{ textAlign: 'center' }}>分數</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#FDECEA' }}>
+                            <td style={{ fontWeight: 600 }}>心悸 (Palpitations)</td>
+                            <td style={{ textAlign: 'center', color: 'var(--pri)', fontWeight: 700, fontSize: 16 }}>+4</td>
+                        </tr>
+                        <tr style={{ background: '#FDECEA' }}>
+                            <td style={{ fontWeight: 600 }}>異常心電圖 / 心臟疾病</td>
+                            <td style={{ textAlign: 'center', color: 'var(--pri)', fontWeight: 700, fontSize: 16 }}>+3</td>
+                        </tr>
+                        <tr style={{ background: '#FDECEA' }}>
+                            <td style={{ fontWeight: 600 }}>運動中發作 (Effort syncope)</td>
+                            <td style={{ textAlign: 'center', color: 'var(--pri)', fontWeight: 700, fontSize: 16 }}>+3</td>
+                        </tr>
+                        <tr style={{ background: '#FEF3E9' }}>
+                            <td style={{ fontWeight: 600 }}>平躺時發作 (Supine position)</td>
+                            <td style={{ textAlign: 'center', color: '#F4A261', fontWeight: 700, fontSize: 16 }}>+2</td>
+                        </tr>
+                        <tr style={{ background: '#E8F5F3' }}>
+                            <td style={{ fontWeight: 600 }}>神經自主前驅症狀*</td>
+                            <td style={{ textAlign: 'center', color: 'var(--suc)', fontWeight: 700, fontSize: 16 }}>-1</td>
+                        </tr>
+                        <tr style={{ background: '#E8F5F3' }}>
+                            <td style={{ fontWeight: 600 }}>誘發/促發因素**</td>
+                            <td style={{ textAlign: 'center', color: 'var(--suc)', fontWeight: 700, fontSize: 16 }}>-1</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div style={{ fontSize: 12, color: 'var(--txt2)', marginTop: 12, lineHeight: 1.7 }}>
+                    * 噁心、嘔吐、腹部不適、冷感、冒汗、頭暈、視力模糊<br/>
+                    ** 溫暖環境、久站、餐後、疼痛、頸部轉動等
+                </div>
+            </div>
+
+            <div className="card" style={{ background: 'linear-gradient(135deg, #FEF3E9, #FDE8E0)' }}>
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>🎯 EGSYS 分數解讀</h3>
+                <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+                    <div style={{ 
+                        flex: 1, 
+                        background: '#fff', 
+                        padding: 16, 
+                        borderRadius: 12, 
+                        textAlign: 'center',
+                        border: '2px solid var(--suc)'
+                    }}>
+                        <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--suc)' }}>&lt; 3</div>
+                        <div style={{ fontSize: 13, color: 'var(--txt2)', marginTop: 4 }}>心因性可能低</div>
+                        <div style={{ fontSize: 12, color: 'var(--suc)', fontWeight: 600, marginTop: 4 }}>LR- = 0.12-0.17</div>
+                    </div>
+                    <div style={{ 
+                        flex: 1, 
+                        background: '#fff', 
+                        padding: 16, 
+                        borderRadius: 12, 
+                        textAlign: 'center',
+                        border: '2px solid var(--pri)'
+                    }}>
+                        <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--pri)' }}>≥ 3</div>
+                        <div style={{ fontSize: 13, color: 'var(--txt2)', marginTop: 4 }}>心因性可能高</div>
+                        <div style={{ fontSize: 12, color: 'var(--pri)', fontWeight: 600, marginTop: 4 }}>LR+ = 2.8-3.3</div>
+                    </div>
+                </div>
+                
+                <div className="formula" style={{ background: '#fff' }}>
+                    EGSYS ≥ 3 → 敏感度 89-91% | 特異度 69-73%
+                </div>
+            </div>
+
+            <div className="tip">
+                <strong style={{ color: '#B8860B' }}>💡 臨床應用提示</strong>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 8, lineHeight: 1.8 }}>
+                    • EGSYS &lt; 3 可以幫助<strong>排除</strong>心因性暈厥<br/>
+                    • EGSYS ≥ 3 需要進一步心臟評估<br/>
+                    • 評分系統應與臨床判斷結合使用<br/>
+                    • 無法取代必要的心電圖和心臟監測
+                </p>
+            </div>
+
+            <div className="good">
+                <strong style={{ color: 'var(--suc)' }}>✅ 案例應用</strong>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 8, lineHeight: 1.8 }}>
+                    70歲女性，坐著吃早餐時感到噁心、溫暖後暈厥...<br/><br/>
+                    <strong>EGSYS計算：</strong><br/>
+                    • 無心悸 (0分)<br/>
+                    • 心電圖正常 (0分)<br/>
+                    • 非運動中發作 (0分)<br/>
+                    • 非平躺時發作 (0分)<br/>
+                    • 有神經自主前驅症狀 (-1分)<br/><br/>
+                    <strong>總分 = -1 分 → 心因性暈厥可能性低</strong>
+                </p>
+            </div>
+        </div>
+    );
+
+    // Lesson 5: Syncope vs Seizure
+    const L5 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--warn)', marginBottom: 14 }}>⚡ 暈厥 vs 癲癇：鑑別要點</h3>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginBottom: 16, lineHeight: 1.7 }}>
+                    暈厥和癲癇都可能表現為突然意識喪失，但治療和預後截然不同。以下是關鍵鑑別特徵。
+                </p>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>🔴 支持「癲癇」的特徵</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>臨床特徵</th>
+                            <th>LR+ (癲癇)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#FDECEA' }}>
+                            <td style={{ fontWeight: 600 }}>咬傷舌頭 (Cut tongue)</td>
+                            <td style={{ color: 'var(--pri)', fontWeight: 700 }}>17</td>
+                        </tr>
+                        <tr style={{ background: '#FDECEA' }}>
+                            <td style={{ fontWeight: 600 }}>頭部轉向一側</td>
+                            <td style={{ color: 'var(--pri)', fontWeight: 700 }}>14</td>
+                        </tr>
+                        <tr style={{ background: '#FDECEA' }}>
+                            <td style={{ fontWeight: 600 }}>異常姿勢</td>
+                            <td style={{ color: 'var(--pri)', fontWeight: 700 }}>13</td>
+                        </tr>
+                        <tr>
+                            <td>尿失禁</td>
+                            <td style={{ fontWeight: 600 }}>6.7</td>
+                        </tr>
+                        <tr>
+                            <td>目擊者見發紺</td>
+                            <td style={{ fontWeight: 600 }}>5.8</td>
+                        </tr>
+                        <tr>
+                            <td>肢體抽動</td>
+                            <td style={{ fontWeight: 600 }}>5.6</td>
+                        </tr>
+                        <tr>
+                            <td>無法回憶發作前行為</td>
+                            <td style={{ fontWeight: 600 }}>4.0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--suc)', marginBottom: 14 }}>🟢 支持「暈厥」的特徵</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>臨床特徵</th>
+                            <th>LR+ (暈厥)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#E8F5F3' }}>
+                            <td style={{ fontWeight: 600 }}>久站或久坐後發作</td>
+                            <td style={{ color: 'var(--suc)', fontWeight: 700 }}>20</td>
+                        </tr>
+                        <tr style={{ background: '#E8F5F3' }}>
+                            <td style={{ fontWeight: 600 }}>發作前呼吸困難</td>
+                            <td style={{ color: 'var(--suc)', fontWeight: 700 }}>13</td>
+                        </tr>
+                        <tr style={{ background: '#E8F5F3' }}>
+                            <td style={{ fontWeight: 600 }}>有冠狀動脈疾病</td>
+                            <td style={{ color: 'var(--suc)', fontWeight: 700 }}>13</td>
+                        </tr>
+                        <tr>
+                            <td>發作前心悸</td>
+                            <td style={{ fontWeight: 600 }}>8.3</td>
+                        </tr>
+                        <tr>
+                            <td>發作前胸痛</td>
+                            <td style={{ fontWeight: 600 }}>6.7</td>
+                        </tr>
+                        <tr>
+                            <td>發作前冒汗</td>
+                            <td style={{ fontWeight: 600 }}>5.9</td>
+                        </tr>
+                        <tr>
+                            <td>有任何前驅症狀</td>
+                            <td style={{ fontWeight: 600 }}>3.7</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="card" style={{ background: 'linear-gradient(135deg, #FFF9E6, #FEF3CD)' }}>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#B8860B', marginBottom: 14 }}>📊 癲癇 vs 暈厥 臨床預測評分</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>症狀</th>
+                            <th style={{ textAlign: 'center' }}>分數</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>醒來時發現咬傷舌頭</td>
+                            <td style={{ textAlign: 'center', fontWeight: 600 }}>+2</td>
+                        </tr>
+                        <tr>
+                            <td>異常行為 (失憶、無反應、姿勢異常、抽動)</td>
+                            <td style={{ textAlign: 'center', fontWeight: 600 }}>+1</td>
+                        </tr>
+                        <tr>
+                            <td>情緒壓力下意識喪失</td>
+                            <td style={{ textAlign: 'center', fontWeight: 600 }}>+1</td>
+                        </tr>
+                        <tr>
+                            <td>發作後意識混亂</td>
+                            <td style={{ textAlign: 'center', fontWeight: 600 }}>+1</td>
+                        </tr>
+                        <tr>
+                            <td>頭部轉向一側</td>
+                            <td style={{ textAlign: 'center', fontWeight: 600 }}>+1</td>
+                        </tr>
+                        <tr>
+                            <td>前驅症狀：似曾相識 (déjà vu) 或陌生感</td>
+                            <td style={{ textAlign: 'center', fontWeight: 600 }}>+1</td>
+                        </tr>
+                        <tr style={{ background: '#E8F5F3' }}>
+                            <td>有任何前驅症狀</td>
+                            <td style={{ textAlign: 'center', color: 'var(--suc)', fontWeight: 600 }}>-2</td>
+                        </tr>
+                        <tr style={{ background: '#E8F5F3' }}>
+                            <td>久站或久坐後意識喪失</td>
+                            <td style={{ textAlign: 'center', color: 'var(--suc)', fontWeight: 600 }}>-2</td>
+                        </tr>
+                        <tr style={{ background: '#E8F5F3' }}>
+                            <td>發作前冒汗</td>
+                            <td style={{ textAlign: 'center', color: 'var(--suc)', fontWeight: 600 }}>-2</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div className="formula" style={{ marginTop: 16 }}>
+                    分數 ≥ 1：傾向癲癇 | 分數 &lt; 1：傾向暈厥
+                </div>
+            </div>
+
+            <div className="info">
+                <strong style={{ color: 'var(--sec)' }}>📌 重要提醒</strong>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 8, lineHeight: 1.8 }}>
+                    <strong>暈厥也可能有短暫抽動！</strong><br/>
+                    • 通常發生在意識喪失時或之後10秒內<br/>
+                    • 持續時間通常少於15秒<br/>
+                    • 不對稱的肌陣攣或強直-陣攣動作<br/>
+                    • 與癲癇不同，不會發生在意識喪失之前
+                </p>
+            </div>
+        </div>
+    );
+
+    const Lesson = () => {
+        const l = lessons.find(x => x.id === lessonId);
+        return (
+            <div className="fade-in">
+                <Header title={l.title} />
+                <div style={{ 
+                    background: `linear-gradient(135deg, ${l.color}, ${l.color}99)`, 
+                    padding: '24px 20px', 
+                    color: '#fff' 
+                }}>
+                    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                        <div style={{ fontSize: 12, opacity: 0.9, marginBottom: 4 }}>Lesson {l.id} • {l.sub}</div>
+                        <h1 style={{ fontSize: 22, fontWeight: 700 }}>{l.title}</h1>
+                    </div>
+                </div>
+                <div style={{ padding: '20px 16px' }}>
+                    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                        {lessonId === 1 && <L1 />}
+                        {lessonId === 2 && <L2 />}
+                        {lessonId === 3 && <L3 />}
+                        {lessonId === 4 && <L4 />}
+                        {lessonId === 5 && <L5 />}
+                        <div style={{ display: 'flex', gap: 12, marginTop: 28 }}>
+                            {lessonId > 1 && (
+                                <button 
+                                    className="btn" 
+                                    style={{ flex: 1, background: '#fff', border: '2px solid var(--pri)', color: 'var(--pri)' }} 
+                                    onClick={() => setLessonId(lessonId - 1)}
+                                >
+                                    ← 上一課
+                                </button>
+                            )}
+                            {lessonId < 5 ? (
+                                <button className="btn btn-pri" style={{ flex: 1 }} onClick={() => setLessonId(lessonId + 1)}>
+                                    下一課 →
+                                </button>
+                            ) : (
+                                <button 
+                                    className="btn btn-sec" 
+                                    style={{ flex: 1 }} 
+                                    onClick={() => { setQIdx(0); setScore(0); setSel(null); setShow(false); setDone(false); setPage('quiz'); }}
+                                >
+                                    開始測驗 📝
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const Quiz = () => {
+        const pick = (i) => {
+            if (show) return;
+            setSel(i);
+            setShow(true);
+            if (i === quiz[qIdx].c) setScore(score + 1);
+        };
+        
+        const next = () => {
+            if (qIdx < quiz.length - 1) {
+                setQIdx(qIdx + 1);
+                setSel(null);
+                setShow(false);
+            } else {
+                setDone(true);
+            }
+        };
+
+        if (done) {
+            const pct = Math.round((score / quiz.length) * 100);
+            return (
+                <div className="fade-in">
+                    <Header title="測驗結果" />
+                    <div style={{ padding: '48px 16px', textAlign: 'center' }}>
+                        <div style={{ 
+                            width: 150, 
+                            height: 150, 
+                            borderRadius: '50%', 
+                            background: `conic-gradient(${pct >= 80 ? 'var(--suc)' : pct >= 60 ? 'var(--warn)' : 'var(--pri)'} ${pct * 3.6}deg, #E5E5E5 0deg)`, 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            margin: '0 auto 28px',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+                        }}>
+                            <div style={{ 
+                                width: 126, 
+                                height: 126, 
+                                borderRadius: '50%', 
+                                background: '#fff', 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                alignItems: 'center', 
+                                justifyContent: 'center' 
+                            }}>
+                                <div style={{ fontSize: 40, fontWeight: 700, color: 'var(--txt)' }}>{pct}%</div>
+                                <div style={{ fontSize: 15, color: 'var(--txt2)' }}>{score}/{quiz.length}</div>
+                            </div>
+                        </div>
+                        <h2 style={{ fontSize: 26, fontWeight: 700, marginBottom: 10 }}>
+                            {pct >= 80 ? '🎉 優秀！' : pct >= 60 ? '👍 不錯！' : '💪 加油！'}
+                        </h2>
+                        <p style={{ color: 'var(--txt2)', marginBottom: 36, fontSize: 15 }}>
+                            {pct >= 80 ? '你對暈厥的臨床診斷掌握良好！' : pct >= 60 ? '再複習可以更進步！' : '建議重新閱讀課程內容'}
+                        </p>
+                        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <button className="btn btn-pri" onClick={() => { setQIdx(0); setScore(0); setSel(null); setShow(false); setDone(false); }}>
+                                重新測驗
+                            </button>
+                            <button className="btn" style={{ background: '#fff', border: '2px solid var(--pri)', color: 'var(--pri)' }} onClick={() => setPage('home')}>
+                                返回課程
+                            </button>
+                        </div>
+                    </div>
+                    <footer style={{ background: 'linear-gradient(135deg, #FEF3E9, #FDE8E0)', padding: '28px 16px', textAlign: 'center', marginTop: 48 }}>
+                        <p style={{ fontSize: 12, color: 'var(--txt2)' }}>新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        const q = quiz[qIdx];
+        return (
+            <div className="fade-in">
+                <Header title="自我測驗" />
+                <div style={{ padding: '20px 16px' }}>
+                    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: 14 }}>
+                            <span style={{ color: 'var(--txt2)' }}>進度</span>
+                            <span style={{ fontWeight: 600, color: 'var(--pri)' }}>{qIdx + 1}/{quiz.length}</span>
+                        </div>
+                        <div style={{ height: 10, background: '#E5E5E5', borderRadius: 5, marginBottom: 24, overflow: 'hidden' }}>
+                            <div style={{ 
+                                height: '100%', 
+                                width: `${((qIdx + 1) / quiz.length) * 100}%`, 
+                                background: 'linear-gradient(90deg, var(--pri), var(--pri2))', 
+                                borderRadius: 5, 
+                                transition: 'width 0.4s ease' 
+                            }} />
+                        </div>
+                        <div className="card">
+                            <h3 style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.7, marginBottom: 22, color: 'var(--txt)' }}>{q.q}</h3>
+                            {q.o.map((opt, i) => {
+                                let bg = '#fff', bd = '#E5E5E5';
+                                if (show) {
+                                    if (i === q.c) { bg = '#E8F5F3'; bd = 'var(--suc)'; }
+                                    else if (i === sel) { bg = '#FDECEA'; bd = 'var(--pri)'; }
+                                } else if (i === sel) { bg = '#FEF3E9'; bd = 'var(--pri)'; }
+                                return (
+                                    <button 
+                                        key={i} 
+                                        onClick={() => pick(i)} 
+                                        disabled={show} 
+                                        style={{ 
+                                            width: '100%', 
+                                            padding: '14px 16px', 
+                                            marginBottom: 12, 
+                                            background: bg, 
+                                            border: `2px solid ${bd}`, 
+                                            borderRadius: 14, 
+                                            textAlign: 'left', 
+                                            fontSize: 14, 
+                                            cursor: show ? 'default' : 'pointer', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: 14,
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                    >
+                                        <span style={{ 
+                                            width: 30, 
+                                            height: 30, 
+                                            borderRadius: 10, 
+                                            background: show && i === q.c ? 'var(--suc)' : show && i === sel ? 'var(--pri)' : 'linear-gradient(135deg, #FEF3E9, #FDE8E0)', 
+                                            color: show && (i === q.c || i === sel) ? '#fff' : 'var(--pri)', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center', 
+                                            fontWeight: 700, 
+                                            fontSize: 14, 
+                                            flexShrink: 0 
+                                        }}>
+                                            {show && i === q.c ? '✓' : show && i === sel && i !== q.c ? '✗' : String.fromCharCode(65 + i)}
+                                        </span>
+                                        <span style={{ lineHeight: 1.6, color: 'var(--txt)' }}>{opt}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {show && (
+                            <div className={sel === q.c ? 'good' : 'tip'}>
+                                <strong style={{ color: sel === q.c ? 'var(--suc)' : '#B8860B' }}>
+                                    {sel === q.c ? '✓ 正確！' : '✗ 答錯了'}
+                                </strong>
+                                <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 10, lineHeight: 1.8 }}>{q.e}</p>
+                            </div>
+                        )}
+                        {show && (
+                            <button className="btn btn-pri" style={{ width: '100%', justifyContent: 'center', marginTop: 20 }} onClick={next}>
+                                {qIdx < quiz.length - 1 ? '下一題 →' : '查看結果'}
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div style={{ maxWidth: '100%', minHeight: '100vh', background: 'var(--bg)' }}>
+            {page === 'home' ? <Home /> : page === 'lesson' ? <Lesson /> : <Quiz />}
+        </div>
+    );
+};
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>

@@ -106,6 +106,28 @@ const App=()=>{
                     <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>📑 JAMA 系列文章</h3>
                     <p style={{fontSize:13,color:'var(--txt2)',marginBottom:16}}>點擊進入各主題的深入學習模組</p>
                     
+                    {/* 暈厥診斷模組 - NEW */}
+                    <a href="jama-syncope.html" style={{textDecoration:'none'}}>
+                        <div className="card" style={{cursor:'pointer',border:'2px solid #7209B7',background:'linear-gradient(135deg,#F3E5F5,#FFF)'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:16}}>
+                                <div style={{width:56,height:56,borderRadius:14,background:'linear-gradient(135deg,#7209B7,#B5179E)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:24}}>
+                                    🫀
+                                </div>
+                                <div style={{flex:1}}>
+                                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                                        <span style={{background:'linear-gradient(135deg,#7209B7,#B5179E)',color:'#fff',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>🆕 NEW</span>
+                                        <span style={{fontSize:11,color:'#7209B7',fontWeight:600}}>JAMA 2019</span>
+                                    </div>
+                                    <div style={{fontSize:16,fontWeight:700,color:'var(--txt)'}}>暈厥的臨床診斷</div>
+                                    <div style={{fontSize:13,color:'var(--txt2)'}}>Did This Patient Have Cardiac Syncope?</div>
+                                    <div style={{fontSize:11,color:'var(--txt2)',marginTop:4}}>Puppala VK, et al. JAMA 2019;321(24):2448-2457</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" fill="#7209B7" width="20" height="20"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/></svg>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    {/* 高血壓診斷模組 */}
                     <a href="jama-hypertension.html" style={{textDecoration:'none'}}>
                         <div className="card" style={{cursor:'pointer',border:'2px solid #E63946',background:'linear-gradient(135deg,#FFF5F5,#FFF)'}}>
                             <div style={{display:'flex',alignItems:'center',gap:16}}>
@@ -114,7 +136,7 @@ const App=()=>{
                                 </div>
                                 <div style={{flex:1}}>
                                     <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                                        <span style={{background:'linear-gradient(135deg,#E63946,#F4A261)',color:'#fff',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>🆕 NEW</span>
+                                        <span style={{background:'linear-gradient(135deg,#2EC4B6,#06D6A0)',color:'#fff',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>✓ 已上線</span>
                                         <span style={{fontSize:11,color:'#E63946',fontWeight:600}}>JAMA 2021</span>
                                     </div>
                                     <div style={{fontSize:16,fontWeight:700,color:'var(--txt)'}}>高血壓診斷評估</div>
