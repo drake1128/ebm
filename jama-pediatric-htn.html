@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>兒童繼發性高血壓診斷 | JAMA Rational Clinical Examination</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--pri:#5B8C5A;--pri2:#7CB342;--acc:#FF8F00;--suc:#26A69A;--warn:#FFC107;--err:#EF5350;--pur:#7E57C2;--blue:#42A5F5;--pink:#EC407A;--bg:#FAFCFA;--txt:#1A2E1A;--txt2:#6B7280}
+        body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+        .container{max-width:480px;margin:0 auto}
+        .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(91,140,90,0.1)}
+        .btn{padding:14px 24px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all 0.3s;width:100%}
+        .btn-pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}
+        .btn-acc{background:linear-gradient(135deg,var(--acc),#FFB300);color:#fff}
+        .btn-out{background:#fff;border:2px solid var(--pri);color:var(--pri)}
+        table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+        th,td{padding:10px;text-align:center;border-bottom:1px solid #eee}
+        th{background:#F0F7F0;font-weight:600;color:var(--pri)}
+        .formula{background:linear-gradient(135deg,#F0F7F0,#E8F5E9);border:2px solid var(--pri);border-radius:12px;padding:16px;margin:12px 0;text-align:center;font-size:17px;color:#2E5D2E}
+        .tip{background:#FFF8E1;border-left:4px solid var(--acc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .good{background:#E8F5E9;border-left:4px solid var(--suc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .info{background:#E3F2FD;border-left:4px solid var(--blue);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .warn{background:#FFF3E0;border-left:4px solid var(--warn);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .purple{background:#EDE7F6;border-left:4px solid var(--pur);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .pink{background:#FCE4EC;border-left:4px solid var(--pink);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .key-point{background:linear-gradient(135deg,#5B8C5A,#7CB342);color:#fff;border-radius:12px;padding:16px;margin:16px 0}
+        .lr-high{background:#C8E6C9;color:#2E7D32;padding:2px 8px;border-radius:4px;font-weight:600}
+        .lr-mod{background:#FFF9C4;color:#F57F17;padding:2px 8px;border-radius:4px;font-weight:600}
+        .lr-low{background:#FFCDD2;color:#C62828;padding:2px 8px;border-radius:4px;font-weight:600}
+        header{background:#fff;border-bottom:1px solid #eee;padding:12px 16px;position:sticky;top:0;z-index:10}
+        .header-inner{max-width:480px;margin:0 auto;display:flex;align-items:center;gap:12px}
+        .back-btn{background:#F0F7F0;border:none;border-radius:10px;width:40px;height:40px;cursor:pointer;color:var(--pri);display:flex;align-items:center;justify-content:center}
+        .hero{background:linear-gradient(135deg,#5B8C5A,#7CB342);padding:32px 20px;color:#fff}
+        .tag{background:rgba(255,255,255,0.2);display:inline-block;padding:6px 14px;border-radius:50px;font-size:12px;font-weight:600;margin-bottom:16px}
+        .badge-row{display:flex;gap:10px;flex-wrap:wrap}
+        .badge{background:rgba(255,255,255,0.2);padding:6px 12px;border-radius:20px;font-size:11px}
+        .content{padding:0 16px;margin-top:-20px}
+        .lesson-item{display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:8px;background:#F8FBF8;border-radius:12px;cursor:pointer;border:2px solid transparent;transition:border-color 0.2s}
+        .lesson-item:hover{border-color:var(--pri)}
+        .lesson-num{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+        .goal-item{display:flex;gap:10px;margin-bottom:8px;font-size:14px}
+        .goal-num{background:var(--suc);color:#fff;border-radius:6px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+        footer{background:#F0F7F0;padding:24px 16px;border-radius:16px;text-align:center;margin:20px 0 40px}
+        .page{display:none}
+        .page.active{display:block}
+        .lesson-header{padding:20px;color:#fff}
+        .lesson-content{padding:20px 16px}
+        .nav-buttons{display:flex;gap:12px;margin-top:24px}
+        .nav-buttons .btn{flex:1}
+        .progress-bar{height:8px;background:#E5E5E5;border-radius:4px;margin-bottom:20px}
+        .progress-fill{height:100%;background:linear-gradient(90deg,var(--pri),var(--pri2));border-radius:4px;transition:width 0.3s}
+        .quiz-option{width:100%;padding:12px 14px;margin-bottom:10px;background:#fff;border:2px solid #E5E5E5;border-radius:12px;text-align:left;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:12px}
+        .quiz-option:hover{border-color:var(--pri)}
+        .quiz-option.selected{background:#F0F7F0;border-color:var(--pri)}
+        .quiz-option.correct{background:#E8F5E9;border-color:var(--suc)}
+        .quiz-option.wrong{background:#FFEBEE;border-color:var(--err)}
+        .quiz-option.disabled{cursor:default}
+        .option-label{width:26px;height:26px;border-radius:8px;background:#F0F7F0;color:var(--pri);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+        .option-label.correct{background:var(--suc);color:#fff}
+        .option-label.wrong{background:var(--err);color:#fff}
+        .result-circle{width:140px;height:140px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px}
+        .result-inner{width:120px;height:120px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+        .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .stat-box{border-radius:12px;padding:16px;text-align:center}
+        .stat-box .label{font-size:11px;color:var(--txt2)}
+        .stat-box .value{font-size:20px;font-weight:700}
+    </style>
+</head>
+<body>
+    <!-- 首頁 -->
+    <div id="home" class="page active">
+        <header>
+            <div class="header-inner">
+                <button class="back-btn" onclick="location.href='jama-rational-exam.html'">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style="font-weight:700;color:#2E5D2E">兒童繼發性高血壓</span>
+            </div>
+        </header>
+        <div class="hero">
+            <div class="container">
+                <div class="tag">👶 JAMA Rational Clinical Examination</div>
+                <h1 style="font-size:22px;font-weight:700;margin-bottom:8px">Does This Child With High Blood Pressure Have Secondary Hypertension?</h1>
+                <h2 style="font-size:15px;font-weight:500;margin-bottom:12px;opacity:0.95">兒童及青少年繼發性高血壓的臨床診斷</h2>
+                <a href="https://jamanetwork.com/journals/jama/article-abstract/2802908" target="_blank" style="display:inline-block;background:rgba(255,255,255,0.25);padding:8px 16px;border-radius:8px;color:#fff;text-decoration:none;font-size:13px;margin-bottom:16px;transition:background 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.25)'">📄 JAMA 2023;329(12):1012-1021 ↗</a>
+                <div class="badge-row">
+                    <div class="badge">📊 N=4,210</div>
+                    <div class="badge">📚 30 Studies</div>
+                    <div class="badge">🎯 LR Analysis</div>
+                </div>
+            </div>
+        </div>
+        <div class="content">
+            <div class="container">
+                <div class="card">
+                    <h3 style="font-size:16px;font-weight:700;color:var(--pri);margin-bottom:12px">🎯 學習目標</h3>
+                    <div class="goal-item"><span class="goal-num">1</span><span style="color:var(--txt2)">了解兒童繼發性高血壓的盛行率</span></div>
+                    <div class="goal-item"><span class="goal-num">2</span><span style="color:var(--txt2)">掌握病史及身體檢查發現的似然比</span></div>
+                    <div class="goal-item"><span class="goal-num">3</span><span style="color:var(--txt2)">學會實驗室檢查的診斷價值</span></div>
+                    <div class="goal-item"><span class="goal-num">4</span><span style="color:var(--txt2)">理解ABPM在診斷中的角色</span></div>
+                    <div class="goal-item"><span class="goal-num">5</span><span style="color:var(--txt2)">臨床綜合判斷與決策應用</span></div>
+                </div>
+                <div class="card">
+                    <h3 style="font-size:16px;font-weight:700;color:var(--pri);margin-bottom:12px">📖 課程單元</h3>
+                    <div class="lesson-item" onclick="showLesson(1)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#5B8C5A,#5B8C5A88)">1</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">兒童高血壓概論</div><div style="font-size:12px;color:var(--txt2)">Primary vs Secondary HTN</div></div>
+                        <svg viewBox="0 0 24 24" fill="#5B8C5A" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="lesson-item" onclick="showLesson(2)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#7CB342,#7CB34288)">2</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">病史與危險因子</div><div style="font-size:12px;color:var(--txt2)">History & Risk Factors</div></div>
+                        <svg viewBox="0 0 24 24" fill="#7CB342" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="lesson-item" onclick="showLesson(3)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#42A5F5,#42A5F588)">3</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">實驗室檢查</div><div style="font-size:12px;color:var(--txt2)">Laboratory Studies</div></div>
+                        <svg viewBox="0 0 24 24" fill="#42A5F5" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="lesson-item" onclick="showLesson(4)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#7E57C2,#7E57C288)">4</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">動態血壓監測</div><div style="font-size:12px;color:var(--txt2)">ABPM Findings</div></div>
+                        <svg viewBox="0 0 24 24" fill="#7E57C2" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="lesson-item" onclick="showLesson(5)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#FF8F00,#FF8F0088)">5</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">臨床決策應用</div><div style="font-size:12px;color:var(--txt2)">Clinical Application</div></div>
+                        <svg viewBox="0 0 24 24" fill="#FF8F00" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                </div>
+                <button class="btn btn-acc" onclick="startQuiz()">📝 開始自我測驗</button>
+                <div class="card" style="background:linear-gradient(135deg,#E8F5E9,#F1F8E9);margin-top:16px">
+                    <h3 style="font-size:14px;font-weight:700;color:var(--pri);margin-bottom:8px">📌 臨床要點</h3>
+                    <p style="font-size:13px;color:var(--txt2);line-height:1.8">兒童高血壓評估需考量繼發性病因。年齡≤6歲、非肥胖、有繼發性高血壓家族史、微量白蛋白尿、低血清尿酸等發現提示繼發性高血壓的可能性較高。但沒有任何單一發現可以完全區分原發性與繼發性高血壓。</p>
+                </div>
+                <footer>
+                    <p style="font-size:12px;color:var(--txt2);margin-bottom:8px">新竹台大分院教學部</p>
+                    <p style="font-size:11px;color:var(--txt2)">謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    <p style="font-size:10px;color:var(--txt2);margin-top:8px">資料來源: JAMA 2023;329(12):1012-1021</p>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- 課程頁 -->
+    <div id="lesson" class="page">
+        <header>
+            <div class="header-inner">
+                <button class="back-btn" onclick="showHome()">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span id="lesson-title" style="font-weight:700;color:#2E5D2E"></span>
+            </div>
+        </header>
+        <div id="lesson-header" class="lesson-header"></div>
+        <div class="lesson-content">
+            <div class="container">
+                <div id="lesson-body"></div>
+                <div class="nav-buttons">
+                    <button id="prev-btn" class="btn btn-out" onclick="prevLesson()">← 上一課</button>
+                    <button id="next-btn" class="btn btn-pri" onclick="nextLesson()">下一課 →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 測驗頁 -->
+    <div id="quiz" class="page">
+        <header>
+            <div class="header-inner">
+                <button class="back-btn" onclick="showHome()">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style="font-weight:700;color:#2E5D2E">自我測驗</span>
+            </div>
+        </header>
+        <div style="padding:20px 16px">
+            <div class="container">
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px">
+                    <span style="color:var(--txt2)">進度</span>
+                    <span id="quiz-progress" style="font-weight:600;color:var(--pri)"></span>
+                </div>
+                <div class="progress-bar"><div id="quiz-progress-bar" class="progress-fill"></div></div>
+                <div id="quiz-content" class="card"></div>
+                <div id="quiz-feedback"></div>
+                <button id="quiz-next" class="btn btn-pri" style="display:none;margin-top:16px" onclick="nextQuestion()">下一題 →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 結果頁 -->
+    <div id="result" class="page">
+        <header>
+            <div class="header-inner">
+                <button class="back-btn" onclick="showHome()">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style="font-weight:700;color:#2E5D2E">測驗結果</span>
+            </div>
+        </header>
+        <div style="padding:40px 16px;text-align:center">
+            <div id="result-circle" class="result-circle">
+                <div class="result-inner">
+                    <div id="result-pct" style="font-size:36px;font-weight:700"></div>
+                    <div id="result-score" style="font-size:14px;color:var(--txt2)"></div>
+                </div>
+            </div>
+            <h2 id="result-title" style="font-size:24px;font-weight:700;margin-bottom:8px"></h2>
+            <p id="result-msg" style="color:var(--txt2);margin-bottom:32px"></p>
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                <button class="btn btn-pri" style="width:auto" onclick="startQuiz()">重新測驗</button>
+                <button class="btn btn-out" style="width:auto" onclick="showHome()">返回課程</button>
+            </div>
+        </div>
+        <footer style="margin-top:40px">
+            <p style="font-size:12px;color:var(--txt2)">新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+        </footer>
+    </div>
+
+<script>
+const lessons = [
+    {id:1, title:'兒童高血壓概論', sub:'Primary vs Secondary HTN', color:'#5B8C5A'},
+    {id:2, title:'病史與危險因子', sub:'History & Risk Factors', color:'#7CB342'},
+    {id:3, title:'實驗室檢查', sub:'Laboratory Studies', color:'#42A5F5'},
+    {id:4, title:'動態血壓監測', sub:'ABPM Findings', color:'#7E57C2'},
+    {id:5, title:'臨床決策應用', sub:'Clinical Application', color:'#FF8F00'}
+];
+
+const lessonContent = {
+    1: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 核心概念</h4><p style="font-size:13px">兒童高血壓可分為原發性 (Primary) 與繼發性 (Secondary)。繼發性高血壓有明確可辨識的病因，早期診斷可能改變治療方向。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 盛行率差異</h4>
+    <table><thead><tr><th>臨床場域</th><th>繼發性高血壓盛行率</th><th>95% CI</th></tr></thead>
+    <tbody><tr><td>基層醫療/學校篩檢</td><td style="font-weight:600">9%</td><td>4.5-15%</td></tr>
+    <tr><td>次專科門診</td><td style="font-weight:600;color:var(--err)">44%</td><td>36-53%</td></tr></tbody></table>
+    <div class="info"><strong>💡 轉介偏差 (Referral Bias)</strong><p style="font-size:13px;margin-top:6px">次專科門診的繼發性高血壓盛行率較高，反映了轉介患者通常有更複雜的病情或疑似繼發性原因。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🩺 常見繼發性原因</h4>
+    <div class="grid-2">
+        <div style="background:#E8F5E9;padding:12px;border-radius:10px"><div style="font-weight:600;color:var(--pri);margin-bottom:6px">腎臟疾病</div><div style="font-size:12px;color:var(--txt2)">• 腎實質疾病<br>• 腎血管疾病<br>• 腎發育異常</div></div>
+        <div style="background:#E3F2FD;padding:12px;border-radius:10px"><div style="font-weight:600;color:var(--blue);margin-bottom:6px">內分泌疾病</div><div style="font-size:12px;color:var(--txt2)">• 嗜鉻細胞瘤<br>• 庫欣症候群<br>• 甲狀腺疾病</div></div>
+        <div style="background:#EDE7F6;padding:12px;border-radius:10px"><div style="font-weight:600;color:var(--pur);margin-bottom:6px">心血管疾病</div><div style="font-size:12px;color:var(--txt2)">• 主動脈狹窄<br>• 血管炎</div></div>
+        <div style="background:#FFF3E0;padding:12px;border-radius:10px"><div style="font-weight:600;color:var(--acc);margin-bottom:6px">其他原因</div><div style="font-size:12px;color:var(--txt2)">• 藥物相關<br>• 神經系統疾病</div></div>
+    </div>`,
+    2: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 病史要點</h4><p style="font-size:13px">年齡、家族史、出生史、體重是評估繼發性高血壓的重要病史因素。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 增加繼發性高血壓可能性的發現</h4>
+    <table><thead><tr><th>臨床發現</th><th>敏感度</th><th>特異度</th><th>LR+</th></tr></thead>
+    <tbody><tr><td style="text-align:left;font-weight:600">繼發性HTN家族史</td><td>46%</td><td>90%</td><td><span class="lr-high">4.7</span></td></tr>
+    <tr><td style="text-align:left;font-weight:600">體重≤第10百分位</td><td>27%</td><td>94%</td><td><span class="lr-high">4.5</span></td></tr>
+    <tr><td style="text-align:left;font-weight:600">早產史</td><td>17-33%</td><td>86-94%</td><td><span class="lr-mod">2.3-2.8</span></td></tr>
+    <tr><td style="text-align:left;font-weight:600">年齡 ≤6歲</td><td>25-36%</td><td>86-88%</td><td><span class="lr-mod">2.2-2.6</span></td></tr></tbody></table>
+    <div class="good"><strong>✓ 臨床意義</strong><p style="font-size:13px;margin-top:6px">繼發性高血壓家族史的LR+ = 4.7是病史中診斷價值最高的發現，但敏感度只有46%。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 降低繼發性高血壓可能性的發現</h4>
+    <table><thead><tr><th>臨床發現</th><th>LR</th><th>95% CI</th></tr></thead>
+    <tbody><tr><td style="text-align:left;font-weight:600">無症狀表現</td><td><span class="lr-low">0.19-0.36</span></td><td>-</td></tr>
+    <tr><td style="text-align:left;font-weight:600">肥胖</td><td><span class="lr-low">0.34</span></td><td>0.13-0.90</td></tr>
+    <tr><td style="text-align:left;font-weight:600">任何HTN家族史</td><td><span class="lr-low">0.42</span></td><td>0.30-0.57</td></tr></tbody></table>
+    <div class="tip"><strong>🔍 區分兩種家族史</strong><p style="font-size:13px;margin-top:6px">• 繼發性高血壓家族史：LR+ = 4.7 (增加繼發性可能)<br>• 任何高血壓家族史：LR = 0.42 (降低繼發性可能)</p></div>
+    <div class="purple"><strong>❌ 無鑑別價值的發現</strong><p style="font-size:13px;margin-top:6px">以下發現無法區分原發性與繼發性高血壓：高血壓分期、頭痛症狀、左心室肥厚 (LVH)</p></div>`,
+    3: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 實驗室檢查</h4><p style="font-size:13px">微量白蛋白尿和血清尿酸是具有診斷價值的實驗室指標。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🔬 微量白蛋白尿 (Microalbuminuria)</h4>
+    <div class="stat-box" style="background:#E3F2FD;margin-bottom:16px">
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
+            <div><div class="label">敏感度</div><div class="value" style="color:var(--blue)">13%</div></div>
+            <div><div class="label">特異度</div><div class="value" style="color:var(--blue)">99%</div></div>
+            <div><div class="label">LR+</div><div class="value" style="color:var(--suc)">13</div></div>
+        </div>
+    </div>
+    <div class="good"><strong>✓ 臨床意義</strong><p style="font-size:13px;margin-top:6px">微量白蛋白尿是本研究中LR+最高的實驗室指標 (LR+ = 13)。當發現微量白蛋白尿時，應高度懷疑繼發性高血壓，特別是腎臟相關病因。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🧪 血清尿酸 (Serum Uric Acid)</h4>
+    <table><thead><tr><th>尿酸濃度</th><th>敏感度</th><th>特異度</th><th>LR+</th></tr></thead>
+    <tbody><tr><td style="font-weight:600">≤5.5 mg/dL</td><td>70-73%</td><td>65-89%</td><td><span class="lr-mod">2.1-6.3</span></td></tr></tbody></table>
+    <div class="info"><strong>💡 機制解釋</strong><p style="font-size:13px;margin-top:6px">原發性高血壓常與代謝症候群相關，血清尿酸通常較高。繼發性高血壓患者可能因不同的病理機制而尿酸較低。</p></div>
+    <div class="warn" style="margin-top:16px"><strong>⚠️ 重要提醒</strong><p style="font-size:13px;margin-top:6px">雖然微量白蛋白尿的LR+很高，但敏感度只有13%，大多數繼發性高血壓患者不會有此發現。檢查陰性不能排除繼發性高血壓。</p></div>`,
+    4: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 動態血壓監測</h4><p style="font-size:13px">24小時動態血壓監測 (ABPM) 的血壓負荷模式可提供診斷線索。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 血壓負荷 (BP Load) 定義</h4>
+    <div class="formula">血壓負荷 = 血壓讀數 ≥ 95th 百分位的比例</div>
+    <div class="info"><strong>💡 說明</strong><p style="font-size:13px;margin-top:6px">血壓負荷是指在ABPM監測期間，血壓讀數超過該年齡、性別、身高第95百分位的比例。正常應<25%。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🌙 ABPM發現與繼發性高血壓</h4>
+    <div class="stat-box" style="background:#EDE7F6;margin-bottom:16px">
+        <div style="font-weight:700;color:var(--pur);margin-bottom:10px">增加白天舒張壓負荷 + 增加夜間收縮壓負荷</div>
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
+            <div><div class="label">敏感度</div><div class="value" style="color:var(--pur)">40%</div></div>
+            <div><div class="label">特異度</div><div class="value" style="color:var(--pur)">82%</div></div>
+            <div><div class="label">LR+</div><div class="value" style="color:var(--suc)">4.8</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:8px">95% CI: 1.2-20</div>
+    </div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🕐 日夜血壓模式</h4>
+    <div class="grid-2">
+        <div style="background:#FFF9C4;padding:12px;border-radius:10px"><div style="font-weight:600;color:#F57F17;margin-bottom:6px">☀️ 白天</div><p style="font-size:12px;color:var(--txt2)">舒張壓負荷增加與繼發性HTN相關</p></div>
+        <div style="background:#E1F5FE;padding:12px;border-radius:10px"><div style="font-weight:600;color:#0288D1;margin-bottom:6px">🌙 夜間</div><p style="font-size:12px;color:var(--txt2)">收縮壓負荷增加與繼發性HTN相關</p></div>
+    </div>
+    <div class="good" style="margin-top:16px"><strong>✓ 臨床應用</strong><p style="font-size:13px;margin-top:6px">ABPM不僅用於確診高血壓，其血壓負荷模式還可提供繼發性高血壓的診斷線索。</p></div>`,
+    5: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 臨床決策</h4><p style="font-size:13px">綜合多項因素評估，沒有單一發現可確診或排除繼發性高血壓。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 似然比應用速查表</h4>
+    <table><thead><tr><th>發現</th><th>LR</th><th>方向</th></tr></thead>
+    <tbody>
+    <tr><td style="text-align:left">微量白蛋白尿</td><td><span class="lr-high">13</span></td><td>↑↑↑ 繼發性</td></tr>
+    <tr><td style="text-align:left">ABPM特定模式</td><td><span class="lr-high">4.8</span></td><td>↑↑ 繼發性</td></tr>
+    <tr><td style="text-align:left">繼發性HTN家族史</td><td><span class="lr-high">4.7</span></td><td>↑↑ 繼發性</td></tr>
+    <tr><td style="text-align:left">低體重 (≤10%tile)</td><td><span class="lr-high">4.5</span></td><td>↑↑ 繼發性</td></tr>
+    <tr><td style="text-align:left">早產史</td><td><span class="lr-mod">2.3-2.8</span></td><td>↑ 繼發性</td></tr>
+    <tr><td style="text-align:left">年齡≤6歲</td><td><span class="lr-mod">2.2-2.6</span></td><td>↑ 繼發性</td></tr>
+    <tr style="background:#FFEBEE"><td style="text-align:left">任何HTN家族史</td><td><span class="lr-low">0.42</span></td><td>↓ 繼發性</td></tr>
+    <tr style="background:#FFEBEE"><td style="text-align:left">肥胖</td><td><span class="lr-low">0.34</span></td><td>↓ 繼發性</td></tr>
+    <tr style="background:#FFEBEE"><td style="text-align:left">無症狀表現</td><td><span class="lr-low">0.19-0.36</span></td><td>↓↓ 繼發性</td></tr>
+    </tbody></table>
+    <div class="warn" style="margin-top:16px"><strong>⚠️ 研究結論</strong><p style="font-size:13px;margin-top:6px"><strong>沒有任何單一症狀或徵象可以完全區分繼發性與原發性高血壓。</strong>臨床決策需要綜合考量多項因素。</p></div>
+    <div class="good" style="margin-top:16px"><strong>✓ 高度懷疑繼發性時</strong><p style="font-size:13px;margin-top:6px">當患者具備多項高似然比的發現（如年幼、低體重、有繼發性高血壓家族史、微量白蛋白尿），應積極進行繼發性高血壓的檢查評估。</p></div>
+    <div class="pink" style="margin-top:16px"><strong>💝 原發性高血壓傾向</strong><p style="font-size:13px;margin-top:6px">當患者為肥胖青少年、無症狀、有原發性高血壓家族史時，原發性高血壓的可能性較高，但仍需依據指引完成基本檢查。</p></div>`
+};
+
+const quiz = [
+    {q:'根據JAMA系統性回顧，在次專科門診中，兒童繼發性高血壓的盛行率約為多少？',o:['約 9%','約 25%','約 44%','約 70%'],c:2,e:'在次專科門診中，繼發性高血壓的盛行率為44% (95% CI: 36%-53%)。相比之下，在基層醫療或學校篩檢中僅為9%。'},
+    {q:'哪一項病史發現與繼發性高血壓的關聯性最強（LR+最高）？',o:['早產史','肥胖','繼發性高血壓家族史','任何高血壓家族史'],c:2,e:'繼發性高血壓家族史的 LR+ = 4.7 (95% CI: 2.9-7.6)，是病史發現中診斷價值最高的。'},
+    {q:'關於年齡與繼發性高血壓的關係，以下何者正確？',o:['年齡≤6歲與繼發性高血壓無關','年齡≤6歲的LR+約為2.2-2.6','年齡越大越可能是繼發性','年齡是排除繼發性的最佳指標'],c:1,e:'年齡≤6歲與繼發性高血壓相關，LR+ 約 2.2-2.6。'},
+    {q:'微量白蛋白尿診斷繼發性高血壓的特異度約為多少？',o:['70%','85%','99%','50%'],c:2,e:'微量白蛋白尿的特異度高達99%，但敏感度僅13%，因此 LR+ = 13。'},
+    {q:'血清尿酸濃度≤5.5 mg/dL 與繼發性高血壓的關係為何？',o:['與繼發性高血壓無關','提示原發性高血壓','提示繼發性高血壓，LR+ 2.1-6.3','只在成人有診斷價值'],c:2,e:'低血清尿酸濃度 (≤5.5 mg/dL) 與繼發性高血壓相關，LR+ 2.1-6.3。'},
+    {q:'以下何者與繼發性高血壓的可能性降低最相關？',o:['有症狀表現','頭痛','肥胖 (LR 0.34)','左心室肥厚'],c:2,e:'肥胖的 LR = 0.34，意味著肥胖患者更可能是原發性高血壓而非繼發性。'},
+    {q:'任何高血壓家族史對診斷繼發性高血壓的意義為何？',o:['增加繼發性高血壓可能性','降低繼發性高血壓可能性 (LR 0.42)','無診斷價值','只在青少年有意義'],c:1,e:'任何高血壓家族史的 LR = 0.42，意味著有高血壓家族史者更可能是原發性高血壓。'},
+    {q:'24小時ABPM中，哪種組合與繼發性高血壓最相關？',o:['白天收縮壓負荷增加','夜間舒張壓負荷增加','白天舒張壓負荷+夜間收縮壓負荷增加','單純夜間血壓升高'],c:2,e:'白天舒張壓負荷增加合併夜間收縮壓負荷增加的 LR+ = 4.8。'},
+    {q:'關於高血壓分期對鑑別原發性與繼發性高血壓的價值，研究發現什麼？',o:['第2期高血壓更可能是繼發性','第1期高血壓更可能是繼發性','高血壓分期無法區分兩者','只有第3期才能區分'],c:2,e:'研究發現高血壓分期無法區分原發性與繼發性高血壓。'},
+    {q:'根據JAMA研究結論，關於兒童繼發性高血壓的診斷，以下何者最正確？',o:['單一症狀或徵象即可確診繼發性高血壓','無個別症狀或徵象可完全區分繼發性與原發性高血壓','所有高血壓兒童都需要完整繼發性高血壓檢查','肥胖兒童不需檢查繼發性高血壓'],c:1,e:'研究結論：沒有任何單一症狀或徵象可以完全區分繼發性與原發性高血壓。'}
+];
+
+let currentLesson = 1;
+let currentQ = 0;
+let score = 0;
+let answered = false;
+
+function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+function showHome() { showPage('home'); }
+
+function showLesson(id) {
+    currentLesson = id;
+    const l = lessons[id-1];
+    document.getElementById('lesson-title').textContent = l.title;
+    document.getElementById('lesson-header').style.background = `linear-gradient(135deg,${l.color},${l.color}88)`;
+    document.getElementById('lesson-header').innerHTML = `<div class="container"><div style="font-size:12px;opacity:0.9">Lesson ${l.id} • ${l.sub}</div><h1 style="font-size:22px;font-weight:700">${l.title}</h1></div>`;
+    document.getElementById('lesson-body').innerHTML = lessonContent[id];
+    document.getElementById('prev-btn').style.display = id > 1 ? 'block' : 'none';
+    document.getElementById('next-btn').textContent = id < 5 ? '下一課 →' : '開始測驗 📝';
+    document.getElementById('next-btn').onclick = id < 5 ? nextLesson : startQuiz;
+    showPage('lesson');
+}
+
+function prevLesson() { if (currentLesson > 1) showLesson(currentLesson - 1); }
+function nextLesson() { if (currentLesson < 5) showLesson(currentLesson + 1); }
+
+function startQuiz() {
+    currentQ = 0; score = 0; answered = false;
+    renderQuestion();
+    showPage('quiz');
+}
+
+function renderQuestion() {
+    const q = quiz[currentQ];
+    document.getElementById('quiz-progress').textContent = `${currentQ+1}/${quiz.length}`;
+    document.getElementById('quiz-progress-bar').style.width = `${((currentQ+1)/quiz.length)*100}%`;
+    
+    let html = `<h3 style="font-size:15px;font-weight:600;line-height:1.7;margin-bottom:20px">${q.q}</h3>`;
+    q.o.forEach((opt, i) => {
+        html += `<button class="quiz-option" onclick="selectAnswer(${i})" id="opt${i}">
+            <span class="option-label" id="lbl${i}">${String.fromCharCode(65+i)}</span>
+            <span style="line-height:1.5">${opt}</span>
+        </button>`;
+    });
+    document.getElementById('quiz-content').innerHTML = html;
+    document.getElementById('quiz-feedback').innerHTML = '';
+    document.getElementById('quiz-next').style.display = 'none';
+    answered = false;
+}
+
+function selectAnswer(i) {
+    if (answered) return;
+    answered = true;
+    const q = quiz[currentQ];
+    
+    document.querySelectorAll('.quiz-option').forEach((btn, idx) => {
+        btn.classList.add('disabled');
+        if (idx === q.c) {
+            btn.classList.add('correct');
+            document.getElementById('lbl'+idx).classList.add('correct');
+            document.getElementById('lbl'+idx).textContent = '✓';
+        } else if (idx === i && i !== q.c) {
+            btn.classList.add('wrong');
+            document.getElementById('lbl'+idx).classList.add('wrong');
+            document.getElementById('lbl'+idx).textContent = '✗';
+        }
+    });
+    
+    if (i === q.c) score++;
+    
+    const feedbackClass = i === q.c ? 'good' : 'tip';
+    const feedbackTitle = i === q.c ? '✓ 正確！' : '✗ 答錯了';
+    const feedbackColor = i === q.c ? 'var(--suc)' : 'var(--acc)';
+    document.getElementById('quiz-feedback').innerHTML = `<div class="${feedbackClass}"><strong style="color:${feedbackColor}">${feedbackTitle}</strong><p style="font-size:13px;color:var(--txt2);margin-top:8px;line-height:1.7">${q.e}</p></div>`;
+    
+    document.getElementById('quiz-next').style.display = 'block';
+    document.getElementById('quiz-next').textContent = currentQ < quiz.length - 1 ? '下一題 →' : '查看結果';
+}
+
+function nextQuestion() {
+    if (currentQ < quiz.length - 1) {
+        currentQ++;
+        renderQuestion();
+    } else {
+        showResult();
+    }
+}
+
+function showResult() {
+    const pct = Math.round((score / quiz.length) * 100);
+    const color = pct >= 80 ? 'var(--suc)' : pct >= 60 ? 'var(--warn)' : 'var(--err)';
+    document.getElementById('result-circle').style.background = `conic-gradient(${color} ${pct*3.6}deg, #E5E5E5 0deg)`;
+    document.getElementById('result-pct').textContent = pct + '%';
+    document.getElementById('result-score').textContent = `${score}/${quiz.length}`;
+    document.getElementById('result-title').textContent = pct >= 80 ? '🎉 太棒了！' : pct >= 60 ? '👍 不錯！' : '💪 加油！';
+    document.getElementById('result-msg').textContent = pct >= 80 ? '你已經掌握兒童繼發性高血壓診斷！' : pct >= 60 ? '再複習可以更進步！' : '建議重新閱讀課程';
+    showPage('result');
+}
+</script>
+</body>
+</html>
