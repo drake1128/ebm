@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAMA è‡¨åºŠç†å­¸æª¢æŸ¥ | EBM æ•™å­¸</title>
+    <title>JAMA 臨床理學檢查 | EBM 教學</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
@@ -30,23 +30,23 @@
 const {useState}=React;
 
 const lessons=[
-    {id:1,title:'æ•æ„Ÿåº¦èˆ‡ç‰¹ç•°åº¦',sub:'Sensitivity & Specificity',color:'#0077B6'},
-    {id:2,title:'ä¼¼ç„¶æ¯”',sub:'Likelihood Ratio',color:'#7209B7'},
-    {id:3,title:'å‰æ¸¬èˆ‡å¾Œæ¸¬æ©ŸçŽ‡',sub:'Pre & Post-test Probability',color:'#2EC4B6'},
-    {id:4,title:'è‡¨åºŠæ‡‰ç”¨æ¡ˆä¾‹',sub:'Clinical Application',color:'#FF6B35'}
+    {id:1,title:'敏感度與特異度',sub:'Sensitivity & Specificity',color:'#0077B6'},
+    {id:2,title:'似然比',sub:'Likelihood Ratio',color:'#7209B7'},
+    {id:3,title:'前測與後測機率',sub:'Pre & Post-test Probability',color:'#2EC4B6'},
+    {id:4,title:'臨床應用案例',sub:'Clinical Application',color:'#FF6B35'}
 ];
 
 const quiz=[
-    {q:'æ•æ„Ÿåº¦çš„å®šç¾©æ˜¯ä»€éº¼ï¼Ÿ',o:['æ‰€æœ‰é™°æ€§ç—…äººä¸­ï¼Œæª¢é©—é™°æ€§çš„æ¯”ä¾‹','æ‰€æœ‰é™½æ€§ç—…äººä¸­ï¼Œæª¢é©—é™½æ€§çš„æ¯”ä¾‹','æ‰€æœ‰æª¢é©—é™½æ€§è€…ä¸­ï¼ŒçœŸæ­£æœ‰ç—…çš„æ¯”ä¾‹','æ‰€æœ‰æª¢é©—é™°æ€§è€…ä¸­ï¼ŒçœŸæ­£æ²’ç—…çš„æ¯”ä¾‹'],c:1,e:'æ•æ„Ÿåº¦æ˜¯åœ¨æ‰€æœ‰çœŸæ­£æœ‰ç—…çš„äººä¸­ï¼Œæª¢æŸ¥é™½æ€§çš„æ¯”ä¾‹ã€‚å…¬å¼ï¼šTP/(TP+FN)ã€‚è¨˜æ†¶å£è¨£ï¼šSnNOut'},
-    {q:'ç‰¹ç•°åº¦çš„è‡¨åºŠæ„ç¾©ç‚ºä½•ï¼Ÿ',o:['ç”¨ä¾†æŽ’é™¤ç–¾ç—…','ç”¨ä¾†ç¢ºèªç–¾ç—…','è©•ä¼°ç–¾ç—…åš´é‡åº¦','è©•ä¼°æ²»ç™‚æ•ˆæžœ'],c:1,e:'é«˜ç‰¹ç•°åº¦æª¢æŸ¥é©åˆç¢ºèªè¨ºæ–·(Rule In)ã€‚è¨˜æ†¶å£è¨£ï¼šSpPIn'},
-    {q:'LR+çš„å…¬å¼ç‚ºä½•ï¼Ÿ',o:['ç‰¹ç•°åº¦/(1-æ•æ„Ÿåº¦)','æ•æ„Ÿåº¦/ç‰¹ç•°åº¦','æ•æ„Ÿåº¦/(1-ç‰¹ç•°åº¦)','(1-æ•æ„Ÿåº¦)/ç‰¹ç•°åº¦'],c:2,e:'LR+ = Sensitivity/(1-Specificity)ã€‚LR+ > 10æ˜¯å¼·åŠ›è¨ºæ–·è­‰æ“š'},
-    {q:'ç•¶LR+=10æ™‚ï¼Œä»£è¡¨ä»€éº¼ï¼Ÿ',o:['é™½æ€§çµæžœåœ¨æœ‰ç—…è€…æ˜¯ç„¡ç—…è€…çš„10å€','å¾Œæ¸¬æ©ŸçŽ‡æ˜¯å‰æ¸¬çš„10å€','æ•æ„Ÿåº¦æ˜¯ç‰¹ç•°åº¦çš„10å€','æœ‰ç—…æ©ŸçŽ‡æ˜¯90%'],c:0,e:'LR+=10ä»£è¡¨é™½æ€§çµæžœåœ¨æœ‰ç—…è€…å‡ºç¾æ©ŸçŽ‡æ˜¯ç„¡ç—…è€…çš„10å€'},
-    {q:'LR-çš„å…¬å¼ç‚ºä½•ï¼Ÿ',o:['æ•æ„Ÿåº¦/(1-ç‰¹ç•°åº¦)','(1-æ•æ„Ÿåº¦)/ç‰¹ç•°åº¦','ç‰¹ç•°åº¦/(1-æ•æ„Ÿåº¦)','(1-ç‰¹ç•°åº¦)/æ•æ„Ÿåº¦'],c:1,e:'LR- = (1-Sensitivity)/Specificityã€‚LR- < 0.1æ˜¯å¼·åŠ›æŽ’é™¤è­‰æ“š'},
-    {q:'ä½•è€…æœ€é©åˆã€ŒæŽ’é™¤ã€ç–¾ç—…ï¼Ÿ',o:['é«˜æ•æ„Ÿåº¦ã€é«˜LR+','é«˜æ•æ„Ÿåº¦ã€ä½ŽLR-','é«˜ç‰¹ç•°åº¦ã€é«˜LR+','é«˜ç‰¹ç•°åº¦ã€ä½ŽLR-'],c:1,e:'é«˜æ•æ„Ÿåº¦+ä½ŽLR-å¯æœ‰æ•ˆæŽ’é™¤ç–¾ç—…ã€‚SnNOutå£è¨£'},
-    {q:'å‰æ¸¬æ©ŸçŽ‡ä¸»è¦å–æ±ºæ–¼ï¼Ÿ',o:['æª¢æŸ¥çš„æ•æ„Ÿåº¦','æª¢æŸ¥çš„ç‰¹ç•°åº¦','ç–¾ç—…ç››è¡ŒçŽ‡èˆ‡è‡¨åºŠåˆ¤æ–·','å¯¦é©—å®¤æ¨™æº–å€¼'],c:2,e:'å‰æ¸¬æ©ŸçŽ‡ç”±ç››è¡ŒçŽ‡èˆ‡è‡¨åºŠåˆ¤æ–·æ±ºå®š'},
-    {q:'Fagan nomograméœ€è¦å“ªä¸‰è¦ç´ ï¼Ÿ',o:['æ•æ„Ÿåº¦ã€ç‰¹ç•°åº¦ã€ç››è¡ŒçŽ‡','å‰æ¸¬æ©ŸçŽ‡ã€ä¼¼ç„¶æ¯”ã€å¾Œæ¸¬æ©ŸçŽ‡','TPã€FPã€TNã€FN','PPVã€NPVã€æº–ç¢ºåº¦'],c:1,e:'Faganåœ–éœ€è¦ï¼šå‰æ¸¬æ©ŸçŽ‡ã€ä¼¼ç„¶æ¯”ã€å¾Œæ¸¬æ©ŸçŽ‡'},
-    {q:'æ•æ„Ÿåº¦90%ã€ç‰¹ç•°åº¦80%ï¼ŒLR+ç‚ºå¤šå°‘ï¼Ÿ',o:['4.5','0.125','7.2','1.125'],c:0,e:'LR+ = 0.90/(1-0.80) = 0.90/0.20 = 4.5'},
-    {q:'é—œæ–¼ä¼¼ç„¶æ¯”ï¼Œä½•è€…éŒ¯èª¤ï¼Ÿ',o:['ä¸å—ç››è¡ŒçŽ‡å½±éŸ¿','LR+>10æˆ–LR-<0.1ç‚ºå¼·åŠ›è­‰æ“š','LR=1è¡¨ç¤ºä¸å½±éŸ¿è¨ºæ–·','ä¼¼ç„¶æ¯”å¯ç›´æŽ¥æ›ç®—ç‚ºå¾Œæ¸¬æ©ŸçŽ‡'],c:3,e:'ä¼¼ç„¶æ¯”éœ€çµåˆå‰æ¸¬æ©ŸçŽ‡æ‰èƒ½è¨ˆç®—å¾Œæ¸¬æ©ŸçŽ‡'}
+    {q:'敏感度的定義是什麼？',o:['所有陰性病人中，檢驗陰性的比例','所有陽性病人中，檢驗陽性的比例','所有檢驗陽性者中，真正有病的比例','所有檢驗陰性者中，真正沒病的比例'],c:1,e:'敏感度是在所有真正有病的人中，檢查陽性的比例。公式：TP/(TP+FN)。記憶口訣：SnNOut'},
+    {q:'特異度的臨床意義為何？',o:['用來排除疾病','用來確認疾病','評估疾病嚴重度','評估治療效果'],c:1,e:'高特異度檢查適合確認診斷(Rule In)。記憶口訣：SpPIn'},
+    {q:'LR+的公式為何？',o:['特異度/(1-敏感度)','敏感度/特異度','敏感度/(1-特異度)','(1-敏感度)/特異度'],c:2,e:'LR+ = Sensitivity/(1-Specificity)。LR+ > 10是強力診斷證據'},
+    {q:'當LR+=10時，代表什麼？',o:['陽性結果在有病者是無病者的10倍','後測機率是前測的10倍','敏感度是特異度的10倍','有病機率是90%'],c:0,e:'LR+=10代表陽性結果在有病者出現機率是無病者的10倍'},
+    {q:'LR-的公式為何？',o:['敏感度/(1-特異度)','(1-敏感度)/特異度','特異度/(1-敏感度)','(1-特異度)/敏感度'],c:1,e:'LR- = (1-Sensitivity)/Specificity。LR- < 0.1是強力排除證據'},
+    {q:'何者最適合「排除」疾病？',o:['高敏感度、高LR+','高敏感度、低LR-','高特異度、高LR+','高特異度、低LR-'],c:1,e:'高敏感度+低LR-可有效排除疾病。SnNOut口訣'},
+    {q:'前測機率主要取決於？',o:['檢查的敏感度','檢查的特異度','疾病盛行率與臨床判斷','實驗室標準值'],c:2,e:'前測機率由盛行率與臨床判斷決定'},
+    {q:'Fagan nomogram需要哪三要素？',o:['敏感度、特異度、盛行率','前測機率、似然比、後測機率','TP、FP、TN、FN','PPV、NPV、準確度'],c:1,e:'Fagan圖需要：前測機率、似然比、後測機率'},
+    {q:'敏感度90%、特異度80%，LR+為多少？',o:['4.5','0.125','7.2','1.125'],c:0,e:'LR+ = 0.90/(1-0.80) = 0.90/0.20 = 4.5'},
+    {q:'關於似然比，何者錯誤？',o:['不受盛行率影響','LR+>10或LR-<0.1為強力證據','LR=1表示不影響診斷','似然比可直接換算為後測機率'],c:3,e:'似然比需結合前測機率才能計算後測機率'}
 ];
 
 const App=()=>{
@@ -71,22 +71,22 @@ const App=()=>{
 
     const Home=()=>(
         <div>
-            <Header title="JAMA è‡¨åºŠç†å­¸æª¢æŸ¥"/>
+            <Header title="JAMA 臨床理學檢查"/>
             <div style={{background:'linear-gradient(135deg,#0077B6,#00B4D8)',padding:'32px 20px',color:'#fff'}}>
                 <div style={{maxWidth:480,margin:'0 auto'}}>
-                    <div style={{background:'rgba(255,255,255,0.2)',display:'inline-block',padding:'6px 14px',borderRadius:50,fontSize:12,fontWeight:600,marginBottom:16}}>ðŸ“– JAMA Rational Clinical Examination Series</div>
+                    <div style={{background:'rgba(255,255,255,0.2)',display:'inline-block',padding:'6px 14px',borderRadius:50,fontSize:12,fontWeight:600,marginBottom:16}}>📖 JAMA Rational Clinical Examination Series</div>
                     <h1 style={{fontSize:26,fontWeight:700,marginBottom:8}}>The Rational Clinical Examination</h1>
-                    <h2 style={{fontSize:16,fontWeight:500,marginBottom:12,opacity:0.95}}>JAMA è‡¨åºŠç†å­¸æª¢æŸ¥ç³»åˆ—</h2>
-                    <p style={{opacity:0.9,fontSize:14,marginBottom:16}}>ç³»çµ±æ€§å­¸ç¿’è¨ºæ–·å­¸æ ¸å¿ƒæ¦‚å¿µèˆ‡è‡¨åºŠæ‡‰ç”¨</p>
+                    <h2 style={{fontSize:16,fontWeight:500,marginBottom:12,opacity:0.95}}>JAMA 臨床理學檢查系列</h2>
+                    <p style={{opacity:0.9,fontSize:14,marginBottom:16}}>系統性學習診斷學核心概念與臨床應用</p>
                     <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
                         <div style={{background:'rgba(255,255,255,0.2)',padding:'8px 14px',borderRadius:20,fontSize:12,display:'flex',alignItems:'center',gap:6}}>
-                            <span>ðŸ“Š</span> æ•æ„Ÿåº¦/ç‰¹ç•°åº¦
+                            <span>📊</span> 敏感度/特異度
                         </div>
                         <div style={{background:'rgba(255,255,255,0.2)',padding:'8px 14px',borderRadius:20,fontSize:12,display:'flex',alignItems:'center',gap:6}}>
-                            <span>ðŸ“ˆ</span> ä¼¼ç„¶æ¯”
+                            <span>📈</span> 似然比
                         </div>
                         <div style={{background:'rgba(255,255,255,0.2)',padding:'8px 14px',borderRadius:20,fontSize:12,display:'flex',alignItems:'center',gap:6}}>
-                            <span>ðŸŽ¯</span> å‰å¾Œæ¸¬æ©ŸçŽ‡
+                            <span>🎯</span> 前後測機率
                         </div>
                     </div>
                 </div>
@@ -94,31 +94,31 @@ const App=()=>{
             <div style={{padding:'0 16px',marginTop:-20}}>
                 <div style={{maxWidth:480,margin:'0 auto'}}>
                     <div className="card">
-                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:12}}>ðŸŽ¯ å­¸ç¿’ç›®æ¨™</h3>
-                        {['ç†è§£æ•æ„Ÿåº¦èˆ‡ç‰¹ç•°åº¦çš„å®šç¾©','è¨ˆç®—ä¸¦è§£è®€ä¼¼ç„¶æ¯”LR+/LR-','é‹ç”¨ä¼¼ç„¶æ¯”èª¿æ•´æ©ŸçŽ‡','æ‡‰ç”¨æ–¼è‡¨åºŠæª¢æŸ¥è©•ä¼°'].map((t,i)=>(
+                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🎯 學習目標</h3>
+                        {['理解敏感度與特異度的定義','計算並解讀似然比LR+/LR-','運用似然比調整機率','應用於臨床檢查評估'].map((t,i)=>(
                             <div key={i} style={{display:'flex',gap:10,marginBottom:8,fontSize:14}}>
                                 <span style={{background:'var(--suc)',color:'#fff',borderRadius:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,flexShrink:0}}>{i+1}</span>
                                 <span style={{color:'var(--txt2)'}}>{t}</span>
                             </div>
                         ))}
                     </div>
-                    {/* JAMA ç³»åˆ—æ–‡ç« å€å¡Š */}
-                    <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>ðŸ“‘ JAMA ç³»åˆ—æ–‡ç« </h3>
-                    <p style={{fontSize:13,color:'var(--txt2)',marginBottom:16}}>é»žæ“Šé€²å…¥å„ä¸»é¡Œçš„æ·±å…¥å­¸ç¿’æ¨¡çµ„</p>
+                    {/* JAMA 系列文章區塊 */}
+                    <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>🔑 JAMA 系列文章</h3>
+                    <p style={{fontSize:13,color:'var(--txt2)',marginBottom:16}}>點擊進入各主題的深入學習模組</p>
                     
-                    {/* æšˆåŽ¥è¨ºæ–·æ¨¡çµ„ - NEW */}
+                    {/* 暈厥診斷模組 */}
                     <a href="jama-syncope.html" style={{textDecoration:'none'}}>
                         <div className="card" style={{cursor:'pointer',border:'2px solid #7209B7',background:'linear-gradient(135deg,#F3E5F5,#FFF)'}}>
                             <div style={{display:'flex',alignItems:'center',gap:16}}>
                                 <div style={{width:56,height:56,borderRadius:14,background:'linear-gradient(135deg,#7209B7,#B5179E)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:24}}>
-                                    ðŸ«€
+                                    🫀
                                 </div>
                                 <div style={{flex:1}}>
                                     <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                                        <span style={{background:'linear-gradient(135deg,#7209B7,#B5179E)',color:'#fff',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>ðŸ†• NEW</span>
+                                        <span style={{background:'linear-gradient(135deg,#2EC4B6,#06D6A0)',color:'#fff',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>✔ 已上線</span>
                                         <span style={{fontSize:11,color:'#7209B7',fontWeight:600}}>JAMA 2019</span>
                                     </div>
-                                    <div style={{fontSize:16,fontWeight:700,color:'var(--txt)'}}>æšˆåŽ¥çš„è‡¨åºŠè¨ºæ–·</div>
+                                    <div style={{fontSize:16,fontWeight:700,color:'var(--txt)'}}>暈厥的臨床診斷</div>
                                     <div style={{fontSize:13,color:'var(--txt2)'}}>Did This Patient Have Cardiac Syncope?</div>
                                     <div style={{fontSize:11,color:'var(--txt2)',marginTop:4}}>Puppala VK, et al. JAMA 2019;321(24):2448-2457</div>
                                 </div>
@@ -127,19 +127,19 @@ const App=()=>{
                         </div>
                     </a>
                     
-                    {/* é«˜è¡€å£“è¨ºæ–·æ¨¡çµ„ */}
+                    {/* 高血壓診斷模組 */}
                     <a href="jama-hypertension.html" style={{textDecoration:'none'}}>
                         <div className="card" style={{cursor:'pointer',border:'2px solid #E63946',background:'linear-gradient(135deg,#FFF5F5,#FFF)'}}>
                             <div style={{display:'flex',alignItems:'center',gap:16}}>
                                 <div style={{width:56,height:56,borderRadius:14,background:'linear-gradient(135deg,#E63946,#F4A261)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:24}}>
-                                    ðŸ©º
+                                    🩺
                                 </div>
                                 <div style={{flex:1}}>
                                     <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                                        <span style={{background:'linear-gradient(135deg,#2EC4B6,#06D6A0)',color:'#fff',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>âœ“ å·²ä¸Šç·š</span>
+                                        <span style={{background:'linear-gradient(135deg,#2EC4B6,#06D6A0)',color:'#fff',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>✔ 已上線</span>
                                         <span style={{fontSize:11,color:'#E63946',fontWeight:600}}>JAMA 2021</span>
                                     </div>
-                                    <div style={{fontSize:16,fontWeight:700,color:'var(--txt)'}}>é«˜è¡€å£“è¨ºæ–·è©•ä¼°</div>
+                                    <div style={{fontSize:16,fontWeight:700,color:'var(--txt)'}}>高血壓診斷評估</div>
                                     <div style={{fontSize:13,color:'var(--txt2)'}}>Does This Adult Have Hypertension?</div>
                                     <div style={{fontSize:11,color:'var(--txt2)',marginTop:4}}>Viera AJ, et al. JAMA 2021;326(4):339-347</div>
                                 </div>
@@ -169,17 +169,17 @@ const App=()=>{
                         </div>
                     </a>
                     
-                    {/* å³å°‡æŽ¨å‡ºçš„æ¨¡çµ„é å‘Š */}
+                    {/* 即將推出的模組預告 */}
                     <div className="card" style={{opacity:0.6,border:'1px dashed #ccc'}}>
                         <div style={{display:'flex',alignItems:'center',gap:16}}>
                             <div style={{width:56,height:56,borderRadius:14,background:'#E5E5E5',display:'flex',alignItems:'center',justifyContent:'center',color:'#999',fontSize:24}}>
-                                ðŸ«
+                                🫁
                             </div>
                             <div style={{flex:1}}>
                                 <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                                    <span style={{background:'#FFD166',color:'#333',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>å³å°‡æŽ¨å‡º</span>
+                                    <span style={{background:'#FFD166',color:'#333',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>即將推出</span>
                                 </div>
-                                <div style={{fontSize:16,fontWeight:700,color:'#999'}}>è‚ºæ “å¡žè‡¨åºŠè¨ºæ–·</div>
+                                <div style={{fontSize:16,fontWeight:700,color:'#999'}}>肺栓塞臨床診斷</div>
                                 <div style={{fontSize:13,color:'#bbb'}}>Does This Patient Have Pulmonary Embolism?</div>
                             </div>
                         </div>
@@ -188,13 +188,13 @@ const App=()=>{
                     <div className="card" style={{opacity:0.6,border:'1px dashed #ccc'}}>
                         <div style={{display:'flex',alignItems:'center',gap:16}}>
                             <div style={{width:56,height:56,borderRadius:14,background:'#E5E5E5',display:'flex',alignItems:'center',justifyContent:'center',color:'#999',fontSize:24}}>
-                                ðŸ¦´
+                                🦴
                             </div>
                             <div style={{flex:1}}>
                                 <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                                    <span style={{background:'#FFD166',color:'#333',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>å³å°‡æŽ¨å‡º</span>
+                                    <span style={{background:'#FFD166',color:'#333',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>即將推出</span>
                                 </div>
-                                <div style={{fontSize:16,fontWeight:700,color:'#999'}}>æ·±éƒ¨éœè„ˆæ “å¡žè©•ä¼°</div>
+                                <div style={{fontSize:16,fontWeight:700,color:'#999'}}>深部靜脈栓塞評估</div>
                                 <div style={{fontSize:13,color:'#bbb'}}>Does This Patient Have Deep Vein Thrombosis?</div>
                             </div>
                         </div>
@@ -202,9 +202,9 @@ const App=()=>{
 
                     <div style={{height:24}}></div>
                     
-                    {/* åŸºç¤Žèª²ç¨‹å€å¡Š */}
-                    <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>ðŸ“š è¨ºæ–·å­¸åŸºç¤Žèª²ç¨‹</h3>
-                    <p style={{fontSize:13,color:'var(--txt2)',marginBottom:16}}>å­¸ç¿’æ•æ„Ÿåº¦ã€ç‰¹ç•°åº¦ã€ä¼¼ç„¶æ¯”ç­‰æ ¸å¿ƒæ¦‚å¿µ</p>
+                    {/* 基礎課程區塊 */}
+                    <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>📚 診斷學基礎課程</h3>
+                    <p style={{fontSize:13,color:'var(--txt2)',marginBottom:16}}>學習敏感度、特異度、似然比等核心概念</p>
                     {lessons.map(l=>(
                         <div key={l.id} className="card" onClick={()=>{setLessonId(l.id);setPage('lesson')}} style={{cursor:'pointer'}}>
                             <div style={{display:'flex',alignItems:'center',gap:16}}>
@@ -219,146 +219,71 @@ const App=()=>{
                         </div>
                     ))}
                     <button className="btn btn-acc" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}} style={{width:'100%',justifyContent:'center',marginTop:20,marginBottom:32}}>
-                        ðŸ“ é–‹å§‹æ¸¬é©— (10é¡Œ)
+                        📝 開始基礎測驗
                     </button>
+                    <footer style={{textAlign:'center',padding:'24px 0',borderTop:'1px solid #eee'}}>
+                        <p style={{fontSize:12,color:'var(--txt2)'}}>新竹台大分院教學部</p>
+                        <p style={{fontSize:11,color:'var(--txt2)',marginTop:4}}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    </footer>
                 </div>
             </div>
-            <footer style={{background:'#F0F7FF',padding:'24px 16px',textAlign:'center'}}>
-                <p style={{fontSize:13,color:'var(--txt2)'}}>æ–°ç«¹å°å¤§åˆ†é™¢æ•™å­¸éƒ¨</p>
-                <p style={{fontSize:12,color:'var(--txt2)'}}>è¬æ…•æš MD, PhD, FESC | é»ƒæ²›éŠ“ MD | é»ƒåœ‹è‰¯</p>
-            </footer>
         </div>
     );
 
     const L1=()=>(
         <div>
-            <div className="card">
-                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>ðŸ“Š 2x2 åˆ—è¯è¡¨</h3>
-                <table><thead><tr><th></th><th style={{background:'#E8F5E9'}}>æœ‰ç—… D+</th><th style={{background:'#FFEBEE'}}>ç„¡ç—… D-</th></tr></thead>
-                <tbody>
-                    <tr><td style={{fontWeight:600,background:'#E3F2FD'}}>æª¢æŸ¥é™½æ€§ T+</td><td style={{color:'var(--suc)',fontWeight:700}}>TP çœŸé™½æ€§</td><td style={{color:'var(--err)',fontWeight:700}}>FP å½é™½æ€§</td></tr>
-                    <tr><td style={{fontWeight:600,background:'#E3F2FD'}}>æª¢æŸ¥é™°æ€§ T-</td><td style={{color:'var(--err)',fontWeight:700}}>FN å½é™°æ€§</td><td style={{color:'var(--suc)',fontWeight:700}}>TN çœŸé™°æ€§</td></tr>
-                </tbody></table>
-            </div>
-            <div className="card">
-                <h3 style={{fontSize:18,fontWeight:700,color:'var(--suc)',marginBottom:12}}>ðŸŽ¯ æ•æ„Ÿåº¦ Sensitivity</h3>
-                <div className="formula">Sensitivity = TP / (TP + FN)</div>
-                <p style={{fontSize:14,color:'var(--txt2)',marginTop:8}}>åœ¨æœ‰ç—…çš„äººä¸­ï¼Œæª¢æŸ¥çµæžœç‚ºé™½æ€§çš„æ¯”ä¾‹</p>
-                <div className="tip"><strong style={{color:'var(--acc)'}}>ðŸ’¡ SnNOut</strong><br/>Sensitivity high â†’ Negative â†’ Rules Out disease<br/><span style={{fontSize:13,color:'var(--txt2)'}}>é«˜æ•æ„Ÿåº¦çš„é™°æ€§çµæžœå¯æŽ’é™¤ç–¾ç—…</span></div>
-            </div>
-            <div className="card">
-                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>ðŸ”¬ ç‰¹ç•°åº¦ Specificity</h3>
-                <div className="formula" style={{borderColor:'var(--pur)',background:'linear-gradient(135deg,#F3E5F5,#E1BEE7)'}}>Specificity = TN / (TN + FP)</div>
-                <p style={{fontSize:14,color:'var(--txt2)',marginTop:8}}>åœ¨æ²’ç—…çš„äººä¸­ï¼Œæª¢æŸ¥çµæžœç‚ºé™°æ€§çš„æ¯”ä¾‹</p>
-                <div className="good"><strong style={{color:'var(--suc)'}}>ðŸ’¡ SpPIn</strong><br/>Specificity high â†’ Positive â†’ Rules In disease<br/><span style={{fontSize:13,color:'var(--txt2)'}}>é«˜ç‰¹ç•°åº¦çš„é™½æ€§çµæžœå¯ç¢ºèªç–¾ç—…</span></div>
-            </div>
+            <div className="formula">敏感度 = TP / (TP + FN)</div>
+            <p style={{fontSize:14,lineHeight:1.8,margin:'16px 0'}}>敏感度 (Sensitivity) 代表在所有<strong>真正有病</strong>的人中，檢查呈現陽性的比例。</p>
+            <div className="tip"><strong>🎯 臨床意義</strong><br/>高敏感度檢查適合用來<strong>排除</strong>疾病（Rule Out）<br/>記憶口訣：<strong>SnNOut</strong> = Sensitivity高 + Negative結果 = Rule Out</div>
+            <div className="formula">特異度 = TN / (TN + FP)</div>
+            <p style={{fontSize:14,lineHeight:1.8,margin:'16px 0'}}>特異度 (Specificity) 代表在所有<strong>真正沒病</strong>的人中，檢查呈現陰性的比例。</p>
+            <div className="good"><strong>✓ 臨床意義</strong><br/>高特異度檢查適合用來<strong>確認</strong>診斷（Rule In）<br/>記憶口訣：<strong>SpPIn</strong> = Specificity高 + Positive結果 = Rule In</div>
+            <table><thead><tr><th></th><th>有病 (D+)</th><th>沒病 (D-)</th></tr></thead>
+            <tbody><tr><td style={{fontWeight:600}}>檢查陽性 (T+)</td><td>TP (真陽性)</td><td>FP (偽陽性)</td></tr>
+            <tr><td style={{fontWeight:600}}>檢查陰性 (T-)</td><td>FN (偽陰性)</td><td>TN (真陰性)</td></tr></tbody></table>
         </div>
     );
 
     const L2=()=>(
         <div>
-            <div className="card">
-                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>ðŸ“ˆ ä¼¼ç„¶æ¯”æ¦‚å¿µ</h3>
-                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>æŸæª¢æŸ¥çµæžœåœ¨æœ‰ç—…è€…ä¸­å‡ºç¾çš„æ©ŸçŽ‡ï¼Œç›¸å°æ–¼åœ¨ç„¡ç—…è€…ä¸­å‡ºç¾çš„æ©ŸçŽ‡ã€‚ä¸å—ç››è¡ŒçŽ‡å½±éŸ¿ã€‚</p>
-            </div>
-            <div className="card">
-                <h3 style={{fontSize:18,fontWeight:700,color:'var(--suc)',marginBottom:12}}>âž• æ­£ä¼¼ç„¶æ¯” LR+</h3>
-                <div className="formula">LR+ = Sensitivity / (1 - Specificity)</div>
-                <table><thead><tr><th>LR+</th><th>åƒ¹å€¼</th><th>æ©ŸçŽ‡æ”¹è®Š</th></tr></thead>
-                <tbody>
-                    <tr><td>&gt;10</td><td style={{color:'var(--suc)'}}>å¼·åŠ›</td><td>å¤§å¹…å¢žåŠ </td></tr>
-                    <tr><td>5-10</td><td style={{color:'var(--pri)'}}>ä¸­åº¦</td><td>ä¸­åº¦å¢žåŠ </td></tr>
-                    <tr><td>2-5</td><td style={{color:'var(--warn)'}}>å¼±</td><td>è¼•å¾®å¢žåŠ </td></tr>
-                    <tr><td>1-2</td><td style={{color:'var(--txt2)'}}>ç„¡</td><td>å¹¾ä¹Žä¸è®Š</td></tr>
-                </tbody></table>
-            </div>
-            <div className="card">
-                <h3 style={{fontSize:18,fontWeight:700,color:'var(--err)',marginBottom:12}}>âž– è² ä¼¼ç„¶æ¯” LR-</h3>
-                <div className="formula" style={{borderColor:'var(--err)',background:'linear-gradient(135deg,#FFEBEE,#FFCDD2)'}}>LR- = (1 - Sensitivity) / Specificity</div>
-                <table><thead><tr><th>LR-</th><th>æŽ’é™¤åƒ¹å€¼</th><th>æ©ŸçŽ‡æ”¹è®Š</th></tr></thead>
-                <tbody>
-                    <tr><td>&lt;0.1</td><td style={{color:'var(--suc)'}}>å¼·åŠ›æŽ’é™¤</td><td>å¤§å¹…é™ä½Ž</td></tr>
-                    <tr><td>0.1-0.2</td><td style={{color:'var(--pri)'}}>ä¸­åº¦æŽ’é™¤</td><td>ä¸­åº¦é™ä½Ž</td></tr>
-                    <tr><td>0.2-0.5</td><td style={{color:'var(--warn)'}}>å¼±æŽ’é™¤</td><td>è¼•å¾®é™ä½Ž</td></tr>
-                    <tr><td>0.5-1</td><td style={{color:'var(--txt2)'}}>ç„¡åƒ¹å€¼</td><td>å¹¾ä¹Žä¸è®Š</td></tr>
-                </tbody></table>
-            </div>
+            <div className="formula">LR+ = Sensitivity / (1 - Specificity)</div>
+            <p style={{fontSize:14,lineHeight:1.8,margin:'16px 0'}}><strong>陽性似然比 (LR+)</strong> 代表陽性結果在有病者出現的機率，相對於無病者的倍數。</p>
+            <div className="good"><strong>✓ LR+ 解讀</strong><br/>• LR+ {'>'} 10：強力支持診斷<br/>• LR+ 5-10：中度支持診斷<br/>• LR+ 2-5：輕度支持診斷<br/>• LR+ = 1：不影響診斷</div>
+            <div className="formula">LR- = (1 - Sensitivity) / Specificity</div>
+            <p style={{fontSize:14,lineHeight:1.8,margin:'16px 0'}}><strong>陰性似然比 (LR-)</strong> 代表陰性結果在有病者出現的機率，相對於無病者的倍數。</p>
+            <div className="tip"><strong>🎯 LR- 解讀</strong><br/>• LR- {'<'} 0.1：強力排除診斷<br/>• LR- 0.1-0.2：中度排除診斷<br/>• LR- 0.2-0.5：輕度排除診斷<br/>• LR- = 1：不影響診斷</div>
         </div>
     );
 
     const L3=()=>(
         <div>
-            <div className="card">
-                <h3 style={{fontSize:18,fontWeight:700,color:'var(--suc)',marginBottom:12}}>ðŸŽ² æ©ŸçŽ‡è½‰æ›</h3>
-                <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:16,background:'#F0F7FF',borderRadius:12,flexWrap:'wrap'}}>
-                    <span style={{background:'var(--pri)',color:'#fff',padding:'8px 12px',borderRadius:8,fontSize:12,fontWeight:600}}>å‰æ¸¬æ©ŸçŽ‡</span>
-                    <span style={{fontSize:20}}>Ã—</span>
-                    <span style={{background:'var(--pur)',color:'#fff',padding:'8px 12px',borderRadius:8,fontSize:12,fontWeight:600}}>ä¼¼ç„¶æ¯”</span>
-                    <span style={{fontSize:20}}>â†’</span>
-                    <span style={{background:'var(--suc)',color:'#fff',padding:'8px 12px',borderRadius:8,fontSize:12,fontWeight:600}}>å¾Œæ¸¬æ©ŸçŽ‡</span>
-                </div>
-            </div>
-            <div className="card">
-                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>ðŸ“ è¨ˆç®—å…¬å¼</h3>
-                <div className="formula">
-                    <div style={{marginBottom:8}}>Pre-test Odds = Prob / (1 - Prob)</div>
-                    <div style={{marginBottom:8}}>Post-test Odds = Pre-test Odds Ã— LR</div>
-                    <div>Post-test Prob = Odds / (1 + Odds)</div>
-                </div>
-            </div>
-            <div className="good">
-                <strong style={{color:'var(--suc)'}}>ðŸ’¡ å¯¦ç”¨ä¼°ç®—</strong><br/>
-                â€¢ LR+ = 2 â†’ ç´„å¢žåŠ  15% å¾Œæ¸¬æ©ŸçŽ‡<br/>
-                â€¢ LR+ = 5 â†’ ç´„å¢žåŠ  30% å¾Œæ¸¬æ©ŸçŽ‡<br/>
-                â€¢ LR+ = 10 â†’ ç´„å¢žåŠ  45% å¾Œæ¸¬æ©ŸçŽ‡
-            </div>
+            <p style={{fontSize:14,lineHeight:1.8,margin:'16px 0'}}><strong>前測機率 (Pre-test Probability)</strong> 是在進行檢查前，根據臨床判斷估計患者有病的機率。</p>
+            <div className="tip"><strong>🎯 影響前測機率的因素</strong><br/>• 疾病盛行率<br/>• 病史與症狀<br/>• 理學檢查發現<br/>• 臨床經驗判斷</div>
+            <p style={{fontSize:14,lineHeight:1.8,margin:'16px 0'}}><strong>後測機率 (Post-test Probability)</strong> 是在獲得檢查結果後，更新的患病機率。</p>
+            <div className="formula">後測勝算 = 前測勝算 × LR</div>
+            <div className="good"><strong>✓ Fagan Nomogram</strong><br/>可快速從前測機率和似然比，查出後測機率。是臨床常用的實用工具。</div>
         </div>
     );
 
     const L4=()=>(
         <div>
-            <div className="card">
-                <h3 style={{fontSize:18,fontWeight:700,color:'var(--acc)',marginBottom:12}}>ðŸ©º æ¡ˆä¾‹ï¼šæ€¥æ€§é—Œå°¾ç‚Ž</h3>
-                <div style={{background:'#F0F7FF',padding:12,borderRadius:10,marginBottom:12}}>
-                    <p><strong>ç—…æ‚£ï¼š</strong>25æ­²ç”·æ€§</p>
-                    <p><strong>ä¸»è¨´ï¼š</strong>å³ä¸‹è…¹ç—›12å°æ™‚</p>
-                    <p><strong>å‰æ¸¬æ©ŸçŽ‡ï¼š</strong>30%</p>
-                </div>
-                <table><thead><tr><th>å¾µè±¡</th><th>LR+</th><th>LR-</th></tr></thead>
-                <tbody>
-                    <tr><td style={{textAlign:'left'}}>McBurney's point</td><td style={{color:'var(--suc)',fontWeight:600}}>3.4</td><td>0.4</td></tr>
-                    <tr><td style={{textAlign:'left'}}>Rebound tenderness</td><td style={{color:'var(--suc)',fontWeight:600}}>2.3</td><td>0.5</td></tr>
-                    <tr><td style={{textAlign:'left'}}>Psoas sign</td><td style={{color:'var(--pri)',fontWeight:600}}>2.4</td><td>0.9</td></tr>
-                </tbody></table>
-            </div>
-            <div className="card" style={{background:'#F0FFF4'}}>
-                <h3 style={{fontSize:16,fontWeight:700,color:'var(--suc)',marginBottom:12}}>ðŸ“Š è¨ˆç®—ç¯„ä¾‹</h3>
-                <p>McBurney's pointé™½æ€§ï¼š</p>
-                <div style={{background:'#fff',padding:12,borderRadius:8,fontSize:14,lineHeight:2,marginTop:8}}>
-                    1. å‰æ¸¬æ©ŸçŽ‡ = 30% = 0.30<br/>
-                    2. å‰æ¸¬å‹ç®— = 0.30/0.70 = 0.43<br/>
-                    3. LR+ = 3.4<br/>
-                    4. å¾Œæ¸¬å‹ç®— = 0.43 Ã— 3.4 = 1.46<br/>
-                    5. <strong style={{color:'var(--suc)'}}>å¾Œæ¸¬æ©ŸçŽ‡ = 1.46/2.46 = 59%</strong>
-                </div>
-            </div>
-            <div className="tip">
-                <strong style={{color:'var(--acc)'}}>ðŸ”‘ è‡¨åºŠè¦é»ž</strong><br/>
-                â€¢ å–®ä¸€æª¢æŸ¥LRé€šå¸¸ä¸å¤ å¤§<br/>
-                â€¢ éœ€çµåˆå¤šå€‹æª¢æŸ¥çµæžœ<br/>
-                â€¢ å‰æ¸¬æ©ŸçŽ‡ä¼°è¨ˆå¾ˆé‡è¦
-            </div>
+            <p style={{fontSize:14,lineHeight:1.8,margin:'16px 0'}}><strong>臨床案例</strong>：50歲男性胸痛，臨床判斷心肌梗塞前測機率30%。Troponin檢查的LR+=15，LR-=0.1。</p>
+            <div className="good"><strong>✓ Troponin 陽性時</strong><br/>前測機率30% + LR+=15<br/>→ 後測機率約 87%<br/>→ 高度懷疑心肌梗塞</div>
+            <div className="tip"><strong>🎯 Troponin 陰性時</strong><br/>前測機率30% + LR-=0.1<br/>→ 後測機率約 4%<br/>→ 可排除心肌梗塞</div>
+            <table><thead><tr><th>檢查結果</th><th>LR</th><th>前測30%→後測</th></tr></thead>
+            <tbody><tr><td>Troponin (+)</td><td>15</td><td>87%</td></tr>
+            <tr><td>Troponin (-)</td><td>0.1</td><td>4%</td></tr></tbody></table>
         </div>
     );
 
     const Lesson=()=>{
-        const l=lessons.find(x=>x.id===lessonId);
+        const l=lessons[lessonId-1];
         return(
             <div>
                 <Header title={l.title}/>
                 <div style={{background:`linear-gradient(135deg,${l.color},${l.color}88)`,padding:'20px',color:'#fff'}}>
                     <div style={{maxWidth:480,margin:'0 auto'}}>
-                        <div style={{fontSize:12,opacity:0.9}}>Lesson {l.id} â€¢ {l.sub}</div>
+                        <div style={{fontSize:12,opacity:0.9}}>Lesson {l.id} • {l.sub}</div>
                         <h1 style={{fontSize:24,fontWeight:700}}>{l.title}</h1>
                     </div>
                 </div>
@@ -366,9 +291,9 @@ const App=()=>{
                     <div style={{maxWidth:480,margin:'0 auto'}}>
                         {lessonId===1&&<L1/>}{lessonId===2&&<L2/>}{lessonId===3&&<L3/>}{lessonId===4&&<L4/>}
                         <div style={{display:'flex',gap:12,marginTop:24}}>
-                            {lessonId>1&&<button className="btn" style={{flex:1,background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setLessonId(lessonId-1)}>â† ä¸Šä¸€èª²</button>}
-                            {lessonId<4?<button className="btn btn-pri" style={{flex:1}} onClick={()=>setLessonId(lessonId+1)}>ä¸‹ä¸€èª² â†’</button>
-                            :<button className="btn btn-acc" style={{flex:1}} onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}}>é–‹å§‹æ¸¬é©— ðŸ“</button>}
+                            {lessonId>1&&<button className="btn" style={{flex:1,background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setLessonId(lessonId-1)}>← 上一課</button>}
+                            {lessonId<4?<button className="btn btn-pri" style={{flex:1}} onClick={()=>setLessonId(lessonId+1)}>下一課 →</button>
+                            :<button className="btn btn-acc" style={{flex:1}} onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}}>開始測驗 📝</button>}
                         </div>
                     </div>
                 </div>
@@ -384,7 +309,7 @@ const App=()=>{
             const pct=Math.round((score/quiz.length)*100);
             return(
                 <div>
-                    <Header title="æ¸¬é©—çµæžœ"/>
+                    <Header title="測驗結果"/>
                     <div style={{padding:'40px 16px',textAlign:'center'}}>
                         <div style={{width:140,height:140,borderRadius:'50%',background:`conic-gradient(${pct>=80?'var(--suc)':pct>=60?'var(--warn)':'var(--err)'} ${pct*3.6}deg,#E5E5E5 0deg)`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 24px'}}>
                             <div style={{width:120,height:120,borderRadius:'50%',background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
@@ -392,15 +317,15 @@ const App=()=>{
                                 <div style={{fontSize:14,color:'var(--txt2)'}}>{score}/{quiz.length}</div>
                             </div>
                         </div>
-                        <h2 style={{fontSize:24,fontWeight:700,marginBottom:8}}>{pct>=80?'ðŸŽ‰ å¤ªæ£’äº†ï¼':pct>=60?'ðŸ‘ ä¸éŒ¯ï¼':'ðŸ’ª åŠ æ²¹ï¼'}</h2>
-                        <p style={{color:'var(--txt2)',marginBottom:32}}>{pct>=80?'ä½ å°æ­¤ä¸»é¡ŒæŽŒæ¡è‰¯å¥½ï¼':pct>=60?'å†è¤‡ç¿’å¯ä»¥æ›´é€²æ­¥ï¼':'å»ºè­°é‡æ–°é–±è®€èª²ç¨‹'}</p>
+                        <h2 style={{fontSize:24,fontWeight:700,marginBottom:8}}>{pct>=80?'🎉 太棒了！':pct>=60?'👍 不錯！':'💪 加油！'}</h2>
+                        <p style={{color:'var(--txt2)',marginBottom:32}}>{pct>=80?'你對此主題掌握良好！':pct>=60?'再複習可以更進步！':'建議重新閱讀課程'}</p>
                         <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
-                            <button className="btn btn-pri" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false)}}>é‡æ–°æ¸¬é©—</button>
-                            <button className="btn" style={{background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setPage('home')}>è¿”å›žèª²ç¨‹</button>
+                            <button className="btn btn-pri" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false)}}>重新測驗</button>
+                            <button className="btn" style={{background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setPage('home')}>返回課程</button>
                         </div>
                     </div>
                     <footer style={{background:'#F0F7FF',padding:'24px 16px',textAlign:'center',marginTop:40}}>
-                        <p style={{fontSize:12,color:'var(--txt2)'}}>æ–°ç«¹å°å¤§åˆ†é™¢æ•™å­¸éƒ¨ | è¬æ…•æš MD, PhD, FESC | é»ƒæ²›éŠ“ MD | é»ƒåœ‹è‰¯</p>
+                        <p style={{fontSize:12,color:'var(--txt2)'}}>新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
                     </footer>
                 </div>
             );
@@ -409,11 +334,11 @@ const App=()=>{
         const q=quiz[qIdx];
         return(
             <div>
-                <Header title="è‡ªæˆ‘æ¸¬é©—"/>
+                <Header title="自我測驗"/>
                 <div style={{padding:'20px 16px'}}>
                     <div style={{maxWidth:480,margin:'0 auto'}}>
                         <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:14}}>
-                            <span style={{color:'var(--txt2)'}}>é€²åº¦</span>
+                            <span style={{color:'var(--txt2)'}}>進度</span>
                             <span style={{fontWeight:600,color:'var(--pri)'}}>{qIdx+1}/{quiz.length}</span>
                         </div>
                         <div style={{height:8,background:'#E5E5E5',borderRadius:4,marginBottom:20}}>
@@ -430,7 +355,7 @@ const App=()=>{
                                 return(
                                     <button key={i} onClick={()=>pick(i)} disabled={show} style={{width:'100%',padding:'12px 14px',marginBottom:10,background:bg,border:`2px solid ${bd}`,borderRadius:12,textAlign:'left',fontSize:14,cursor:show?'default':'pointer',display:'flex',alignItems:'center',gap:12}}>
                                         <span style={{width:26,height:26,borderRadius:8,background:show&&i===q.c?'var(--suc)':show&&i===sel?'var(--err)':'#F0F7FF',color:show&&(i===q.c||i===sel)?'#fff':'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13,flexShrink:0}}>
-                                            {show&&i===q.c?'âœ“':show&&i===sel&&i!==q.c?'âœ—':String.fromCharCode(65+i)}
+                                            {show&&i===q.c?'✔':show&&i===sel&&i!==q.c?'✗':String.fromCharCode(65+i)}
                                         </span>
                                         <span style={{lineHeight:1.5}}>{opt}</span>
                                     </button>
@@ -439,11 +364,11 @@ const App=()=>{
                         </div>
                         {show&&(
                             <div className={sel===q.c?'good':'tip'}>
-                                <strong style={{color:sel===q.c?'var(--suc)':'var(--acc)'}}>{sel===q.c?'âœ“ æ­£ç¢ºï¼':'âœ— ç­”éŒ¯äº†'}</strong>
+                                <strong style={{color:sel===q.c?'var(--suc)':'var(--acc)'}}>{sel===q.c?'✔ 正確！':'✗ 答錯了'}</strong>
                                 <p style={{fontSize:14,color:'var(--txt2)',marginTop:8,lineHeight:1.7}}>{q.e}</p>
                             </div>
                         )}
-                        {show&&<button className="btn btn-pri" style={{width:'100%',justifyContent:'center',marginTop:16}} onClick={next}>{qIdx<quiz.length-1?'ä¸‹ä¸€é¡Œ â†’':'æŸ¥çœ‹çµæžœ'}</button>}
+                        {show&&<button className="btn btn-pri" style={{width:'100%',justifyContent:'center',marginTop:16}} onClick={next}>{qIdx<quiz.length-1?'下一題 →':'查看結果'}</button>}
                     </div>
                 </div>
             </div>
