@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>輕微頭部創傷的顱內損傷評估 | JAMA Rational Clinical Examination</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Crimson+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --pri: #1E88E5;
+            --pri2: #42A5F5;
+            --sec: #00897B;
+            --sec2: #26A69A;
+            --suc: #43A047;
+            --warn: #FFA726;
+            --danger: #E53935;
+            --info: #5E35B1;
+            --bg: #F5F7FA;
+            --txt: #1A237E;
+            --txt2: #546E7A;
+            --card-shadow: 0 4px 20px rgba(30, 136, 229, 0.08);
+        }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--bg);
+            color: var(--txt);
+            line-height: 1.8;
+            -webkit-font-smoothing: antialiased;
+        }
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(30, 136, 229, 0.08);
+        }
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        .btn-pri { background: linear-gradient(135deg, var(--pri), var(--pri2)); color: #fff; }
+        .btn-pri:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(30, 136, 229, 0.3); }
+        .btn-sec { background: linear-gradient(135deg, var(--sec), var(--sec2)); color: #fff; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: linear-gradient(135deg, #E3F2FD, #BBDEFB); font-weight: 600; color: var(--pri); }
+        .formula {
+            background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
+            border: 2px solid var(--pri2);
+            border-radius: 16px;
+            padding: 18px;
+            margin: 14px 0;
+            text-align: center;
+            font-family: 'Crimson Pro', serif;
+            font-size: 18px;
+            color: var(--txt);
+            font-weight: 600;
+        }
+        .tip {
+            background: linear-gradient(135deg, #FFF8E1, #FFECB3);
+            border-left: 4px solid var(--warn);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        .good {
+            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+            border-left: 4px solid var(--suc);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        .danger {
+            background: linear-gradient(135deg, #FFEBEE, #FFCDD2);
+            border-left: 4px solid var(--danger);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        .info {
+            background: linear-gradient(135deg, #EDE7F6, #D1C4E9);
+            border-left: 4px solid var(--info);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .pulse { animation: pulse 2s infinite; }
+        .lr-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .lr-high { background: #FFCDD2; color: #C62828; }
+        .lr-mod { background: #FFF9C4; color: #F57F17; }
+        .lr-low { background: #C8E6C9; color: #2E7D32; }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+const lessons = [
+    { id: 1, title: '頭部創傷概論與分級', sub: 'Head Trauma Classification', color: '#1E88E5' },
+    { id: 2, title: '臨床病史評估', sub: 'Clinical History Features', color: '#00897B' },
+    { id: 3, title: '理學檢查發現', sub: 'Physical Examination Signs', color: '#5E35B1' },
+    { id: 4, title: '臨床決策規則', sub: 'Clinical Decision Rules', color: '#E53935' },
+    { id: 5, title: '臨床應用整合', sub: 'Clinical Application', color: '#F57C00' }
+];
+
+const quiz = [
+    {
+        q: '根據JAMA系統性回顧，輕微頭部創傷患者中嚴重顱內損傷的盛行率約為多少？',
+        o: ['1-2%', '7.1%', '15-20%', '30%'],
+        c: 1,
+        e: '在23,079名輕微頭部創傷患者中，嚴重顱內損傷的盛行率為7.1% (95% CI, 6.8%-7.4%)。需要神經外科手術或導致死亡的損傷約0.9%。'
+    },
+    {
+        q: '下列哪個理學檢查發現對於預測嚴重顱內損傷具有最高的陽性似然比(LR+)？',
+        o: ['頭痛', '意識喪失', '疑似顱骨骨折徵象', '嘔吐一次'],
+        c: 2,
+        e: '疑似顱骨骨折徵象 (包括Battle sign、浣熊眼、腦脊髓液漏) 的LR+ = 16 (95% CI, 3.1-59)，是最強的預測指標。'
+    },
+    {
+        q: 'GCS分數為13分時，對於嚴重顱內損傷的診斷意義為何？',
+        o: ['可排除嚴重損傷', 'LR+ = 4.9，顯著增加損傷可能性', '與GCS 15分風險相同', '需要立即手術'],
+        c: 1,
+        e: 'GCS分數13分的LR+ = 4.9 (95% CI, 2.8-8.5)，以7.1%的基線盛行率計算，顱內損傷的機率提升至18%-39%。'
+    },
+    {
+        q: '關於Canadian CT Head Rule，下列何者正確？',
+        o: ['包含頭痛作為風險因子', '陰性結果的LR- = 0.04', '適用於GCS < 13的患者', '不考慮年齡因素'],
+        c: 1,
+        e: 'Canadian CT Head Rule陰性結果的LR- = 0.04 (95% CI, 0-0.65)，可將嚴重顱內損傷機率降至0.31%。規則包含年齡≥65歲作為風險因子。'
+    },
+    {
+        q: '下列哪個症狀對於預測嚴重顱內損傷最有價值？',
+        o: ['單次嘔吐', '頭痛', '嘔吐≥2次', '頭暈'],
+        c: 2,
+        e: '嘔吐≥2次的LR+ = 3.6 (95% CI, 3.1-4.1)，而單次嘔吐的LR+僅2.3。重複嘔吐是更可靠的警示徵象。'
+    },
+    {
+        q: '關於意識喪失對顱內損傷的預測價值，何者正確？',
+        o: ['無意識喪失可完全排除損傷', 'LR+ = 1.6，診斷價值有限', '意識喪失是最重要的預測因子', '只有意識喪失>30分鐘才有意義'],
+        c: 1,
+        e: '意識喪失的LR+ = 1.6 (95% CI, 1.1-2.1)，無意識喪失的LR- = 0.60，單獨此症狀不足以排除或確認顱內損傷。'
+    },
+    {
+        q: 'New Orleans Criteria包含下列哪些項目？',
+        o: ['年齡≥65歲、危險機轉、頭痛', '年齡>60歲、醉酒、頭痛、嘔吐、癲癇、失憶、鎖骨以上創傷', 'GCS < 15於2小時、疑似顱骨骨折', '年齡、性別、血壓'],
+        c: 1,
+        e: 'New Orleans Criteria包含：年齡>60歲、醉酒、頭痛、任何嘔吐、癲癇、失憶、鎖骨以上可見創傷。陰性結果LR- = 0.08。'
+    },
+    {
+        q: '行人被車輛撞擊後的顱內損傷風險為何？',
+        o: ['與其他機轉相同', 'LR+ = 3.0-4.3，顯著增加風險', '僅需觀察無需CT', 'LR- < 0.1，可排除損傷'],
+        c: 1,
+        e: '行人被車輛撞擊的LR+ = 3.0-4.3，以7.1%基線盛行率計算，顱內損傷預測值為19%-25%，是重要的危險機轉。'
+    },
+    {
+        q: '下列何者是顱底骨折的典型臨床徵象？',
+        o: ['前額血腫', 'Battle sign (乳突區瘀斑)、浣熊眼、腦脊髓液耳漏', '瞳孔對光反射正常', '頸部僵硬'],
+        c: 1,
+        e: '顱底骨折徵象包括：Battle sign (耳後瘀斑)、浣熊眼 (眶周瘀斑)、腦脊髓液耳漏/鼻漏、鼓膜積血。LR+ = 6.0。'
+    },
+    {
+        q: '當患者完全不符合Canadian CT Head Rule任何條件時，嚴重顱內損傷的機率約為多少？',
+        o: ['5%', '2-3%', '0.31%', '與基線相同(7.1%)'],
+        c: 2,
+        e: '當Canadian CT Head Rule完全陰性時，LR- = 0.04，將7.1%的基線盛行率降低至0.31% (95% CI, 0%-4.7%)，可安全出院。'
+    }
+];
+
+const App = () => {
+    const [page, setPage] = useState('home');
+    const [lessonId, setLessonId] = useState(1);
+    const [qIdx, setQIdx] = useState(0);
+    const [score, setScore] = useState(0);
+    const [sel, setSel] = useState(null);
+    const [show, setShow] = useState(false);
+    const [done, setDone] = useState(false);
+
+    const Header = ({ title }) => (
+        <header style={{ 
+            background: '#fff', 
+            borderBottom: '1px solid rgba(30, 136, 229, 0.1)', 
+            padding: '14px 16px', 
+            position: 'sticky', 
+            top: 0, 
+            zIndex: 10,
+            backdropFilter: 'blur(10px)'
+        }}>
+            <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <button 
+                    onClick={() => page === 'home' ? window.location.href = 'jama-rational-exam.html' : setPage('home')} 
+                    style={{ 
+                        background: 'linear-gradient(135deg, #E3F2FD, #BBDEFB)', 
+                        border: 'none', 
+                        borderRadius: 12, 
+                        width: 42, 
+                        height: 42, 
+                        cursor: 'pointer', 
+                        color: 'var(--pri)', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 8px rgba(30, 136, 229, 0.1)'
+                    }}
+                >
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <span style={{ fontWeight: 700, color: 'var(--txt)', fontSize: 16 }}>{title}</span>
+            </div>
+        </header>
+    );
+
+    const Home = () => (
+        <div className="fade-in">
+            <Header title="輕微頭部創傷評估" />
+            <div style={{ 
+                background: 'linear-gradient(135deg, #1E88E5 0%, #42A5F5 50%, #00897B 100%)', 
+                padding: '36px 20px 44px', 
+                color: '#fff',
+                position: 'relative',
+                overflow: 'hidden'
+            }}>
+                <div style={{
+                    position: 'absolute',
+                    top: -30,
+                    right: -30,
+                    width: 150,
+                    height: 150,
+                    borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.1)'
+                }} />
+                <div style={{ maxWidth: 480, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+                    <div style={{ 
+                        background: 'rgba(255,255,255,0.2)', 
+                        display: 'inline-block', 
+                        padding: '8px 16px', 
+                        borderRadius: 50, 
+                        fontSize: 12, 
+                        fontWeight: 600, 
+                        marginBottom: 16,
+                        backdropFilter: 'blur(10px)'
+                    }}>
+                        🧠 JAMA Rational Clinical Examination
+                    </div>
+                    <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12, lineHeight: 1.3 }}>
+                        Minor Head Trauma & Intracranial Injury
+                    </h1>
+                    <p style={{ opacity: 0.95, fontSize: 14, lineHeight: 1.7 }}>
+                        輕微頭部創傷的嚴重顱內損傷評估 - 神經影像學決策
+                    </p>
+                    <p style={{ opacity: 0.8, fontSize: 12, marginTop: 8 }}>
+                        Easter JS, et al. JAMA. 2015;314(24):2672-2681
+                    </p>
+                    <a 
+                        href="https://jamanetwork.com/journals/jama/fullarticle/2478532" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{
+                            display:'inline-flex',
+                            alignItems:'center',
+                            gap:6,
+                            background:'rgba(255,255,255,0.25)',
+                            color:'#fff',
+                            padding:'8px 16px',
+                            borderRadius:25,
+                            fontSize:13,
+                            fontWeight:600,
+                            textDecoration:'none',
+                            backdropFilter:'blur(10px)',
+                            marginTop: 12,
+                            transition:'all 0.3s'
+                        }}
+                    >
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                        閱讀原文 Read Full Article
+                    </a>
+                </div>
+            </div>
+            
+            <div style={{ padding: '0 16px', marginTop: -24 }}>
+                <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                    <div className="card">
+                        <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--pri)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 22 }}>🎯</span> 學習目標
+                        </h3>
+                        {[
+                            '了解輕微頭部創傷的定義與流行病學',
+                            '識別預測嚴重顱內損傷的臨床特徵',
+                            '熟悉Canadian CT Head Rule與New Orleans Criteria',
+                            '掌握低風險患者的安全出院標準'
+                        ].map((t, i) => (
+                            <div key={i} style={{ display: 'flex', gap: 12, marginBottom: 10, fontSize: 14 }}>
+                                <span style={{ 
+                                    background: 'linear-gradient(135deg, var(--suc), #66BB6A)', 
+                                    color: '#fff', 
+                                    borderRadius: 8, 
+                                    width: 26, 
+                                    height: 26, 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    fontSize: 13, 
+                                    flexShrink: 0,
+                                    fontWeight: 600
+                                }}>{i + 1}</span>
+                                <span style={{ color: 'var(--txt2)', lineHeight: 1.6 }}>{t}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="danger" style={{ marginBottom: 20 }}>
+                        <strong style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            ⚠️ 臨床重要性
+                        </strong>
+                        <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 8, lineHeight: 1.7 }}>
+                            每年約250萬美國人因頭部創傷就醫。輕微頭部創傷(GCS 13-15)佔所有頭部創傷的89%，但仍有5-15%患者存在顱內損傷，約0.9%需神經外科介入或導致死亡。
+                        </p>
+                    </div>
+
+                    <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: 'var(--txt)' }}>📚 課程內容</h3>
+                    {lessons.map(l => (
+                        <div 
+                            key={l.id} 
+                            className="card" 
+                            onClick={() => { setLessonId(l.id); setPage('lesson'); }} 
+                            style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                <div style={{ 
+                                    width: 52, 
+                                    height: 52, 
+                                    borderRadius: 14, 
+                                    background: `linear-gradient(135deg, ${l.color}, ${l.color}99)`, 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    color: '#fff', 
+                                    fontWeight: 700,
+                                    fontSize: 18,
+                                    boxShadow: `0 4px 12px ${l.color}33`
+                                }}>{l.id}</div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: 11, color: l.color, fontWeight: 600, marginBottom: 2 }}>Lesson {l.id}</div>
+                                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--txt)' }}>{l.title}</div>
+                                    <div style={{ fontSize: 13, color: 'var(--txt2)' }}>{l.sub}</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" fill={l.color} width="22" height="22">
+                                    <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/>
+                                </svg>
+                            </div>
+                        </div>
+                    ))}
+                    
+                    <button 
+                        className="btn btn-pri" 
+                        onClick={() => { setQIdx(0); setScore(0); setSel(null); setShow(false); setDone(false); setPage('quiz'); }} 
+                        style={{ width: '100%', justifyContent: 'center', marginTop: 24, marginBottom: 16, padding: '16px 24px' }}
+                    >
+                        📝 開始測驗 (10題)
+                    </button>
+
+                    <a 
+                        href="https://jamanetwork.com/journals/jama/fullarticle/2478532"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 8,
+                            padding: '14px 20px',
+                            background: 'linear-gradient(135deg, #F8F9FA, #E9ECEF)',
+                            borderRadius: 14,
+                            textDecoration: 'none',
+                            color: 'var(--sec)',
+                            fontSize: 14,
+                            fontWeight: 600,
+                            marginBottom: 32,
+                            border: '1px solid rgba(0, 137, 123, 0.2)'
+                        }}
+                    >
+                        📄 閱讀原文 (JAMA 2015)
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                            <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            
+            <footer style={{ background: 'linear-gradient(135deg, #E3F2FD, #BBDEFB)', padding: '28px 16px', textAlign: 'center' }}>
+                <p style={{ fontSize: 13, color: 'var(--txt2)', fontWeight: 600 }}>新竹台大分院教學部</p>
+                <p style={{ fontSize: 12, color: 'var(--txt2)', marginTop: 4 }}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+        </div>
+    );
+
+    // Lesson 1: 頭部創傷概論與分級
+    const L1 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>🧠 頭部創傷的定義與分類</h3>
+                <div className="formula">
+                    Glasgow Coma Scale (GCS) 評分是頭部創傷分類的基礎
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>嚴重度</th>
+                            <th>GCS分數</th>
+                            <th>處置建議</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{ fontWeight: 600, color: 'var(--danger)' }}>重度</td>
+                            <td>≤ 8</td>
+                            <td>立即CT + 神經外科會診</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600, color: 'var(--warn)' }}>中度</td>
+                            <td>9-12</td>
+                            <td>緊急CT檢查</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600, color: 'var(--suc)' }}>輕度</td>
+                            <td>13-15</td>
+                            <td>依臨床決策規則評估</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>📊 Glasgow Coma Scale 計算</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>反應類型</th>
+                            <th>反應內容</th>
+                            <th>分數</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td rowSpan="4" style={{ fontWeight: 600, color: 'var(--pri)' }}>眼睛反應<br/>(E, 1-4分)</td><td>自發性張眼</td><td>4</td></tr>
+                        <tr><td>對聲音張眼</td><td>3</td></tr>
+                        <tr><td>對疼痛張眼</td><td>2</td></tr>
+                        <tr><td>無反應</td><td>1</td></tr>
+                        <tr><td rowSpan="5" style={{ fontWeight: 600, color: 'var(--sec)' }}>語言反應<br/>(V, 1-5分)</td><td>定向力正常</td><td>5</td></tr>
+                        <tr><td>混亂交談</td><td>4</td></tr>
+                        <tr><td>不適當言語</td><td>3</td></tr>
+                        <tr><td>難以理解的聲音</td><td>2</td></tr>
+                        <tr><td>無反應</td><td>1</td></tr>
+                        <tr><td rowSpan="6" style={{ fontWeight: 600, color: 'var(--info)' }}>運動反應<br/>(M, 1-6分)</td><td>遵從指令</td><td>6</td></tr>
+                        <tr><td>定位疼痛</td><td>5</td></tr>
+                        <tr><td>退縮疼痛</td><td>4</td></tr>
+                        <tr><td>異常屈曲</td><td>3</td></tr>
+                        <tr><td>伸展反應</td><td>2</td></tr>
+                        <tr><td>無反應</td><td>1</td></tr>
+                    </tbody>
+                </table>
+                <div className="formula">
+                    GCS 總分 = E + V + M (範圍 3-15分)
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--info)', marginBottom: 14 }}>📈 流行病學數據</h3>
+                <div className="danger">
+                    <strong>關鍵數據</strong>
+                    <ul style={{ marginTop: 8, marginLeft: 16, color: 'var(--txt2)', fontSize: 14 }}>
+                        <li>每年約250萬美國人因頭部創傷就醫</li>
+                        <li>輕微頭部創傷 (GCS 13-15) 佔所有頭部創傷的 <strong>89%</strong></li>
+                        <li>嚴重顱內損傷盛行率：<strong>7.1%</strong> (95% CI, 6.8%-7.4%)</li>
+                        <li>需神經外科介入或死亡：<strong>0.9%</strong> (95% CI, 0.78%-1.0%)</li>
+                    </ul>
+                </div>
+                <div className="tip">
+                    <strong>💡 臨床意涵</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        雖然輕微創傷的嚴重損傷比例較低，但因絕對病患數量龐大，需要積極介入的患者人數實際上比中重度創傷更多。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--danger)', marginBottom: 14 }}>🚨 嚴重顱內損傷的定義</h3>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginBottom: 12, lineHeight: 1.8 }}>
+                    需要緊急介入處置的損傷類型：
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    {['硬腦膜下血腫', '硬腦膜外血腫', '腦室內出血', '實質血腫', '蛛網膜下腔出血', '腦疝', '凹陷性顱骨骨折'].map((item, i) => (
+                        <div key={i} style={{ 
+                            background: 'linear-gradient(135deg, #FFEBEE, #FFCDD2)', 
+                            padding: '10px 14px', 
+                            borderRadius: 10,
+                            fontSize: 13,
+                            fontWeight: 500,
+                            color: 'var(--danger)'
+                        }}>
+                            {item}
+                        </div>
+                    ))}
+                </div>
+                <div className="good" style={{ marginTop: 14 }}>
+                    <strong>✓ 不列入嚴重損傷</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        閉合性、非凹陷性線性顱骨骨折不需緊急介入，不列入嚴重損傷。
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+
+    // Lesson 2: 臨床病史評估
+    const L2 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>📋 危險因子與受傷機轉</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>危險因子</th>
+                            <th>LR+ (95% CI)</th>
+                            <th>臨床解讀</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>行人被車撞擊</td>
+                            <td><span className="lr-badge lr-high">3.0-4.3</span></td>
+                            <td>損傷機率19-25%</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>年齡 ≥65歲</td>
+                            <td><span className="lr-badge lr-mod">2.3</span></td>
+                            <td>損傷機率15%</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>年齡 &gt;60歲</td>
+                            <td><span className="lr-badge lr-mod">2.2</span></td>
+                            <td>損傷機率14%</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>凝血功能異常</td>
+                            <td><span className="lr-badge lr-mod">2.2</span></td>
+                            <td>損傷機率14%</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>危險機轉*</td>
+                            <td><span className="lr-badge lr-mod">2.1</span></td>
+                            <td>損傷機率14%</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div className="info">
+                    <strong>*危險機轉定義</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        行人被車撞擊、車輛乘客被拋出、從超過1公尺或5階樓梯高度墜落
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>🤕 症狀評估</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>症狀</th>
+                            <th>LR+ (95% CI)</th>
+                            <th>LR- (95% CI)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{ fontWeight: 600, color: 'var(--danger)' }}>嘔吐 ≥2次</td>
+                            <td><span className="lr-badge lr-high">3.6 (3.1-4.1)</span></td>
+                            <td>0.76</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>創傷後癲癇</td>
+                            <td><span className="lr-badge lr-mod">2.5 (1.3-4.3)</span></td>
+                            <td>0.98</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>任何嘔吐</td>
+                            <td><span className="lr-badge lr-mod">2.3 (1.8-2.8)</span></td>
+                            <td>0.89</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>順行性失憶</td>
+                            <td><span className="lr-badge lr-mod">2.2 (1.6-3.1)</span></td>
+                            <td>0.75</td>
+                        </tr>
+                        <tr>
+                            <td>意識喪失</td>
+                            <td>1.6 (1.1-2.1)</td>
+                            <td>0.60</td>
+                        </tr>
+                        <tr>
+                            <td>任何失憶</td>
+                            <td>1.5 (0.81-2.8)</td>
+                            <td>0.55</td>
+                        </tr>
+                        <tr>
+                            <td>頭痛</td>
+                            <td>1.2 (1.0-1.5)</td>
+                            <td>0.84</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--danger)', marginBottom: 14 }}>🔴 高危險症狀</h3>
+                <div className="danger">
+                    <strong>嘔吐 ≥2次</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        LR+ = 3.6，以7.1%基線盛行率計算，顱內損傷預測值達 <strong>19-24%</strong>
+                    </p>
+                </div>
+                <div className="tip">
+                    <strong>💡 臨床要點</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        重複嘔吐比單次嘔吐具有更高的預測價值。應詢問創傷後嘔吐的次數和時間。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--info)', marginBottom: 14 }}>⚠️ 意識喪失的解讀</h3>
+                <div className="formula">
+                    意識喪失 LR+ = 1.6 | 無意識喪失 LR- = 0.60
+                </div>
+                <div className="info">
+                    <strong>重要觀念</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        意識喪失和失憶雖常讓患者和醫師擔憂，但作為單獨發現，其診斷價值有限。
+                        <br/><br/>
+                        • 無意識喪失<strong>不能</strong>完全排除顱內損傷 (LR- = 0.60)
+                        <br/>
+                        • 有意識喪失也不代表必有損傷 (LR+ 僅 1.6)
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+
+    // Lesson 3: 理學檢查發現
+    const L3 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>🔍 理學檢查發現</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>徵象</th>
+                            <th>LR+ (95% CI)</th>
+                            <th>特異度</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#FFEBEE' }}>
+                            <td style={{ fontWeight: 700, color: 'var(--danger)' }}>疑似顱骨骨折*</td>
+                            <td><span className="lr-badge lr-high">16 (3.1-59)</span></td>
+                            <td>99%</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>顱底骨折徵象</td>
+                            <td><span className="lr-badge lr-high">6.0 (3.9-8.0)</span></td>
+                            <td>97%</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>開放性骨折</td>
+                            <td><span className="lr-badge lr-high">4.6-5.0</span></td>
+                            <td>97%</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>局灶性神經學缺損</td>
+                            <td>1.9-7.0</td>
+                            <td>91-99%</td>
+                        </tr>
+                        <tr>
+                            <td>鎖骨以上創傷</td>
+                            <td>1.3 (1.1-1.5)</td>
+                            <td>74%</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div className="tip">
+                    <strong>*疑似顱骨骨折徵象</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        包括：可見的開放性骨折、可觸及的凹陷性骨折、顱底骨折徵象
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--danger)', marginBottom: 14 }}>💀 顱底骨折的臨床徵象</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
+                    <div style={{ 
+                        background: 'linear-gradient(135deg, #E3F2FD, #BBDEFB)', 
+                        padding: 16, 
+                        borderRadius: 12,
+                        border: '2px solid var(--pri)'
+                    }}>
+                        <h4 style={{ color: 'var(--pri)', marginBottom: 8, fontSize: 15 }}>🦡 Battle Sign (Battle徵象)</h4>
+                        <p style={{ fontSize: 13, color: 'var(--txt2)' }}>乳突區 (耳後) 瘀斑，提示岩骨或顳骨骨折</p>
+                    </div>
+                    <div style={{ 
+                        background: 'linear-gradient(135deg, #EDE7F6, #D1C4E9)', 
+                        padding: 16, 
+                        borderRadius: 12,
+                        border: '2px solid var(--info)'
+                    }}>
+                        <h4 style={{ color: 'var(--info)', marginBottom: 8, fontSize: 15 }}>🦝 Raccoon Eyes (浣熊眼)</h4>
+                        <p style={{ fontSize: 13, color: 'var(--txt2)' }}>眶周雙側瘀斑，提示前顱底骨折</p>
+                    </div>
+                    <div style={{ 
+                        background: 'linear-gradient(135deg, #E8F5E9, #C8E6C9)', 
+                        padding: 16, 
+                        borderRadius: 12,
+                        border: '2px solid var(--suc)'
+                    }}>
+                        <h4 style={{ color: 'var(--suc)', marginBottom: 8, fontSize: 15 }}>👂 Hemotympanum (鼓膜積血)</h4>
+                        <p style={{ fontSize: 13, color: 'var(--txt2)' }}>鼓膜後方血液積聚，需耳鏡檢查</p>
+                    </div>
+                    <div style={{ 
+                        background: 'linear-gradient(135deg, #FFF8E1, #FFECB3)', 
+                        padding: 16, 
+                        borderRadius: 12,
+                        border: '2px solid var(--warn)'
+                    }}>
+                        <h4 style={{ color: '#F57C00', marginBottom: 8, fontSize: 15 }}>💧 CSF漏 (腦脊髓液耳漏/鼻漏)</h4>
+                        <p style={{ fontSize: 13, color: 'var(--txt2)' }}>清澈液體自耳道或鼻腔流出，可用葡萄糖試紙確認</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>📉 GCS變化的意義</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>GCS狀態</th>
+                            <th>LR+ (95% CI)</th>
+                            <th>損傷機率</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#FFEBEE' }}>
+                            <td style={{ fontWeight: 700, color: 'var(--danger)' }}>GCS任何下降</td>
+                            <td><span className="lr-badge lr-high">3.4-16</span></td>
+                            <td>21-55%</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>GCS = 13</td>
+                            <td><span className="lr-badge lr-high">4.9 (2.8-8.5)</span></td>
+                            <td>27%</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>GCS = 14</td>
+                            <td><span className="lr-badge lr-high">4.2 (0.85-7.6)</span></td>
+                            <td>24%</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>2小時後GCS &lt;15</td>
+                            <td><span className="lr-badge lr-high">3.4 (1.4-8.4)</span></td>
+                            <td>18%</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div className="danger">
+                    <strong>🚨 重要警示</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        GCS = 13雖被歸類為「輕微」頭部創傷，但LR+ = 4.9，損傷風險顯著增加。
+                        從決策角度，這類患者更適合視為「中度」頭部創傷處置。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--info)', marginBottom: 14 }}>🧠 局灶性神經學缺損</h3>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginBottom: 12, lineHeight: 1.8 }}>
+                    可定位至特定腦部解剖位置的新發異常：
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    {['瞳孔不等大', '視覺改變', '失語症', '局灶運動缺損', '局灶感覺缺損', '共濟失調', '步態異常'].map((item, i) => (
+                        <div key={i} style={{ 
+                            background: 'linear-gradient(135deg, #EDE7F6, #D1C4E9)', 
+                            padding: '10px 14px', 
+                            borderRadius: 10,
+                            fontSize: 13,
+                            fontWeight: 500,
+                            color: 'var(--info)'
+                        }}>
+                            {item}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+
+    // Lesson 4: 臨床決策規則
+    const L4 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--danger)', marginBottom: 14 }}>🇨🇦 Canadian CT Head Rule</h3>
+                <div className="formula">
+                    適用對象：GCS 13-15 且有意識喪失、失憶或定向力障礙
+                </div>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginBottom: 12 }}>
+                    <strong>任一條件陽性即建議CT：</strong>
+                </p>
+                <div style={{ display: 'grid', gap: 10 }}>
+                    {[
+                        { item: '年齡 ≥65歲', risk: '高風險' },
+                        { item: '危險機轉 (行人被撞、被拋出車外、墜落>1公尺)', risk: '高風險' },
+                        { item: '嘔吐超過1次', risk: '高風險' },
+                        { item: '失憶超過30分鐘', risk: '高風險' },
+                        { item: '2小時後GCS仍<15', risk: '中風險' },
+                        { item: '疑似開放性、凹陷性或顱底骨折', risk: '中風險' }
+                    ].map((x, i) => (
+                        <div key={i} style={{ 
+                            background: x.risk === '高風險' ? 'linear-gradient(135deg, #FFEBEE, #FFCDD2)' : 'linear-gradient(135deg, #FFF8E1, #FFECB3)',
+                            padding: '12px 16px', 
+                            borderRadius: 12,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 12
+                        }}>
+                            <span style={{ 
+                                background: x.risk === '高風險' ? 'var(--danger)' : 'var(--warn)',
+                                color: '#fff',
+                                padding: '4px 8px',
+                                borderRadius: 6,
+                                fontSize: 11,
+                                fontWeight: 600
+                            }}>{x.risk}</span>
+                            <span style={{ fontSize: 14, color: 'var(--txt)' }}>{x.item}</span>
+                        </div>
+                    ))}
+                </div>
+                <div className="good" style={{ marginTop: 14 }}>
+                    <strong>✓ 規則表現</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        • 敏感度：99% (95% CI, 78-100%)<br/>
+                        • 陰性LR：<strong>0.04</strong> (95% CI, 0-0.65)<br/>
+                        • 完全陰性時損傷機率：<strong>0.31%</strong>
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>🇺🇸 New Orleans Criteria</h3>
+                <div className="formula">
+                    適用對象：GCS 15 且有意識喪失或失憶
+                </div>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginBottom: 12 }}>
+                    <strong>任一條件陽性即建議CT：</strong>
+                </p>
+                <div style={{ display: 'grid', gap: 10 }}>
+                    {[
+                        '年齡 >60歲',
+                        '醉酒 (Intoxication)',
+                        '頭痛',
+                        '任何嘔吐',
+                        '癲癇發作',
+                        '失憶',
+                        '鎖骨以上可見創傷'
+                    ].map((item, i) => (
+                        <div key={i} style={{ 
+                            background: 'linear-gradient(135deg, #E0F2F1, #B2DFDB)',
+                            padding: '12px 16px', 
+                            borderRadius: 12,
+                            fontSize: 14,
+                            color: 'var(--sec)'
+                        }}>
+                            {i + 1}. {item}
+                        </div>
+                    ))}
+                </div>
+                <div className="good" style={{ marginTop: 14 }}>
+                    <strong>✓ 規則表現</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        • 敏感度：99% (95% CI, 90-100%)<br/>
+                        • 陰性LR：<strong>0.08</strong> (95% CI, 0.01-0.84)<br/>
+                        • 完全陰性時損傷機率：<strong>0.61%</strong>
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--info)', marginBottom: 14 }}>📊 兩規則比較</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>特性</th>
+                            <th>Canadian CT Head Rule</th>
+                            <th>New Orleans Criteria</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>適用GCS</td>
+                            <td>13-15</td>
+                            <td>15</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>敏感度</td>
+                            <td>99%</td>
+                            <td>99%</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>特異度</td>
+                            <td>40%</td>
+                            <td>13%</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>陰性LR</td>
+                            <td>0.04</td>
+                            <td>0.08</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>CT減少率</td>
+                            <td>較高</td>
+                            <td>較低</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div className="tip">
+                    <strong>💡 選擇建議</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        Canadian CT Head Rule具有較高特異度，可減少不必要的CT檢查。
+                        在大多數比較研究中，其識別顱內損傷的準確度優於New Orleans Criteria。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--warn)', marginBottom: 14 }}>⚠️ 規則使用注意事項</h3>
+                <div className="danger">
+                    <strong>規則限制</strong>
+                    <ul style={{ marginTop: 8, marginLeft: 16, color: 'var(--txt2)', fontSize: 14 }}>
+                        <li>不適用於嚴重凝血功能障礙患者</li>
+                        <li>不適用於嚴重醉酒者</li>
+                        <li>不適用於年齡>75歲的族群 (驗證不足)</li>
+                        <li>不適用於受傷>24小時後就診者</li>
+                    </ul>
+                </div>
+                <div className="info" style={{ marginTop: 14 }}>
+                    <strong>正確解讀</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        這些規則是用來識別<strong>低風險</strong>患者可安全出院，而非規定有一項陽性就必須做CT。
+                        有一項或多項陽性時，仍需結合臨床判斷、患者偏好、陽性項目數量和具體特徵做決策。
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+
+    // Lesson 5: 臨床應用整合
+    const L5 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>🏥 Case 1：67歲女性跌倒</h3>
+                <div className="info">
+                    <strong>病史</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        67歲女性在冰上滑倒撞到頭部。無意識喪失，完整記得事件經過。
+                        跌倒後立即嘔吐一次，3小時後到急診再嘔吐一次。
+                        前額有0.5cm擦傷，GCS 15分，神經學檢查正常。
+                    </p>
+                </div>
+                <div style={{ marginTop: 14 }}>
+                    <h4 style={{ color: 'var(--sec)', marginBottom: 10 }}>📋 風險評估</h4>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>年齡 ≥65歲</td>
+                                <td><span className="lr-badge lr-high">✓ 陽性</span></td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>嘔吐 ≥2次</td>
+                                <td><span className="lr-badge lr-high">✓ 陽性</span></td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>Canadian Rule狀態</td>
+                                <td><span className="lr-badge lr-high">高風險</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div className="danger" style={{ marginTop: 14 }}>
+                    <strong>後測機率計算</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        以6.8%基線盛行率，嘔吐≥2次 (LR+ = 3.6) →<br/>
+                        後測機率 = <strong>21%</strong> 顱內損傷
+                    </p>
+                </div>
+                <div className="good" style={{ marginTop: 14 }}>
+                    <strong>✓ 結果</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        頭部CT顯示硬腦膜下血腫。住院觀察48小時後，症狀改善，神經學檢查正常，
+                        出院並安排2週後神經外科門診追蹤。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>🏀 Case 2：20歲男性運動傷害</h3>
+                <div className="info">
+                    <strong>病史</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        20歲男性打籃球被撞倒，意識喪失約5秒後恢復並繼續比賽。
+                        受傷4小時後到急診，左側中度頭痛，左頂部頭皮血腫。
+                        無其他異常發現，GCS 15分。
+                    </p>
+                </div>
+                <div style={{ marginTop: 14 }}>
+                    <h4 style={{ color: 'var(--sec)', marginBottom: 10 }}>📋 Canadian CT Head Rule評估</h4>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td>年齡 ≥65歲</td>
+                                <td><span className="lr-badge lr-low">✗ 陰性</span></td>
+                            </tr>
+                            <tr>
+                                <td>危險機轉</td>
+                                <td><span className="lr-badge lr-low">✗ 陰性</span></td>
+                            </tr>
+                            <tr>
+                                <td>嘔吐 >1次</td>
+                                <td><span className="lr-badge lr-low">✗ 陰性</span></td>
+                            </tr>
+                            <tr>
+                                <td>失憶 >30分鐘</td>
+                                <td><span className="lr-badge lr-low">✗ 陰性</span></td>
+                            </tr>
+                            <tr>
+                                <td>2小時後GCS &lt;15</td>
+                                <td><span className="lr-badge lr-low">✗ 陰性</span></td>
+                            </tr>
+                            <tr>
+                                <td>疑似顱骨骨折</td>
+                                <td><span className="lr-badge lr-low">✗ 陰性</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div className="good" style={{ marginTop: 14 }}>
+                    <strong>後測機率計算</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        以7.4%基線盛行率，Canadian Rule完全陰性 (LR- = 0.04) →<br/>
+                        後測機率 = <strong>0.32%</strong> 顱內損傷
+                    </p>
+                </div>
+                <div className="tip" style={{ marginTop: 14 }}>
+                    <strong>💡 處置</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        儘管有意識喪失和頭痛 (New Orleans Criteria項目)，但不符合Canadian Rule任何條件。
+                        結合臨床判斷，給予嚴格衛教後出院，1週後追蹤完全恢復。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--danger)', marginBottom: 14 }}>🚨 出院衛教要點</h3>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginBottom: 12 }}>
+                    所有出院患者應有成人陪伴，並告知以下警示症狀需立即回診：
+                </p>
+                <div style={{ display: 'grid', gap: 10 }}>
+                    {[
+                        { icon: '🤮', text: '多次嘔吐' },
+                        { icon: '🤕', text: '劇烈或惡化的頭痛' },
+                        { icon: '⚡', text: '癲癇發作' },
+                        { icon: '😵', text: '意識狀態惡化' },
+                        { icon: '💪', text: '肢體無力或感覺異常' },
+                        { icon: '👁️', text: '視力改變' }
+                    ].map((x, i) => (
+                        <div key={i} style={{ 
+                            background: 'linear-gradient(135deg, #FFEBEE, #FFCDD2)',
+                            padding: '12px 16px', 
+                            borderRadius: 12,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 12,
+                            fontSize: 14
+                        }}>
+                            <span style={{ fontSize: 20 }}>{x.icon}</span>
+                            <span style={{ color: 'var(--danger)' }}>{x.text}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--info)', marginBottom: 14 }}>📊 臨床決策流程</h3>
+                <div style={{ 
+                    background: 'linear-gradient(135deg, #E3F2FD, #BBDEFB)', 
+                    padding: 20, 
+                    borderRadius: 16,
+                    textAlign: 'center'
+                }}>
+                    <div style={{ marginBottom: 16 }}>
+                        <div style={{ 
+                            background: 'var(--pri)', 
+                            color: '#fff', 
+                            padding: '10px 20px', 
+                            borderRadius: 10,
+                            display: 'inline-block',
+                            fontWeight: 600
+                        }}>
+                            成人輕微頭部創傷 (GCS 13-15)
+                        </div>
+                    </div>
+                    <div style={{ fontSize: 24, marginBottom: 16 }}>↓</div>
+                    <div style={{ marginBottom: 16 }}>
+                        <div style={{ 
+                            background: 'var(--danger)', 
+                            color: '#fff', 
+                            padding: '10px 20px', 
+                            borderRadius: 10,
+                            display: 'inline-block',
+                            fontWeight: 600
+                        }}>
+                            GCS ≤13 或 意識改變?
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: 40 }}>
+                        <div>
+                            <div style={{ fontSize: 14, color: 'var(--danger)', fontWeight: 600 }}>是</div>
+                            <div style={{ fontSize: 20 }}>↓</div>
+                            <div style={{ 
+                                background: 'var(--danger)', 
+                                color: '#fff', 
+                                padding: '8px 16px', 
+                                borderRadius: 8,
+                                fontSize: 13
+                            }}>
+                                立即CT + 會診
+                            </div>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: 14, color: 'var(--suc)', fontWeight: 600 }}>否</div>
+                            <div style={{ fontSize: 20 }}>↓</div>
+                            <div style={{ 
+                                background: 'var(--sec)', 
+                                color: '#fff', 
+                                padding: '8px 16px', 
+                                borderRadius: 8,
+                                fontSize: 13
+                            }}>
+                                應用臨床決策規則
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--suc)', marginBottom: 14 }}>✅ 核心重點總結</h3>
+                <div style={{ display: 'grid', gap: 12 }}>
+                    {[
+                        '輕微頭部創傷嚴重顱內損傷盛行率7.1%',
+                        '疑似顱骨骨折徵象LR+ = 16，是最強預測指標',
+                        '嘔吐≥2次、GCS 13、GCS下降都是高風險特徵',
+                        '意識喪失單獨不足以排除或確認損傷',
+                        'Canadian Rule陰性可將損傷機率降至0.31%',
+                        '規則是輔助工具，不能取代臨床判斷'
+                    ].map((item, i) => (
+                        <div key={i} style={{ 
+                            background: 'linear-gradient(135deg, #E8F5E9, #C8E6C9)',
+                            padding: '12px 16px', 
+                            borderRadius: 12,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 12
+                        }}>
+                            <span style={{ 
+                                background: 'var(--suc)',
+                                color: '#fff',
+                                borderRadius: '50%',
+                                width: 24,
+                                height: 24,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 12,
+                                fontWeight: 700,
+                                flexShrink: 0
+                            }}>✓</span>
+                            <span style={{ fontSize: 14, color: 'var(--txt)' }}>{item}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+
+    const Lesson = () => {
+        const l = lessons.find(x => x.id === lessonId);
+        return (
+            <div className="fade-in">
+                <Header title={l.title} />
+                <div style={{ background: `linear-gradient(135deg, ${l.color}, ${l.color}88)`, padding: '20px', color: '#fff' }}>
+                    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                        <div style={{ fontSize: 12, opacity: 0.9 }}>Lesson {l.id} • {l.sub}</div>
+                        <h1 style={{ fontSize: 24, fontWeight: 700 }}>{l.title}</h1>
+                    </div>
+                </div>
+                <div style={{ padding: '20px 16px' }}>
+                    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                        {lessonId === 1 && <L1 />}
+                        {lessonId === 2 && <L2 />}
+                        {lessonId === 3 && <L3 />}
+                        {lessonId === 4 && <L4 />}
+                        {lessonId === 5 && <L5 />}
+                        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+                            {lessonId > 1 && (
+                                <button className="btn" style={{ flex: 1, background: '#fff', border: '2px solid var(--pri)', color: 'var(--pri)' }} onClick={() => setLessonId(lessonId - 1)}>
+                                    ← 上一課
+                                </button>
+                            )}
+                            {lessonId < 5 ? (
+                                <button className="btn btn-pri" style={{ flex: 1 }} onClick={() => setLessonId(lessonId + 1)}>
+                                    下一課 →
+                                </button>
+                            ) : (
+                                <button className="btn btn-sec" style={{ flex: 1 }} onClick={() => { setQIdx(0); setScore(0); setSel(null); setShow(false); setDone(false); setPage('quiz'); }}>
+                                    開始測驗 📝
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const Quiz = () => {
+        const pick = (i) => { if (show) return; setSel(i); setShow(true); if (i === quiz[qIdx].c) setScore(score + 1); };
+        const next = () => { if (qIdx < quiz.length - 1) { setQIdx(qIdx + 1); setSel(null); setShow(false); } else setDone(true); };
+
+        if (done) {
+            const pct = Math.round((score / quiz.length) * 100);
+            return (
+                <div className="fade-in">
+                    <Header title="測驗結果" />
+                    <div style={{ padding: '48px 16px', textAlign: 'center' }}>
+                        <div style={{ 
+                            width: 150, 
+                            height: 150, 
+                            borderRadius: '50%', 
+                            background: `conic-gradient(${pct >= 80 ? 'var(--suc)' : pct >= 60 ? 'var(--warn)' : 'var(--danger)'} ${pct * 3.6}deg, #E5E5E5 0deg)`, 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            margin: '0 auto 28px',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+                        }}>
+                            <div style={{ 
+                                width: 126, 
+                                height: 126, 
+                                borderRadius: '50%', 
+                                background: '#fff', 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                alignItems: 'center', 
+                                justifyContent: 'center' 
+                            }}>
+                                <div style={{ fontSize: 40, fontWeight: 700, color: 'var(--txt)' }}>{pct}%</div>
+                                <div style={{ fontSize: 15, color: 'var(--txt2)' }}>{score}/{quiz.length}</div>
+                            </div>
+                        </div>
+                        <h2 style={{ fontSize: 26, fontWeight: 700, marginBottom: 10 }}>
+                            {pct >= 80 ? '🎉 優秀！' : pct >= 60 ? '👍 不錯！' : '💪 加油！'}
+                        </h2>
+                        <p style={{ color: 'var(--txt2)', marginBottom: 36, fontSize: 15 }}>
+                            {pct >= 80 ? '你對輕微頭部創傷評估掌握良好！' : pct >= 60 ? '再複習可以更進步！' : '建議重新閱讀課程內容'}
+                        </p>
+                        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <button className="btn btn-pri" onClick={() => { setQIdx(0); setScore(0); setSel(null); setShow(false); setDone(false); }}>
+                                重新測驗
+                            </button>
+                            <button className="btn" style={{ background: '#fff', border: '2px solid var(--pri)', color: 'var(--pri)' }} onClick={() => setPage('home')}>
+                                返回課程
+                            </button>
+                        </div>
+                    </div>
+                    <footer style={{ background: 'linear-gradient(135deg, #E3F2FD, #BBDEFB)', padding: '28px 16px', textAlign: 'center', marginTop: 48 }}>
+                        <p style={{ fontSize: 12, color: 'var(--txt2)' }}>新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        const q = quiz[qIdx];
+        return (
+            <div className="fade-in">
+                <Header title="自我測驗" />
+                <div style={{ padding: '20px 16px' }}>
+                    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: 14 }}>
+                            <span style={{ color: 'var(--txt2)' }}>進度</span>
+                            <span style={{ fontWeight: 600, color: 'var(--pri)' }}>{qIdx + 1}/{quiz.length}</span>
+                        </div>
+                        <div style={{ height: 10, background: '#E5E5E5', borderRadius: 5, marginBottom: 24, overflow: 'hidden' }}>
+                            <div style={{ 
+                                height: '100%', 
+                                width: `${((qIdx + 1) / quiz.length) * 100}%`, 
+                                background: 'linear-gradient(90deg, var(--pri), var(--pri2))', 
+                                borderRadius: 5, 
+                                transition: 'width 0.4s ease' 
+                            }} />
+                        </div>
+                        <div className="card">
+                            <h3 style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.7, marginBottom: 22, color: 'var(--txt)' }}>{q.q}</h3>
+                            {q.o.map((opt, i) => {
+                                let bg = '#fff', bd = '#E5E5E5';
+                                if (show) {
+                                    if (i === q.c) { bg = '#E8F5E9'; bd = 'var(--suc)'; }
+                                    else if (i === sel) { bg = '#FFEBEE'; bd = 'var(--danger)'; }
+                                } else if (i === sel) { bg = '#E3F2FD'; bd = 'var(--pri)'; }
+                                return (
+                                    <button 
+                                        key={i} 
+                                        onClick={() => pick(i)} 
+                                        disabled={show} 
+                                        style={{ 
+                                            width: '100%', 
+                                            padding: '14px 16px', 
+                                            marginBottom: 12, 
+                                            background: bg, 
+                                            border: `2px solid ${bd}`, 
+                                            borderRadius: 14, 
+                                            textAlign: 'left', 
+                                            fontSize: 14, 
+                                            cursor: show ? 'default' : 'pointer', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: 14,
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                    >
+                                        <span style={{ 
+                                            width: 30, 
+                                            height: 30, 
+                                            borderRadius: 10, 
+                                            background: show && i === q.c ? 'var(--suc)' : show && i === sel ? 'var(--danger)' : 'linear-gradient(135deg, #E3F2FD, #BBDEFB)', 
+                                            color: show && (i === q.c || i === sel) ? '#fff' : 'var(--pri)', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center', 
+                                            fontWeight: 700, 
+                                            fontSize: 14, 
+                                            flexShrink: 0 
+                                        }}>
+                                            {show && i === q.c ? '✓' : show && i === sel && i !== q.c ? '✗' : String.fromCharCode(65 + i)}
+                                        </span>
+                                        <span style={{ lineHeight: 1.6, color: 'var(--txt)' }}>{opt}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {show && (
+                            <div className={sel === q.c ? 'good' : 'tip'}>
+                                <strong style={{ color: sel === q.c ? 'var(--suc)' : '#F57C00' }}>
+                                    {sel === q.c ? '✓ 正確！' : '✗ 答錯了'}
+                                </strong>
+                                <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 10, lineHeight: 1.8 }}>{q.e}</p>
+                            </div>
+                        )}
+                        {show && (
+                            <button className="btn btn-pri" style={{ width: '100%', justifyContent: 'center', marginTop: 20 }} onClick={next}>
+                                {qIdx < quiz.length - 1 ? '下一題 →' : '查看結果'}
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div style={{ maxWidth: '100%', minHeight: '100vh', background: 'var(--bg)' }}>
+            {page === 'home' ? <Home /> : page === 'lesson' ? <Lesson /> : <Quiz />}
+        </div>
+    );
+};
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>
