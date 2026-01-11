@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>胸痛與急性冠心症候群評估 | JAMA Rational Clinical Examination</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Crimson+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --pri: #C62828;
+            --pri2: #EF5350;
+            --sec: #AD1457;
+            --sec2: #EC407A;
+            --suc: #2E7D32;
+            --warn: #F9A825;
+            --danger: #B71C1C;
+            --info: #1565C0;
+            --bg: #FFF8F8;
+            --txt: #37474F;
+            --txt2: #607D8B;
+            --card-shadow: 0 4px 20px rgba(198, 40, 40, 0.08);
+        }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--bg);
+            color: var(--txt);
+            line-height: 1.8;
+            -webkit-font-smoothing: antialiased;
+        }
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(198, 40, 40, 0.08);
+        }
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        .btn-pri { background: linear-gradient(135deg, var(--pri), var(--pri2)); color: #fff; }
+        .btn-pri:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(198, 40, 40, 0.3); }
+        .btn-sec { background: linear-gradient(135deg, var(--sec), var(--sec2)); color: #fff; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: linear-gradient(135deg, #FFEBEE, #FFCDD2); font-weight: 600; color: var(--pri); }
+        .formula {
+            background: linear-gradient(135deg, #FFEBEE, #FFCDD2);
+            border: 2px solid var(--pri2);
+            border-radius: 16px;
+            padding: 18px;
+            margin: 14px 0;
+            text-align: center;
+            font-family: 'Crimson Pro', serif;
+            font-size: 18px;
+            color: var(--txt);
+            font-weight: 600;
+        }
+        .tip {
+            background: linear-gradient(135deg, #FFF8E1, #FFECB3);
+            border-left: 4px solid var(--warn);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        .good {
+            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+            border-left: 4px solid var(--suc);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        .danger {
+            background: linear-gradient(135deg, #FFEBEE, #FFCDD2);
+            border-left: 4px solid var(--danger);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        .info {
+            background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
+            border-left: 4px solid var(--info);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .lr-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .lr-high { background: #FFCDD2; color: #B71C1C; }
+        .lr-mod { background: #FFF9C4; color: #F57F17; }
+        .lr-low { background: #C8E6C9; color: #1B5E20; }
+        .score-box {
+            background: linear-gradient(135deg, #FAFAFA, #F5F5F5);
+            border: 2px solid #E0E0E0;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const MODULE_ID='jama-chest-pain-acs';
+
+const ProgressTracker={
+    STORAGE_KEY:'ebm-progress',
+    getProgress:()=>{try{const d=localStorage.getItem(ProgressTracker.STORAGE_KEY);return d?JSON.parse(d):{version:1,modules:{},badges:[],totalTimeSpent:0}}catch{return{version:1,modules:{},badges:[],totalTimeSpent:0}}},
+    saveQuizResult:(moduleId,score,total,timeSpent)=>{
+        const progress=ProgressTracker.getProgress();
+        const mod=progress.modules[moduleId]||{bestScore:0,totalAttempts:0,allAttempts:[],lessonsViewed:[],completed:false,firstCompleted:null};
+        const attempt={date:new Date().toISOString(),score,timeSpent};
+        mod.allAttempts.push(attempt);mod.totalAttempts++;
+        if(score>mod.bestScore)mod.bestScore=score;
+        const passingScore=Math.ceil(total*0.7);
+        if(score>=passingScore&&!mod.completed){mod.completed=true;mod.firstCompleted=attempt.date}
+        progress.modules[moduleId]=mod;progress.totalTimeSpent+=timeSpent;progress.lastUpdated=new Date().toISOString();
+        ProgressTracker.checkBadges(progress,score,total,timeSpent);
+        localStorage.setItem(ProgressTracker.STORAGE_KEY,JSON.stringify(progress));return progress;
+    },
+    checkBadges:(progress,score,total,timeSpent)=>{
+        const badges=progress.badges||[];const ids=badges.map(b=>b.id);const now=new Date().toISOString();
+        if(!ids.includes('first-quiz'))badges.push({id:'first-quiz',earnedAt:now});
+        if(score===total&&!ids.includes('perfect-score'))badges.push({id:'perfect-score',earnedAt:now});
+        if(timeSpent<120&&!ids.includes('speed-demon'))badges.push({id:'speed-demon',earnedAt:now});
+        const completed=Object.values(progress.modules).filter(m=>m.completed).length;
+        if(completed>=5&&!ids.includes('five-complete'))badges.push({id:'five-complete',earnedAt:now});
+        if(completed>=10&&!ids.includes('ten-complete'))badges.push({id:'ten-complete',earnedAt:now});
+        if(completed>=18&&!ids.includes('master'))badges.push({id:'master',earnedAt:now});
+        const mod=progress.modules[MODULE_ID];
+        if(mod&&mod.totalAttempts>=3&&!ids.includes('persistent'))badges.push({id:'persistent',earnedAt:now});
+        progress.badges=badges;
+    }
+};
+
+const lessons = [
+    { id: 1, title: 'ACS概論與臨床分類', sub: 'ACS Overview & Classification', color: '#C62828' },
+    { id: 2, title: '危險因子與症狀評估', sub: 'Risk Factors & Symptoms', color: '#AD1457' },
+    { id: 3, title: '理學檢查與心電圖', sub: 'Physical Exam & ECG', color: '#6A1B9A' },
+    { id: 4, title: 'HEART與TIMI評分', sub: 'Clinical Decision Rules', color: '#1565C0' },
+    { id: 5, title: '臨床應用整合', sub: 'Clinical Application', color: '#00695C' }
+];
+
+const quiz = [
+    {
+        q: '根據JAMA系統性回顧，急診胸痛患者中最終診斷為ACS的比例約為多少？',
+        o: ['約5%', '約13%', '約25%', '約40%'],
+        c: 1,
+        e: '納入研究的急診胸痛患者中，ACS的盛行率中位數為14% (IQR 10%-20%)，綜合估計約13% (95% CI, 11%-16%)。'
+    },
+    {
+        q: '下列哪個危險因子對於預測ACS具有最高的陽性似然比(LR+)？',
+        o: ['糖尿病史', '曾有異常壓力測試', '高血壓', '家族冠心病史'],
+        c: 1,
+        e: '曾有異常壓力測試的LR+ = 3.1 (95% CI, 2.0-4.7)，特異度96%，是危險因子中預測ACS最強的指標。'
+    },
+    {
+        q: '關於胸痛特徵，下列何者對ACS的診斷價值最高？',
+        o: ['疼痛放射至左臂', '疼痛放射至雙側上肢', '壓迫感胸痛', '伴隨呼吸困難'],
+        c: 1,
+        e: '疼痛放射至雙側上肢的LR+ = 2.6 (95% CI, 1.8-3.7)，特異度96%，是症狀中預測ACS最強的特徵。'
+    },
+    {
+        q: '硝化甘油緩解胸痛對於ACS的診斷意義為何？',
+        o: ['強烈支持ACS診斷', '強烈排除ACS診斷', 'LR接近1.0，診斷價值有限', '僅對不穩定心絞痛有價值'],
+        c: 2,
+        e: '硝化甘油緩解胸痛的LR+ = 1.1，無緩解的LR- = 0.90，兩者均接近1.0，對ACS診斷幾乎沒有幫助。'
+    },
+    {
+        q: '下列哪個理學檢查發現對於降低ACS可能性最有價值？',
+        o: ['心搏過速', '低血壓', '肺囉音', '觸診可重現疼痛'],
+        c: 3,
+        e: '觸診可重現疼痛的LR = 0.28 (95% CI, 0.14-0.54)，是所有危險因子、症狀和徵象中最能降低ACS可能性的發現。'
+    },
+    {
+        q: '關於心電圖在ACS診斷的價值，何者正確？',
+        o: ['正常心電圖可排除ACS', 'ST段下降的LR+ = 5.3', 'T波倒置比ST段下降更有診斷價值', '心電圖敏感度超過80%'],
+        c: 1,
+        e: 'ST段下降的LR+ = 5.3 (95% CI, 2.1-8.6)，特異度95%，是心電圖發現中最有價值的指標。但敏感度僅25%，正常心電圖不能排除ACS。'
+    },
+    {
+        q: 'HEART評分為0-3分時，對於ACS的診斷意義為何？',
+        o: ['LR = 0.20，可有效降低ACS可能性', 'LR = 0.50，中等降低可能性', 'LR接近1.0，無診斷價值', 'LR > 2.0，增加ACS可能性'],
+        c: 0,
+        e: 'HEART評分0-3分的LR = 0.20 (95% CI, 0.13-0.30)，以13%前測機率計算，後測機率降至2.9%，是低風險識別的有效工具。'
+    },
+    {
+        q: 'TIMI評分5-7分時，ACS的後測機率約為多少？(假設前測機率13%)',
+        o: ['約25%', '約50%', '約75%', '約90%'],
+        c: 1,
+        e: 'TIMI評分5-7分的LR = 6.8 (95% CI, 5.2-8.9)，以13%前測機率計算，後測機率升至約50%。'
+    },
+    {
+        q: 'HEART評分包含下列哪些要素？',
+        o: ['病史、心電圖、年齡、危險因子、肌鈣蛋白', '年齡、性別、血壓、心率、肌鈣蛋白', '胸痛特徵、心電圖、血壓、肌酸激酶', '危險因子、症狀、心電圖、BNP'],
+        c: 0,
+        e: 'HEART評分包含：History(病史)、ECG(心電圖)、Age(年齡)、Risk factors(危險因子)、Troponin(肌鈣蛋白)，各項0-2分，總分0-10分。'
+    },
+    {
+        q: '關於臨床決策規則的使用，何者正確？',
+        o: ['單獨的病史和理學檢查可排除ACS', 'HEART和TIMI評分表現相近', '低風險評分可達到<1%的漏診率', '評分工具可取代連續肌鈣蛋白檢測'],
+        c: 1,
+        e: 'HEART和TIMI評分在識別高風險(LR 13 vs 6.8)和低風險患者(LR 0.20 vs 0.31)的表現相近。但單次評分可能無法達到<1%漏診率，仍需結合連續檢測。'
+    }
+];
+
+const App = () => {
+    const [page, setPage] = useState('home');
+    const [lessonId, setLessonId] = useState(1);
+    const [qIdx, setQIdx] = useState(0);
+    const [score, setScore] = useState(0);
+    const [sel, setSel] = useState(null);
+    const [show, setShow] = useState(false);
+    const [done, setDone] = useState(false);
+    const [quizStartTime, setQuizStartTime] = useState(null);
+
+    useEffect(() => { if (page === 'quiz' && !done && !quizStartTime) setQuizStartTime(Date.now()) }, [page, done]);
+    useEffect(() => { if (done && quizStartTime) { const t = Math.round((Date.now() - quizStartTime) / 1000); ProgressTracker.saveQuizResult(MODULE_ID, score, quiz.length, t) } }, [done]);
+
+    const Header = ({ title }) => (
+        <header style={{ 
+            background: '#fff', 
+            borderBottom: '1px solid rgba(198, 40, 40, 0.1)', 
+            padding: '14px 16px', 
+            position: 'sticky', 
+            top: 0, 
+            zIndex: 10,
+            backdropFilter: 'blur(10px)'
+        }}>
+            <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <button 
+                    onClick={() => page === 'home' ? window.location.href = 'jama-rational-exam.html' : setPage('home')} 
+                    style={{ 
+                        background: 'linear-gradient(135deg, #FFEBEE, #FFCDD2)', 
+                        border: 'none', 
+                        borderRadius: 12, 
+                        width: 42, 
+                        height: 42, 
+                        cursor: 'pointer', 
+                        color: 'var(--pri)', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 8px rgba(198, 40, 40, 0.1)'
+                    }}
+                >
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <span style={{ fontWeight: 700, color: 'var(--txt)', fontSize: 16 }}>{title}</span>
+            </div>
+        </header>
+    );
+
+    const Home = () => (
+        <div className="fade-in">
+            <Header title="胸痛與ACS評估" />
+            <div style={{ 
+                background: 'linear-gradient(135deg, #C62828 0%, #AD1457 50%, #6A1B9A 100%)', 
+                padding: '36px 20px 44px', 
+                color: '#fff',
+                position: 'relative',
+                overflow: 'hidden'
+            }}>
+                <div style={{
+                    position: 'absolute',
+                    top: -30,
+                    right: -30,
+                    width: 150,
+                    height: 150,
+                    borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.1)'
+                }} />
+                <div style={{ maxWidth: 480, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+                    <div style={{ 
+                        background: 'rgba(255,255,255,0.2)', 
+                        display: 'inline-block', 
+                        padding: '8px 16px', 
+                        borderRadius: 50, 
+                        fontSize: 12, 
+                        fontWeight: 600, 
+                        marginBottom: 16,
+                        backdropFilter: 'blur(10px)'
+                    }}>
+                        ❤️ JAMA Rational Clinical Examination
+                    </div>
+                    <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12, lineHeight: 1.3 }}>
+                        Does This Patient Have Acute Coronary Syndrome?
+                    </h1>
+                    <p style={{ opacity: 0.95, fontSize: 14, lineHeight: 1.7 }}>
+                        胸痛患者的急性冠心症候群臨床評估
+                    </p>
+                    <p style={{ opacity: 0.8, fontSize: 12, marginTop: 8 }}>
+                        Fanaroff AC, et al. JAMA. 2015;314(18):1955-1965
+                    </p>
+                    <a 
+                        href="https://jamanetwork.com/journals/jama/fullarticle/2468896" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{
+                            display:'inline-flex',
+                            alignItems:'center',
+                            gap:6,
+                            background:'rgba(255,255,255,0.25)',
+                            color:'#fff',
+                            padding:'8px 16px',
+                            borderRadius:25,
+                            fontSize:13,
+                            fontWeight:600,
+                            textDecoration:'none',
+                            backdropFilter:'blur(10px)',
+                            marginTop: 12,
+                            transition:'all 0.3s'
+                        }}
+                    >
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                        閱讀原文 Read Full Article
+                    </a>
+                </div>
+            </div>
+            
+            <div style={{ padding: '0 16px', marginTop: -24 }}>
+                <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                    <div className="card">
+                        <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--pri)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 22 }}>🎯</span> 學習目標
+                        </h3>
+                        {[
+                            '了解ACS的臨床分類與流行病學',
+                            '掌握病史和症狀對ACS的診斷價值',
+                            '熟悉HEART與TIMI風險評分系統',
+                            '學習整合臨床資訊進行風險分層'
+                        ].map((t, i) => (
+                            <div key={i} style={{ display: 'flex', gap: 12, marginBottom: 10, fontSize: 14 }}>
+                                <span style={{ 
+                                    background: 'linear-gradient(135deg, var(--suc), #43A047)', 
+                                    color: '#fff', 
+                                    borderRadius: 8, 
+                                    width: 26, 
+                                    height: 26, 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    fontSize: 13, 
+                                    flexShrink: 0,
+                                    fontWeight: 600
+                                }}>{i + 1}</span>
+                                <span style={{ color: 'var(--txt2)', lineHeight: 1.6 }}>{t}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="danger" style={{ marginBottom: 20 }}>
+                        <strong style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            ⚠️ 臨床重要性
+                        </strong>
+                        <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 8, lineHeight: 1.7 }}>
+                            每年超過800萬美國人因急性胸痛至急診就醫，但僅約10-13%最終診斷為ACS。準確的風險分層可避免低風險患者不必要的住院，同時確保高風險患者獲得及時治療。
+                        </p>
+                    </div>
+
+                    <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: 'var(--txt)' }}>📚 課程內容</h3>
+                    {lessons.map(l => (
+                        <div 
+                            key={l.id} 
+                            className="card" 
+                            onClick={() => { setLessonId(l.id); setPage('lesson'); }} 
+                            style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                <div style={{ 
+                                    width: 52, 
+                                    height: 52, 
+                                    borderRadius: 14, 
+                                    background: `linear-gradient(135deg, ${l.color}, ${l.color}99)`, 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    color: '#fff', 
+                                    fontWeight: 700,
+                                    fontSize: 18,
+                                    boxShadow: `0 4px 12px ${l.color}33`
+                                }}>{l.id}</div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: 11, color: l.color, fontWeight: 600, marginBottom: 2 }}>Lesson {l.id}</div>
+                                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--txt)' }}>{l.title}</div>
+                                    <div style={{ fontSize: 13, color: 'var(--txt2)' }}>{l.sub}</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" fill={l.color} width="22" height="22">
+                                    <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/>
+                                </svg>
+                            </div>
+                        </div>
+                    ))}
+                    
+                    <button 
+                        className="btn btn-pri" 
+                        onClick={() => { setQIdx(0); setScore(0); setSel(null); setShow(false); setDone(false); setPage('quiz'); }} 
+                        style={{ width: '100%', justifyContent: 'center', marginTop: 24, marginBottom: 16, padding: '16px 24px' }}
+                    >
+                        📝 開始測驗 (10題)
+                    </button>
+
+                    <a 
+                        href="https://jamanetwork.com/journals/jama/fullarticle/2468896"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 8,
+                            padding: '14px 20px',
+                            background: 'linear-gradient(135deg, #F8F9FA, #E9ECEF)',
+                            borderRadius: 14,
+                            textDecoration: 'none',
+                            color: 'var(--pri)',
+                            fontSize: 14,
+                            fontWeight: 600,
+                            marginBottom: 32,
+                            border: '1px solid rgba(198, 40, 40, 0.2)'
+                        }}
+                    >
+                        📄 閱讀原文 (JAMA 2015)
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                            <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            
+            <footer style={{ background: 'linear-gradient(135deg, #FFEBEE, #FFCDD2)', padding: '28px 16px', textAlign: 'center' }}>
+                <p style={{ fontSize: 13, color: 'var(--txt2)', fontWeight: 600 }}>新竹台大分院教學部</p>
+                <p style={{ fontSize: 12, color: 'var(--txt2)', marginTop: 4 }}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+        </div>
+    );
+
+    // Lesson 1: ACS概論與臨床分類
+    const L1 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>❤️ 什麼是急性冠心症候群(ACS)？</h3>
+                <div className="formula">
+                    ACS = STEMI + NSTEMI + 不穩定心絞痛 (Unstable Angina)
+                </div>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', lineHeight: 1.8 }}>
+                    急性冠心症候群是一組由冠狀動脈急性血流減少引起的臨床症候群，包括ST段上升型心肌梗塞(STEMI)、非ST段上升型心肌梗塞(NSTEMI)和不穩定心絞痛。
+                </p>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>📊 ACS的臨床分類</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>類型</th>
+                            <th>心電圖</th>
+                            <th>肌鈣蛋白</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{ fontWeight: 600, color: 'var(--danger)' }}>STEMI</td>
+                            <td>ST段上升</td>
+                            <td>升高</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600, color: 'var(--pri)' }}>NSTEMI</td>
+                            <td>ST段下降/T波倒置/正常</td>
+                            <td>升高</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600, color: 'var(--warn)' }}>不穩定心絞痛</td>
+                            <td>ST段下降/T波倒置/正常</td>
+                            <td>正常</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div className="info">
+                    <strong>💡 臨床要點</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        STEMI可由心電圖立即診斷，佔ACS不到25%。大多數患者需要區分的是NSTE-ACS（包括NSTEMI和不穩定心絞痛）與非心因性胸痛。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--info)', marginBottom: 14 }}>📈 流行病學數據</h3>
+                <div className="danger">
+                    <strong>關鍵統計</strong>
+                    <ul style={{ marginTop: 8, marginLeft: 16, color: 'var(--txt2)', fontSize: 14 }}>
+                        <li>每年超過<strong>800萬</strong>美國人因急性胸痛至急診</li>
+                        <li>最終診斷為ACS的比例：<strong>約10-13%</strong></li>
+                        <li>研究中ACS盛行率中位數：<strong>14%</strong> (IQR 10%-20%)</li>
+                        <li>急診胸痛誤診出院後的ACS率：<strong>2.2%</strong></li>
+                    </ul>
+                </div>
+                <div className="tip">
+                    <strong>⚠️ 臨床意涵</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        多數急診醫師期望ACS漏診率低於1%。單獨的臨床印象敏感度不足以達到這個標準，需要結合評分工具和連續檢測。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#6A1B9A', marginBottom: 14 }}>🔬 心肌梗塞的定義</h3>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginBottom: 12, lineHeight: 1.8 }}>
+                    根據第三版通用定義，心肌梗塞需要：
+                </p>
+                <div style={{ display: 'grid', gap: 10 }}>
+                    <div style={{ 
+                        background: 'linear-gradient(135deg, #F3E5F5, #E1BEE7)', 
+                        padding: '12px 16px', 
+                        borderRadius: 12,
+                        fontSize: 14
+                    }}>
+                        <strong>1.</strong> 心肌肌鈣蛋白至少一次超過第99百分位參考上限，且有典型升降變化
+                    </div>
+                    <div style={{ 
+                        background: 'linear-gradient(135deg, #F3E5F5, #E1BEE7)', 
+                        padding: '12px 16px', 
+                        borderRadius: 12,
+                        fontSize: 14
+                    }}>
+                        <strong>2.</strong> 加上以下任一項：缺血症狀、心電圖缺血變化、影像學心肌活力喪失、冠狀動脈血栓
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    // Lesson 2: 危險因子與症狀評估
+    const L2 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>📋 危險因子的診斷價值</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>危險因子</th>
+                            <th>LR+ (95% CI)</th>
+                            <th>LR-</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#FFEBEE' }}>
+                            <td style={{ fontWeight: 600 }}>曾有異常壓力測試</td>
+                            <td><span className="lr-badge lr-high">3.1 (2.0-4.7)</span></td>
+                            <td>0.92</td>
+                        </tr>
+                        <tr style={{ background: '#FFEBEE' }}>
+                            <td style={{ fontWeight: 600 }}>周邊動脈疾病</td>
+                            <td><span className="lr-badge lr-mod">2.7 (1.5-4.8)</span></td>
+                            <td>0.96</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>已知冠心病</td>
+                            <td><span className="lr-badge lr-mod">2.0 (1.4-2.6)</span></td>
+                            <td>0.75</td>
+                        </tr>
+                        <tr>
+                            <td>曾有心肌梗塞</td>
+                            <td>1.6 (1.4-1.7)</td>
+                            <td>0.88</td>
+                        </tr>
+                        <tr>
+                            <td>糖尿病</td>
+                            <td>1.4 (1.3-1.6)</td>
+                            <td>0.90</td>
+                        </tr>
+                        <tr>
+                            <td>高血脂</td>
+                            <td>1.3 (1.1-1.5)</td>
+                            <td>0.85</td>
+                        </tr>
+                        <tr>
+                            <td>高血壓</td>
+                            <td>1.2 (1.1-1.3)</td>
+                            <td>0.78</td>
+                        </tr>
+                        <tr>
+                            <td>吸菸</td>
+                            <td>1.1 (0.9-1.3)</td>
+                            <td>0.96</td>
+                        </tr>
+                        <tr>
+                            <td>家族冠心病史</td>
+                            <td>1.0 (0.9-1.2)</td>
+                            <td>0.99</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div className="tip">
+                    <strong>💡 臨床解讀</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        傳統心血管危險因子（高血壓、糖尿病、吸菸、家族史）對ACS的診斷價值有限，LR+多接近1.0。沒有任何單一危險因子缺乏時可有效排除ACS。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>🤕 症狀特徵的診斷價值</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>症狀特徵</th>
+                            <th>LR+ (95% CI)</th>
+                            <th>特異度</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#FCE4EC' }}>
+                            <td style={{ fontWeight: 700, color: 'var(--sec)' }}>放射至雙側上肢</td>
+                            <td><span className="lr-badge lr-high">2.6 (1.8-3.7)</span></td>
+                            <td>96%</td>
+                        </tr>
+                        <tr style={{ background: '#FCE4EC' }}>
+                            <td style={{ fontWeight: 600 }}>疼痛類似過去缺血發作</td>
+                            <td><span className="lr-badge lr-mod">2.2 (2.0-2.6)</span></td>
+                            <td>79%</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>過去24小時疼痛型態改變</td>
+                            <td><span className="lr-badge lr-mod">2.0 (1.6-2.4)</span></td>
+                            <td>86%</td>
+                        </tr>
+                        <tr>
+                            <td>「典型」胸痛</td>
+                            <td>1.9 (0.94-2.9)</td>
+                            <td>66%</td>
+                        </tr>
+                        <tr>
+                            <td>放射至頸部或下顎</td>
+                            <td>1.5 (1.3-1.8)</td>
+                            <td>84%</td>
+                        </tr>
+                        <tr>
+                            <td>放射至左臂</td>
+                            <td>1.3 (1.2-1.4)</td>
+                            <td>69%</td>
+                        </tr>
+                        <tr>
+                            <td>伴隨呼吸困難</td>
+                            <td>1.2 (1.1-1.3)</td>
+                            <td>61%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--danger)', marginBottom: 14 }}>❌ 降低ACS可能性的症狀</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>症狀特徵</th>
+                            <th>LR+</th>
+                            <th>臨床意義</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{ fontWeight: 600, color: 'var(--suc)' }}>肋膜性胸痛</td>
+                            <td><span className="lr-badge lr-low">0.35-0.61</span></td>
+                            <td>降低ACS可能性</td>
+                        </tr>
+                        <tr>
+                            <td>伴隨昏厥</td>
+                            <td>0.55</td>
+                            <td>略降低可能性</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div className="danger" style={{ marginTop: 14 }}>
+                    <strong>🚨 硝化甘油的迷思</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        硝化甘油緩解胸痛 LR+ = 1.1<br/>
+                        硝化甘油無法緩解 LR- = 0.90<br/><br/>
+                        <strong>結論：硝化甘油反應對ACS診斷幾乎沒有幫助！</strong>
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--info)', marginBottom: 14 }}>👨‍⚕️ 臨床印象的價值</h3>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginBottom: 12, lineHeight: 1.8 }}>
+                    一項納入458名患者的研究評估了醫師在看到心電圖和肌鈣蛋白結果前的臨床印象：
+                </p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>臨床印象</th>
+                            <th>LR (95% CI)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>「肯定是」ACS</td>
+                            <td><span className="lr-badge lr-high">4.0 (2.5-6.6)</span></td>
+                        </tr>
+                        <tr>
+                            <td>「可能是」ACS</td>
+                            <td>1.8 (1.3-2.4)</td>
+                        </tr>
+                        <tr>
+                            <td>「有可能」ACS</td>
+                            <td>0.66 (0.46-0.96)</td>
+                        </tr>
+                        <tr>
+                            <td>「可能不是」ACS</td>
+                            <td><span className="lr-badge lr-low">0.20 (0.09-0.44)</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+
+    // Lesson 3: 理學檢查與心電圖
+    const L3 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>🔍 理學檢查發現</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>理學檢查</th>
+                            <th>LR+ (95% CI)</th>
+                            <th>LR-</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>低血壓 (SBP&lt;100)</td>
+                            <td>3.9 (0.98-15)</td>
+                            <td>0.98</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>肺囉音</td>
+                            <td>2.0 (1.0-4.0)</td>
+                            <td>0.95</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>呼吸急促</td>
+                            <td>1.9 (0.99-3.5)</td>
+                            <td>0.95</td>
+                        </tr>
+                        <tr>
+                            <td>心搏過速 (HR&gt;120)</td>
+                            <td>1.3 (0.42-3.94)</td>
+                            <td>0.99</td>
+                        </tr>
+                        <tr style={{ background: '#E8F5E9' }}>
+                            <td style={{ fontWeight: 700, color: 'var(--suc)' }}>觸診可重現疼痛</td>
+                            <td><span className="lr-badge lr-low">0.28 (0.14-0.54)</span></td>
+                            <td>1.2</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div className="good">
+                    <strong>✓ 最有價值的發現</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        <strong>觸診可重現疼痛</strong>是所有危險因子、症狀和徵象中最能降低ACS可能性的發現 (LR = 0.28)。
+                        但請注意：這仍不能完全排除ACS！
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>📈 心電圖的診斷價值</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>心電圖發現</th>
+                            <th>敏感度</th>
+                            <th>特異度</th>
+                            <th>LR+</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#FFEBEE' }}>
+                            <td style={{ fontWeight: 700, color: 'var(--danger)' }}>ST段下降</td>
+                            <td>25%</td>
+                            <td>95%</td>
+                            <td><span className="lr-badge lr-high">5.3 (2.1-8.6)</span></td>
+                        </tr>
+                        <tr style={{ background: '#FFEBEE' }}>
+                            <td style={{ fontWeight: 600 }}>缺血性心電圖*</td>
+                            <td>32%</td>
+                            <td>91%</td>
+                            <td><span className="lr-badge lr-high">3.6 (1.6-5.7)</span></td>
+                        </tr>
+                        <tr>
+                            <td>T波倒置</td>
+                            <td>24%</td>
+                            <td>87%</td>
+                            <td>1.8 (1.3-2.7)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div className="info">
+                    <strong>*缺血性心電圖定義</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        包括：T波倒置、ST段下降、Q波等變化
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--danger)', marginBottom: 14 }}>⚠️ 心電圖的限制</h3>
+                <div className="danger">
+                    <strong>重要觀念</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        心電圖對ACS的<strong>敏感度僅25-32%</strong>，這意味著：
+                    </p>
+                    <ul style={{ marginTop: 8, marginLeft: 16, color: 'var(--txt2)', fontSize: 14 }}>
+                        <li>正常心電圖<strong>不能排除</strong>ACS</li>
+                        <li>約68-75%的ACS患者心電圖可能正常或非特異性變化</li>
+                        <li>心電圖主要價值在於高特異度：異常時強烈支持ACS</li>
+                    </ul>
+                </div>
+                <div className="formula" style={{ marginTop: 14 }}>
+                    ST段下降：高特異度(95%) + 低敏感度(25%) = Rule In工具
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--info)', marginBottom: 14 }}>💡 ST段下降的臨床意義</h3>
+                <div style={{ 
+                    background: 'linear-gradient(135deg, #E3F2FD, #BBDEFB)', 
+                    padding: 16, 
+                    borderRadius: 12,
+                    marginBottom: 12
+                }}>
+                    <h4 style={{ color: 'var(--info)', marginBottom: 8, fontSize: 15 }}>後測機率計算範例</h4>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)' }}>
+                        前測機率 13% + ST段下降 (LR+ = 5.3)<br/>
+                        → 後測機率 ≈ <strong>44%</strong>
+                    </p>
+                </div>
+                <div className="tip">
+                    <strong>臨床應用</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        ST段下降是急診最重要的心電圖發現，顯著增加ACS可能性。
+                        但仍需結合肌鈣蛋白和臨床評估做出最終判斷。
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+
+    // Lesson 4: HEART與TIMI評分
+    const L4 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>❤️ HEART評分系統</h3>
+                <div className="formula">
+                    HEART = History + ECG + Age + Risk factors + Troponin (0-10分)
+                </div>
+                <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
+                    <div className="score-box">
+                        <h4 style={{ color: 'var(--pri)', marginBottom: 8, fontSize: 14 }}>H - History (病史) 0-2分</h4>
+                        <div style={{ fontSize: 13, color: 'var(--txt2)' }}>
+                            0分：病史不符合ACS<br/>
+                            1分：病史可能符合ACS<br/>
+                            2分：病史強烈提示ACS
+                        </div>
+                    </div>
+                    <div className="score-box">
+                        <h4 style={{ color: 'var(--sec)', marginBottom: 8, fontSize: 14 }}>E - ECG (心電圖) 0-2分</h4>
+                        <div style={{ fontSize: 13, color: 'var(--txt2)' }}>
+                            0分：正常心電圖<br/>
+                            1分：非特異性再極化異常<br/>
+                            2分：ST段下降或短暫ST段上升
+                        </div>
+                    </div>
+                    <div className="score-box">
+                        <h4 style={{ color: '#6A1B9A', marginBottom: 8, fontSize: 14 }}>A - Age (年齡) 0-2分</h4>
+                        <div style={{ fontSize: 13, color: 'var(--txt2)' }}>
+                            0分：&lt;45歲<br/>
+                            1分：45-65歲<br/>
+                            2分：&gt;65歲
+                        </div>
+                    </div>
+                    <div className="score-box">
+                        <h4 style={{ color: 'var(--info)', marginBottom: 8, fontSize: 14 }}>R - Risk factors (危險因子) 0-2分</h4>
+                        <div style={{ fontSize: 13, color: 'var(--txt2)' }}>
+                            0分：無危險因子<br/>
+                            1分：1-2個危險因子<br/>
+                            2分：≥3個危險因子或已知冠心病
+                        </div>
+                    </div>
+                    <div className="score-box">
+                        <h4 style={{ color: 'var(--danger)', marginBottom: 8, fontSize: 14 }}>T - Troponin (肌鈣蛋白) 0-2分</h4>
+                        <div style={{ fontSize: 13, color: 'var(--txt2)' }}>
+                            0分：正常<br/>
+                            1分：1-3倍正常上限<br/>
+                            2分：&gt;3倍正常上限
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>📊 HEART評分的診斷表現</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>風險層級</th>
+                            <th>分數範圍</th>
+                            <th>LR (95% CI)</th>
+                            <th>預測值*</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#FFEBEE' }}>
+                            <td style={{ fontWeight: 700, color: 'var(--danger)' }}>高風險</td>
+                            <td>7-10分</td>
+                            <td><span className="lr-badge lr-high">13 (7.0-24)</span></td>
+                            <td>66%</td>
+                        </tr>
+                        <tr style={{ background: '#FFF8E1' }}>
+                            <td style={{ fontWeight: 600, color: '#F57F17' }}>中風險</td>
+                            <td>5-6分</td>
+                            <td>2.4 (1.6-3.6)</td>
+                            <td>26%</td>
+                        </tr>
+                        <tr>
+                            <td>不確定</td>
+                            <td>4分</td>
+                            <td>0.79 (0.53-1.2)</td>
+                            <td>11%</td>
+                        </tr>
+                        <tr style={{ background: '#E8F5E9' }}>
+                            <td style={{ fontWeight: 700, color: 'var(--suc)' }}>低風險</td>
+                            <td>0-3分</td>
+                            <td><span className="lr-badge lr-low">0.20 (0.13-0.30)</span></td>
+                            <td>2.9%</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style={{ fontSize: 12, color: 'var(--txt2)', marginTop: 8 }}>*假設前測機率13%</p>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--info)', marginBottom: 14 }}>📋 TIMI風險評分</h3>
+                <div className="formula">
+                    TIMI Risk Score (0-7分) - 每項1分
+                </div>
+                <div style={{ display: 'grid', gap: 8, marginTop: 14 }}>
+                    {[
+                        '年齡 ≥65歲',
+                        '≥3個心血管危險因子',
+                        '已知冠心病 (狹窄≥50%)',
+                        '使用阿斯匹靈',
+                        '過去24小時內≥2次心絞痛發作',
+                        'ST段偏移 ≥0.5mm',
+                        '心肌標記升高'
+                    ].map((item, i) => (
+                        <div key={i} style={{ 
+                            background: 'linear-gradient(135deg, #E3F2FD, #BBDEFB)',
+                            padding: '10px 14px', 
+                            borderRadius: 10,
+                            fontSize: 13,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10
+                        }}>
+                            <span style={{ 
+                                background: 'var(--info)',
+                                color: '#fff',
+                                borderRadius: '50%',
+                                width: 22,
+                                height: 22,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 12,
+                                fontWeight: 700,
+                                flexShrink: 0
+                            }}>{i + 1}</span>
+                            {item}
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#6A1B9A', marginBottom: 14 }}>📊 TIMI評分的診斷表現</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>風險層級</th>
+                            <th>分數範圍</th>
+                            <th>LR (95% CI)</th>
+                            <th>預測值*</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#FFEBEE' }}>
+                            <td style={{ fontWeight: 700, color: 'var(--danger)' }}>高風險</td>
+                            <td>5-7分</td>
+                            <td><span className="lr-badge lr-high">6.8 (5.2-8.9)</span></td>
+                            <td>50%</td>
+                        </tr>
+                        <tr style={{ background: '#FFF8E1' }}>
+                            <td style={{ fontWeight: 600, color: '#F57F17' }}>中風險</td>
+                            <td>3-4分</td>
+                            <td>2.4 (2.1-2.7)</td>
+                            <td>26%</td>
+                        </tr>
+                        <tr>
+                            <td>不確定</td>
+                            <td>2分</td>
+                            <td>0.94 (0.85-1.0)</td>
+                            <td>12%</td>
+                        </tr>
+                        <tr style={{ background: '#E8F5E9' }}>
+                            <td style={{ fontWeight: 700, color: 'var(--suc)' }}>低風險</td>
+                            <td>0-1分</td>
+                            <td><span className="lr-badge lr-low">0.31 (0.23-0.43)</span></td>
+                            <td>4.4%</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style={{ fontSize: 12, color: 'var(--txt2)', marginTop: 8 }}>*假設前測機率13%</p>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--suc)', marginBottom: 14 }}>📊 兩種評分比較</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>特性</th>
+                            <th>HEART</th>
+                            <th>TIMI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>設計目的</td>
+                            <td>診斷ACS</td>
+                            <td>預後(原設計)</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>分數範圍</td>
+                            <td>0-10分</td>
+                            <td>0-7分</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>高風險LR</td>
+                            <td>13</td>
+                            <td>6.8</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>低風險LR</td>
+                            <td>0.20</td>
+                            <td>0.31</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div className="good">
+                    <strong>✓ 結論</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        HEART和TIMI評分在識別高風險和低風險患者的表現相近。HEART評分在低風險識別略優(LR 0.20 vs 0.31)。
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+
+    // Lesson 5: 臨床應用整合
+    const L5 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>🏥 Case 1：42歲女性典型胸痛</h3>
+                <div className="info">
+                    <strong>病史</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        42歲，過去健康的女性，因45分鐘壓迫性胸骨後胸痛至急診。
+                        到達急診後，胸痛經硝化甘油完全緩解。心電圖正常，初始肌鈣蛋白0.01 ng/mL (參考範圍0.00-0.08)。
+                    </p>
+                </div>
+                <div style={{ marginTop: 14 }}>
+                    <h4 style={{ color: 'var(--sec)', marginBottom: 10 }}>📋 HEART評分計算</h4>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>H - 病史</td>
+                                <td>可能符合ACS</td>
+                                <td>1分</td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>E - 心電圖</td>
+                                <td>正常</td>
+                                <td>0分</td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>A - 年齡</td>
+                                <td>&lt;45歲</td>
+                                <td>0分</td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>R - 危險因子</td>
+                                <td>無危險因子</td>
+                                <td>0分</td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>T - 肌鈣蛋白</td>
+                                <td>正常</td>
+                                <td>0分</td>
+                            </tr>
+                            <tr style={{ background: '#E8F5E9' }}>
+                                <td style={{ fontWeight: 700 }}>總分</td>
+                                <td></td>
+                                <td style={{ fontWeight: 700, color: 'var(--suc)' }}>1分</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div className="good" style={{ marginTop: 14 }}>
+                    <strong>後測機率計算</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        HEART評分 1分 → LR = 0.20<br/>
+                        前測機率 13% × LR 0.20 → 後測機率 ≈ <strong>3%</strong>
+                    </p>
+                </div>
+                <div className="tip" style={{ marginTop: 14 }}>
+                    <strong>💡 處置建議</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        硝化甘油緩解胸痛對診斷無幫助。此患者屬低風險，可考慮加速診斷流程，若第二次肌鈣蛋白陰性可早期出院。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>🏥 Case 2：74歲男性有心肌梗塞病史</h3>
+                <div className="info">
+                    <strong>病史</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        74歲男性，3年前曾有心肌梗塞，因數日間歇性燒灼感胸骨後胸痛至急診。
+                        心電圖顯示II、III、aVF導程Q波(與3個月前相同，無新變化)。
+                        初始肌鈣蛋白0.14 ng/mL (參考範圍0.00-0.08)。
+                    </p>
+                </div>
+                <div style={{ marginTop: 14 }}>
+                    <h4 style={{ color: 'var(--sec)', marginBottom: 10 }}>📋 HEART評分計算</h4>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>H - 病史</td>
+                                <td>可能符合ACS</td>
+                                <td>1分</td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>E - 心電圖</td>
+                                <td>無動態變化</td>
+                                <td>0分</td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>A - 年齡</td>
+                                <td>&gt;65歲</td>
+                                <td>2分</td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>R - 危險因子</td>
+                                <td>已知冠心病</td>
+                                <td>2分</td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>T - 肌鈣蛋白</td>
+                                <td>輕度升高(1-3×)</td>
+                                <td>1分</td>
+                            </tr>
+                            <tr style={{ background: '#FFF8E1' }}>
+                                <td style={{ fontWeight: 700 }}>總分</td>
+                                <td></td>
+                                <td style={{ fontWeight: 700, color: '#F57F17' }}>6分</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div className="danger" style={{ marginTop: 14 }}>
+                    <strong>後測機率計算</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        HEART評分 6分 → LR = 2.4 (中風險)<br/>
+                        前測機率 13% × LR 2.4 → 後測機率 ≈ <strong>26%</strong>
+                    </p>
+                </div>
+                <div className="tip" style={{ marginTop: 14 }}>
+                    <strong>💡 處置建議</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        此患者屬中風險，應住院接受ACS治療，包括抗血小板和抗凝血治療，並進一步評估。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--info)', marginBottom: 14 }}>📊 臨床決策流程</h3>
+                <div style={{ 
+                    background: 'linear-gradient(135deg, #FFEBEE, #FFCDD2)', 
+                    padding: 20, 
+                    borderRadius: 16,
+                    textAlign: 'center'
+                }}>
+                    <div style={{ marginBottom: 16 }}>
+                        <div style={{ 
+                            background: 'var(--pri)', 
+                            color: '#fff', 
+                            padding: '10px 20px', 
+                            borderRadius: 10,
+                            display: 'inline-block',
+                            fontWeight: 600
+                        }}>
+                            急診胸痛患者
+                        </div>
+                    </div>
+                    <div style={{ fontSize: 24, marginBottom: 16 }}>↓</div>
+                    <div style={{ marginBottom: 16 }}>
+                        <div style={{ 
+                            background: 'var(--danger)', 
+                            color: '#fff', 
+                            padding: '10px 20px', 
+                            borderRadius: 10,
+                            display: 'inline-block',
+                            fontWeight: 600
+                        }}>
+                            心電圖 ST段上升?
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: 40 }}>
+                        <div>
+                            <div style={{ fontSize: 14, color: 'var(--danger)', fontWeight: 600 }}>是</div>
+                            <div style={{ fontSize: 20 }}>↓</div>
+                            <div style={{ 
+                                background: 'var(--danger)', 
+                                color: '#fff', 
+                                padding: '8px 16px', 
+                                borderRadius: 8,
+                                fontSize: 13
+                            }}>
+                                STEMI路徑
+                            </div>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: 14, color: 'var(--suc)', fontWeight: 600 }}>否</div>
+                            <div style={{ fontSize: 20 }}>↓</div>
+                            <div style={{ 
+                                background: 'var(--info)', 
+                                color: '#fff', 
+                                padding: '8px 16px', 
+                                borderRadius: 8,
+                                fontSize: 13
+                            }}>
+                                HEART/TIMI評分
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--suc)', marginBottom: 14 }}>✅ 核心重點總結</h3>
+                <div style={{ display: 'grid', gap: 12 }}>
+                    {[
+                        '急診胸痛患者ACS盛行率約13%',
+                        '單獨病史和理學檢查不能確認或排除ACS',
+                        '觸診可重現疼痛是最能降低ACS可能性的發現(LR 0.28)',
+                        '硝化甘油反應對ACS診斷無幫助',
+                        'ST段下降是最有價值的心電圖發現(LR+ 5.3)',
+                        'HEART評分0-3分可將ACS機率降至約3%',
+                        '風險評分需結合連續肌鈣蛋白檢測使用'
+                    ].map((item, i) => (
+                        <div key={i} style={{ 
+                            background: 'linear-gradient(135deg, #E8F5E9, #C8E6C9)',
+                            padding: '12px 16px', 
+                            borderRadius: 12,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 12
+                        }}>
+                            <span style={{ 
+                                background: 'var(--suc)',
+                                color: '#fff',
+                                borderRadius: '50%',
+                                width: 24,
+                                height: 24,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 12,
+                                fontWeight: 700,
+                                flexShrink: 0
+                            }}>✓</span>
+                            <span style={{ fontSize: 14, color: 'var(--txt)' }}>{item}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+
+    const Lesson = () => {
+        const l = lessons.find(x => x.id === lessonId);
+        return (
+            <div className="fade-in">
+                <Header title={l.title} />
+                <div style={{ background: `linear-gradient(135deg, ${l.color}, ${l.color}88)`, padding: '20px', color: '#fff' }}>
+                    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                        <div style={{ fontSize: 12, opacity: 0.9 }}>Lesson {l.id} • {l.sub}</div>
+                        <h1 style={{ fontSize: 24, fontWeight: 700 }}>{l.title}</h1>
+                    </div>
+                </div>
+                <div style={{ padding: '20px 16px' }}>
+                    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                        {lessonId === 1 && <L1 />}
+                        {lessonId === 2 && <L2 />}
+                        {lessonId === 3 && <L3 />}
+                        {lessonId === 4 && <L4 />}
+                        {lessonId === 5 && <L5 />}
+                        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+                            {lessonId > 1 && (
+                                <button className="btn" style={{ flex: 1, background: '#fff', border: '2px solid var(--pri)', color: 'var(--pri)' }} onClick={() => setLessonId(lessonId - 1)}>
+                                    ← 上一課
+                                </button>
+                            )}
+                            {lessonId < 5 ? (
+                                <button className="btn btn-pri" style={{ flex: 1 }} onClick={() => setLessonId(lessonId + 1)}>
+                                    下一課 →
+                                </button>
+                            ) : (
+                                <button className="btn btn-sec" style={{ flex: 1 }} onClick={() => { setQIdx(0); setScore(0); setSel(null); setShow(false); setDone(false); setPage('quiz'); }}>
+                                    開始測驗 📝
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const Quiz = () => {
+        const pick = (i) => { if (show) return; setSel(i); setShow(true); if (i === quiz[qIdx].c) setScore(score + 1); };
+        const next = () => { if (qIdx < quiz.length - 1) { setQIdx(qIdx + 1); setSel(null); setShow(false); } else setDone(true); };
+
+        if (done) {
+            const pct = Math.round((score / quiz.length) * 100);
+            return (
+                <div className="fade-in">
+                    <Header title="測驗結果" />
+                    <div style={{ padding: '48px 16px', textAlign: 'center' }}>
+                        <div style={{ 
+                            width: 150, 
+                            height: 150, 
+                            borderRadius: '50%', 
+                            background: `conic-gradient(${pct >= 80 ? 'var(--suc)' : pct >= 60 ? 'var(--warn)' : 'var(--danger)'} ${pct * 3.6}deg, #E5E5E5 0deg)`, 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            margin: '0 auto 28px',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+                        }}>
+                            <div style={{ 
+                                width: 126, 
+                                height: 126, 
+                                borderRadius: '50%', 
+                                background: '#fff', 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                alignItems: 'center', 
+                                justifyContent: 'center' 
+                            }}>
+                                <div style={{ fontSize: 40, fontWeight: 700, color: 'var(--txt)' }}>{pct}%</div>
+                                <div style={{ fontSize: 15, color: 'var(--txt2)' }}>{score}/{quiz.length}</div>
+                            </div>
+                        </div>
+                        <h2 style={{ fontSize: 26, fontWeight: 700, marginBottom: 10 }}>
+                            {pct >= 80 ? '🎉 優秀！' : pct >= 60 ? '👍 不錯！' : '💪 加油！'}
+                        </h2>
+                        <p style={{ color: 'var(--txt2)', marginBottom: 36, fontSize: 15 }}>
+                            {pct >= 80 ? '你對胸痛ACS評估掌握良好！' : pct >= 60 ? '再複習可以更進步！' : '建議重新閱讀課程內容'}
+                        </p>
+                        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <button className="btn btn-pri" onClick={() => { setQIdx(0); setScore(0); setSel(null); setShow(false); setDone(false); }}>
+                                重新測驗
+                            </button>
+                            <button className="btn" style={{ background: '#fff', border: '2px solid var(--pri)', color: 'var(--pri)' }} onClick={() => setPage('home')}>
+                                返回課程
+                            </button>
+                        </div>
+                    </div>
+                    <footer style={{ background: 'linear-gradient(135deg, #FFEBEE, #FFCDD2)', padding: '28px 16px', textAlign: 'center', marginTop: 48 }}>
+                        <p style={{ fontSize: 12, color: 'var(--txt2)' }}>新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        const q = quiz[qIdx];
+        return (
+            <div className="fade-in">
+                <Header title="自我測驗" />
+                <div style={{ padding: '20px 16px' }}>
+                    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: 14 }}>
+                            <span style={{ color: 'var(--txt2)' }}>進度</span>
+                            <span style={{ fontWeight: 600, color: 'var(--pri)' }}>{qIdx + 1}/{quiz.length}</span>
+                        </div>
+                        <div style={{ height: 10, background: '#E5E5E5', borderRadius: 5, marginBottom: 24, overflow: 'hidden' }}>
+                            <div style={{ 
+                                height: '100%', 
+                                width: `${((qIdx + 1) / quiz.length) * 100}%`, 
+                                background: 'linear-gradient(90deg, var(--pri), var(--pri2))', 
+                                borderRadius: 5, 
+                                transition: 'width 0.4s ease' 
+                            }} />
+                        </div>
+                        <div className="card">
+                            <h3 style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.7, marginBottom: 22, color: 'var(--txt)' }}>{q.q}</h3>
+                            {q.o.map((opt, i) => {
+                                let bg = '#fff', bd = '#E5E5E5';
+                                if (show) {
+                                    if (i === q.c) { bg = '#E8F5E9'; bd = 'var(--suc)'; }
+                                    else if (i === sel) { bg = '#FFEBEE'; bd = 'var(--danger)'; }
+                                } else if (i === sel) { bg = '#FFEBEE'; bd = 'var(--pri)'; }
+                                return (
+                                    <button 
+                                        key={i} 
+                                        onClick={() => pick(i)} 
+                                        disabled={show} 
+                                        style={{ 
+                                            width: '100%', 
+                                            padding: '14px 16px', 
+                                            marginBottom: 12, 
+                                            background: bg, 
+                                            border: `2px solid ${bd}`, 
+                                            borderRadius: 14, 
+                                            textAlign: 'left', 
+                                            fontSize: 14, 
+                                            cursor: show ? 'default' : 'pointer', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: 14,
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                    >
+                                        <span style={{ 
+                                            width: 30, 
+                                            height: 30, 
+                                            borderRadius: 10, 
+                                            background: show && i === q.c ? 'var(--suc)' : show && i === sel ? 'var(--danger)' : 'linear-gradient(135deg, #FFEBEE, #FFCDD2)', 
+                                            color: show && (i === q.c || i === sel) ? '#fff' : 'var(--pri)', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center', 
+                                            fontWeight: 700, 
+                                            fontSize: 14, 
+                                            flexShrink: 0 
+                                        }}>
+                                            {show && i === q.c ? '✓' : show && i === sel && i !== q.c ? '✗' : String.fromCharCode(65 + i)}
+                                        </span>
+                                        <span style={{ lineHeight: 1.6, color: 'var(--txt)' }}>{opt}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {show && (
+                            <div className={sel === q.c ? 'good' : 'tip'}>
+                                <strong style={{ color: sel === q.c ? 'var(--suc)' : '#F57F17' }}>
+                                    {sel === q.c ? '✓ 正確！' : '✗ 答錯了'}
+                                </strong>
+                                <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 10, lineHeight: 1.8 }}>{q.e}</p>
+                            </div>
+                        )}
+                        {show && (
+                            <button className="btn btn-pri" style={{ width: '100%', justifyContent: 'center', marginTop: 20 }} onClick={next}>
+                                {qIdx < quiz.length - 1 ? '下一題 →' : '查看結果'}
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div style={{ maxWidth: '100%', minHeight: '100vh', background: 'var(--bg)' }}>
+            {page === 'home' ? <Home /> : page === 'lesson' ? <Lesson /> : <Quiz />}
+        </div>
+    );
+};
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>

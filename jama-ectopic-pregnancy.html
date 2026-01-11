@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>子宮外孕評估 | JAMA Rational Clinical Examination</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Crimson+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --pri: #AD1457;
+            --pri2: #D81B60;
+            --sec: #880E4F;
+            --sec2: #C2185B;
+            --suc: #2E7D32;
+            --warn: #F9A825;
+            --danger: #B71C1C;
+            --info: #00838F;
+            --bg: #FFF5F7;
+            --txt: #37474F;
+            --txt2: #607D8B;
+            --card-shadow: 0 4px 20px rgba(173, 20, 87, 0.08);
+        }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--bg);
+            color: var(--txt);
+            line-height: 1.8;
+            -webkit-font-smoothing: antialiased;
+        }
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(173, 20, 87, 0.08);
+        }
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        .btn-pri { background: linear-gradient(135deg, var(--pri), var(--pri2)); color: #fff; }
+        .btn-pri:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(173, 20, 87, 0.3); }
+        .btn-sec { background: linear-gradient(135deg, var(--sec), var(--sec2)); color: #fff; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: linear-gradient(135deg, #FCE4EC, #F8BBD9); font-weight: 600; color: var(--pri); }
+        .formula {
+            background: linear-gradient(135deg, #FCE4EC, #F8BBD9);
+            border: 2px solid var(--pri2);
+            border-radius: 16px;
+            padding: 18px;
+            margin: 14px 0;
+            text-align: center;
+            font-family: 'Crimson Pro', serif;
+            font-size: 18px;
+            color: var(--txt);
+            font-weight: 600;
+        }
+        .tip {
+            background: linear-gradient(135deg, #FFF8E1, #FFECB3);
+            border-left: 4px solid var(--warn);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        .good {
+            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+            border-left: 4px solid var(--suc);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        .danger {
+            background: linear-gradient(135deg, #FFEBEE, #FFCDD2);
+            border-left: 4px solid var(--danger);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        .info {
+            background: linear-gradient(135deg, #E0F7FA, #B2EBF2);
+            border-left: 4px solid var(--info);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .lr-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .lr-high { background: #F8BBD9; color: #880E4F; }
+        .lr-mod { background: #FFF9C4; color: #F57F17; }
+        .lr-low { background: #C8E6C9; color: #1B5E20; }
+        .score-box {
+            background: linear-gradient(135deg, #FAFAFA, #F5F5F5);
+            border: 2px solid #E0E0E0;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const MODULE_ID='jama-ectopic-pregnancy';
+
+const ProgressTracker={
+    STORAGE_KEY:'ebm-progress',
+    getProgress:()=>{try{const d=localStorage.getItem(ProgressTracker.STORAGE_KEY);return d?JSON.parse(d):{version:1,modules:{},badges:[],totalTimeSpent:0}}catch{return{version:1,modules:{},badges:[],totalTimeSpent:0}}},
+    saveQuizResult:(moduleId,score,total,timeSpent)=>{
+        const progress=ProgressTracker.getProgress();
+        const mod=progress.modules[moduleId]||{bestScore:0,totalAttempts:0,allAttempts:[],lessonsViewed:[],completed:false,firstCompleted:null};
+        const attempt={date:new Date().toISOString(),score,timeSpent};
+        mod.allAttempts.push(attempt);mod.totalAttempts++;
+        if(score>mod.bestScore)mod.bestScore=score;
+        const passingScore=Math.ceil(total*0.7);
+        if(score>=passingScore&&!mod.completed){mod.completed=true;mod.firstCompleted=attempt.date}
+        progress.modules[moduleId]=mod;progress.totalTimeSpent+=timeSpent;progress.lastUpdated=new Date().toISOString();
+        ProgressTracker.checkBadges(progress,score,total,timeSpent);
+        localStorage.setItem(ProgressTracker.STORAGE_KEY,JSON.stringify(progress));return progress;
+    },
+    checkBadges:(progress,score,total,timeSpent)=>{
+        const badges=progress.badges||[];const ids=badges.map(b=>b.id);const now=new Date().toISOString();
+        if(!ids.includes('first-quiz'))badges.push({id:'first-quiz',earnedAt:now});
+        if(score===total&&!ids.includes('perfect-score'))badges.push({id:'perfect-score',earnedAt:now});
+        if(timeSpent<120&&!ids.includes('speed-demon'))badges.push({id:'speed-demon',earnedAt:now});
+        const completed=Object.values(progress.modules).filter(m=>m.completed).length;
+        if(completed>=5&&!ids.includes('five-complete'))badges.push({id:'five-complete',earnedAt:now});
+        if(completed>=10&&!ids.includes('ten-complete'))badges.push({id:'ten-complete',earnedAt:now});
+        if(completed>=18&&!ids.includes('master'))badges.push({id:'master',earnedAt:now});
+        const mod=progress.modules[MODULE_ID];
+        if(mod&&mod.totalAttempts>=3&&!ids.includes('persistent'))badges.push({id:'persistent',earnedAt:now});
+        progress.badges=badges;
+    }
+};
+
+const lessons = [
+    { id: 1, title: '子宮外孕概論與流行病學', sub: 'Ectopic Pregnancy Overview', color: '#AD1457' },
+    { id: 2, title: '危險因子與症狀評估', sub: 'Risk Factors & Symptoms', color: '#880E4F' },
+    { id: 3, title: '理學檢查與實驗室檢查', sub: 'Physical Exam & Lab Tests', color: '#C2185B' },
+    { id: 4, title: '超音波與診斷策略', sub: 'Ultrasound & Diagnosis', color: '#00838F' },
+    { id: 5, title: '臨床應用整合', sub: 'Clinical Application', color: '#1565C0' }
+];
+
+const quiz = [
+    {
+        q: '根據JAMA系統性回顧，急診有症狀女性中子宮外孕的盛行率約為多少？',
+        o: ['約5%', '約15%', '約25%', '約35%'],
+        c: 1,
+        e: '在急診有症狀（陰道出血、腹痛或兩者）且驗孕陽性的女性中，子宮外孕的盛行率約為6%-16%，綜合估計約15%。'
+    },
+    {
+        q: '子宮外孕最常發生在哪個位置？',
+        o: ['子宮角', '輸卵管', '卵巢', '腹腔'],
+        c: 1,
+        e: '超過95%的子宮外孕發生在輸卵管，其中最常見於壺腹部(ampulla)約70%，其次為峽部(isthmus)約12%。'
+    },
+    {
+        q: '下列哪個危險因子對子宮外孕的相對風險最高？',
+        o: ['年齡>35歲', '吸菸', '曾有子宮外孕病史', '人工流產史'],
+        c: 2,
+        e: '曾有子宮外孕病史的OR = 8.3 (95% CI, 6.0-11.5)，是最強的危險因子。曾有輸卵管手術史的OR = 4.0，使用子宮內避孕器的OR = 2.4。'
+    },
+    {
+        q: '關於經典三聯症(triad)，何者正確？',
+        o: ['敏感度高達90%', '三者同時出現僅約45%', '對診斷高度特異', '可用於排除子宮外孕'],
+        c: 1,
+        e: '經典三聯症（腹痛、陰道出血、附件腫塊）三者同時出現僅約45%的患者。這三個症狀的敏感度和特異度都不高，無法單獨用於確認或排除診斷。'
+    },
+    {
+        q: '下列哪個理學檢查發現對子宮外孕的LR+最高？',
+        o: ['子宮頸移動痛', '附件壓痛', '腹膜刺激徵象', '附件腫塊'],
+        c: 2,
+        e: '腹膜刺激徵象(peritoneal signs)的LR+ = 4.2-4.5。子宮頸移動痛的LR+ = 4.9 (但95% CI包含1.0)。附件腫塊的LR+ = 2.4。'
+    },
+    {
+        q: '關於β-hCG的鑑別閾值(discriminatory zone)，何者正確？',
+        o: ['1000-1500 mIU/mL', '1500-3000 mIU/mL', '5000-6000 mIU/mL', '10000 mIU/mL以上'],
+        c: 1,
+        e: '經陰道超音波的鑑別閾值為1500-3000 mIU/mL。當β-hCG達到此閾值時，應可在子宮內看到妊娠囊；若看不到則高度懷疑子宮外孕。'
+    },
+    {
+        q: '經陰道超音波(TVS)看到附件腫塊對子宮外孕的診斷價值為何？',
+        o: ['LR+ = 5.0', 'LR+ = 25', 'LR+ = 111', 'LR+ = 200'],
+        c: 2,
+        e: 'TVS顯示附件腫塊的LR+ = 111 (95% CI, 12-1028)，是最有診斷價值的發現。但敏感度僅26%，陰性結果不能排除子宮外孕。'
+    },
+    {
+        q: '關於子宮外孕的超音波發現，何者正確？',
+        o: ['子宮內妊娠囊可確認子宮外孕', '「假妊娠囊」只出現在正常子宮內懷孕', '胚胎/卵黃囊在附件處可確診', '附件腫塊敏感度達90%'],
+        c: 2,
+        e: '在附件處看到胚胎或卵黃囊可確診子宮外孕。「假妊娠囊」是蛻膜反應造成的假陽性，可能誤認為子宮內懷孕而漏診子宮外孕。'
+    },
+    {
+        q: '正常子宮內懷孕早期，β-hCG每48小時應增加多少？',
+        o: ['至少35%', '至少53%', '至少75%', '至少100%'],
+        c: 1,
+        e: '正常子宮內懷孕時，β-hCG通常每48小時增加至少53%。若上升幅度小於此標準，需考慮異常懷孕（子宮外孕或流產）的可能。'
+    },
+    {
+        q: '關於子宮外孕的臨床處置，何者正確？',
+        o: ['所有子宮外孕都需手術', '血流動力學不穩定是藥物治療的適應症', 'Methotrexate可用於穩定、未破裂的病例', '觀察等待是首選策略'],
+        c: 2,
+        e: 'Methotrexate藥物治療適用於血流動力學穩定、未破裂的子宮外孕。血流動力學不穩定時需緊急手術。選擇需考慮β-hCG數值、胚胎大小和患者偏好。'
+    }
+];
+
+const App = () => {
+    const [page, setPage] = useState('home');
+    const [lessonId, setLessonId] = useState(1);
+    const [qIdx, setQIdx] = useState(0);
+    const [score, setScore] = useState(0);
+    const [sel, setSel] = useState(null);
+    const [show, setShow] = useState(false);
+    const [done, setDone] = useState(false);
+    const [quizStartTime, setQuizStartTime] = useState(null);
+
+    useEffect(() => { if (page === 'quiz' && !done && !quizStartTime) setQuizStartTime(Date.now()) }, [page, done]);
+    useEffect(() => { if (done && quizStartTime) { const t = Math.round((Date.now() - quizStartTime) / 1000); ProgressTracker.saveQuizResult(MODULE_ID, score, quiz.length, t) } }, [done]);
+
+    const Header = ({ title }) => (
+        <header style={{
+            background: '#fff',
+            borderBottom: '1px solid rgba(173, 20, 87, 0.1)',
+            padding: '14px 16px',
+            position: 'sticky',
+            top: 0,
+            zIndex: 10,
+            backdropFilter: 'blur(10px)'
+        }}>
+            <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <button
+                    onClick={() => page === 'home' ? window.location.href = 'jama-rational-exam.html' : setPage('home')}
+                    style={{
+                        background: 'linear-gradient(135deg, #FCE4EC, #F8BBD9)',
+                        border: 'none',
+                        borderRadius: 12,
+                        width: 42,
+                        height: 42,
+                        cursor: 'pointer',
+                        color: 'var(--pri)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 8px rgba(173, 20, 87, 0.1)'
+                    }}
+                >
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <span style={{ fontWeight: 700, color: 'var(--txt)', fontSize: 16 }}>{title}</span>
+            </div>
+        </header>
+    );
+
+    const Home = () => (
+        <div className="fade-in">
+            <Header title="子宮外孕評估" />
+            <div style={{
+                background: 'linear-gradient(135deg, #AD1457 0%, #880E4F 50%, #4A148C 100%)',
+                padding: '36px 20px 44px',
+                color: '#fff',
+                position: 'relative',
+                overflow: 'hidden'
+            }}>
+                <div style={{
+                    position: 'absolute',
+                    top: -30,
+                    right: -30,
+                    width: 150,
+                    height: 150,
+                    borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.1)'
+                }} />
+                <div style={{ maxWidth: 480, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+                    <div style={{
+                        background: 'rgba(255,255,255,0.2)',
+                        display: 'inline-block',
+                        padding: '8px 16px',
+                        borderRadius: 50,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        marginBottom: 16,
+                        backdropFilter: 'blur(10px)'
+                    }}>
+                        🤰 JAMA Rational Clinical Examination
+                    </div>
+                    <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12, lineHeight: 1.3 }}>
+                        Does This Woman Have an Ectopic Pregnancy?
+                    </h1>
+                    <p style={{ opacity: 0.95, fontSize: 14, lineHeight: 1.7 }}>
+                        子宮外孕的臨床診斷評估
+                    </p>
+                    <p style={{ opacity: 0.8, fontSize: 12, marginTop: 8 }}>
+                        Crochet JR, et al. JAMA. 2013;309(16):1722-1729
+                    </p>
+                    <a
+                        href="https://jamanetwork.com/journals/jama/fullarticle/1681418"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                            display:'inline-flex',
+                            alignItems:'center',
+                            gap:6,
+                            background:'rgba(255,255,255,0.25)',
+                            color:'#fff',
+                            padding:'8px 16px',
+                            borderRadius:25,
+                            fontSize:13,
+                            fontWeight:600,
+                            textDecoration:'none',
+                            backdropFilter:'blur(10px)',
+                            marginTop: 12,
+                            transition:'all 0.3s'
+                        }}
+                    >
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                        閱讀原文 Read Full Article
+                    </a>
+                </div>
+            </div>
+
+            <div style={{ padding: '0 16px', marginTop: -24 }}>
+                <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                    <div className="card">
+                        <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--pri)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 22 }}>🎯</span> 學習目標
+                        </h3>
+                        {[
+                            '了解子宮外孕的流行病學與危險因子',
+                            '掌握症狀和理學檢查對診斷的價值',
+                            '熟悉β-hCG與超音波的診斷策略',
+                            '學習臨床決策與處置原則'
+                        ].map((t, i) => (
+                            <div key={i} style={{ display: 'flex', gap: 12, marginBottom: 10, fontSize: 14 }}>
+                                <span style={{
+                                    background: 'linear-gradient(135deg, var(--suc), #43A047)',
+                                    color: '#fff',
+                                    borderRadius: 8,
+                                    width: 26,
+                                    height: 26,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: 13,
+                                    flexShrink: 0,
+                                    fontWeight: 600
+                                }}>{i + 1}</span>
+                                <span style={{ color: 'var(--txt2)', lineHeight: 1.6 }}>{t}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="danger" style={{ marginBottom: 20 }}>
+                        <strong style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            ⚠️ 臨床重要性
+                        </strong>
+                        <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 8, lineHeight: 1.7 }}>
+                            子宮外孕佔所有懷孕的2.6%，但造成6%的孕產婦死亡。早期診斷對於避免破裂、保留生育能力至關重要。急診有症狀女性中約15%為子宮外孕。
+                        </p>
+                    </div>
+
+                    <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: 'var(--txt)' }}>📚 課程內容</h3>
+                    {lessons.map(l => (
+                        <div
+                            key={l.id}
+                            className="card"
+                            onClick={() => { setLessonId(l.id); setPage('lesson'); }}
+                            style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                <div style={{
+                                    width: 52,
+                                    height: 52,
+                                    borderRadius: 14,
+                                    background: `linear-gradient(135deg, ${l.color}, ${l.color}99)`,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#fff',
+                                    fontWeight: 700,
+                                    fontSize: 18,
+                                    boxShadow: `0 4px 12px ${l.color}33`
+                                }}>{l.id}</div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: 11, color: l.color, fontWeight: 600, marginBottom: 2 }}>Lesson {l.id}</div>
+                                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--txt)' }}>{l.title}</div>
+                                    <div style={{ fontSize: 13, color: 'var(--txt2)' }}>{l.sub}</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" fill={l.color} width="22" height="22">
+                                    <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/>
+                                </svg>
+                            </div>
+                        </div>
+                    ))}
+
+                    <button
+                        className="btn btn-pri"
+                        onClick={() => { setQIdx(0); setScore(0); setSel(null); setShow(false); setDone(false); setPage('quiz'); }}
+                        style={{ width: '100%', justifyContent: 'center', marginTop: 24, marginBottom: 16, padding: '16px 24px' }}
+                    >
+                        📝 開始測驗 (10題)
+                    </button>
+
+                    <a
+                        href="https://jamanetwork.com/journals/jama/fullarticle/1681418"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 8,
+                            padding: '14px 20px',
+                            background: 'linear-gradient(135deg, #F8F9FA, #E9ECEF)',
+                            borderRadius: 14,
+                            textDecoration: 'none',
+                            color: 'var(--pri)',
+                            fontSize: 14,
+                            fontWeight: 600,
+                            marginBottom: 32,
+                            border: '1px solid rgba(173, 20, 87, 0.2)'
+                        }}
+                    >
+                        📄 閱讀原文 (JAMA 2013)
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                            <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <footer style={{ background: 'linear-gradient(135deg, #FCE4EC, #F8BBD9)', padding: '28px 16px', textAlign: 'center' }}>
+                <p style={{ fontSize: 13, color: 'var(--txt2)', fontWeight: 600 }}>新竹台大分院教學部</p>
+                <p style={{ fontSize: 12, color: 'var(--txt2)', marginTop: 4 }}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+        </div>
+    );
+
+    // Lesson 1: 子宮外孕概論與流行病學
+    const L1 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>🤰 什麼是子宮外孕？</h3>
+                <div className="formula">
+                    子宮外孕(Ectopic Pregnancy) = 受精卵著床於子宮腔以外的位置
+                </div>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', lineHeight: 1.8 }}>
+                    子宮外孕是指受精卵著床於子宮腔以外的位置。這是婦產科急症，若未及時診斷可能導致破裂、大出血，甚至危及生命。
+                </p>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>📍 著床位置分布</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>位置</th>
+                            <th>比例</th>
+                            <th>說明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#FCE4EC' }}>
+                            <td style={{ fontWeight: 700, color: 'var(--pri)' }}>輸卵管</td>
+                            <td>&gt;95%</td>
+                            <td>最常見位置</td>
+                        </tr>
+                        <tr>
+                            <td>- 壺腹部(Ampulla)</td>
+                            <td>~70%</td>
+                            <td>輸卵管最常見</td>
+                        </tr>
+                        <tr>
+                            <td>- 峽部(Isthmus)</td>
+                            <td>~12%</td>
+                            <td>較易破裂</td>
+                        </tr>
+                        <tr>
+                            <td>- 繖部(Fimbria)</td>
+                            <td>~11%</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>- 間質部(Interstitial)</td>
+                            <td>~2%</td>
+                            <td>最危險</td>
+                        </tr>
+                        <tr>
+                            <td>卵巢</td>
+                            <td>~3%</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>腹腔</td>
+                            <td>~1%</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>子宮頸</td>
+                            <td>&lt;1%</td>
+                            <td>-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--info)', marginBottom: 14 }}>📈 流行病學數據</h3>
+                <div className="danger">
+                    <strong>關鍵統計</strong>
+                    <ul style={{ marginTop: 8, marginLeft: 16, color: 'var(--txt2)', fontSize: 14 }}>
+                        <li>佔所有懷孕的<strong>2.6%</strong></li>
+                        <li>佔孕產婦死亡的<strong>6%</strong></li>
+                        <li>急診有症狀女性中盛行率：<strong>6-16%</strong>（約15%）</li>
+                        <li>是妊娠初期（第一孕期）出血和死亡的主要原因</li>
+                    </ul>
+                </div>
+                <div className="info">
+                    <strong>💡 前測機率考量</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        急診有症狀（腹痛、陰道出血）且驗孕陽性的女性，子宮外孕前測機率約15%。這是進行後續檢查和似然比計算的基礎。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#6A1B9A', marginBottom: 14 }}>⏰ 早期診斷的重要性</h3>
+                <div style={{ display: 'grid', gap: 10 }}>
+                    {[
+                        { icon: '💔', title: '避免破裂', desc: '未診斷的輸卵管妊娠可能破裂導致腹腔內大出血' },
+                        { icon: '🏥', title: '增加治療選擇', desc: '早期診斷可選擇藥物治療(MTX)，避免手術' },
+                        { icon: '👶', title: '保留生育能力', desc: '及時處置可保留輸卵管功能和未來生育能力' },
+                        { icon: '❤️', title: '降低死亡率', desc: '早期診斷和處置顯著降低孕產婦死亡風險' }
+                    ].map((item, i) => (
+                        <div key={i} style={{
+                            background: 'linear-gradient(135deg, #FCE4EC, #F8BBD9)',
+                            padding: '12px 16px',
+                            borderRadius: 12,
+                            fontSize: 14,
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: 12
+                        }}>
+                            <span style={{ fontSize: 20 }}>{item.icon}</span>
+                            <div>
+                                <strong style={{ color: 'var(--pri)' }}>{item.title}</strong>
+                                <p style={{ color: 'var(--txt2)', marginTop: 2, fontSize: 13 }}>{item.desc}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+
+    // Lesson 2: 危險因子與症狀評估
+    const L2 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>⚠️ 危險因子</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>危險因子</th>
+                            <th>OR (95% CI)</th>
+                            <th>風險程度</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#FCE4EC' }}>
+                            <td style={{ fontWeight: 700, color: 'var(--pri)' }}>曾有子宮外孕病史</td>
+                            <td><span className="lr-badge lr-high">8.3 (6.0-11.5)</span></td>
+                            <td>最高風險</td>
+                        </tr>
+                        <tr style={{ background: '#FCE4EC' }}>
+                            <td style={{ fontWeight: 600 }}>曾有輸卵管手術</td>
+                            <td><span className="lr-badge lr-high">4.0 (2.6-6.1)</span></td>
+                            <td>高風險</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>使用子宮內避孕器(IUD)</td>
+                            <td><span className="lr-badge lr-mod">2.4 (1.5-3.8)</span></td>
+                            <td>中等風險</td>
+                        </tr>
+                        <tr>
+                            <td>曾有骨盆腔發炎(PID)</td>
+                            <td>2.5 (1.3-4.9)</td>
+                            <td>中等風險</td>
+                        </tr>
+                        <tr>
+                            <td>不孕症/接受人工生殖</td>
+                            <td>2.1 (1.3-3.5)</td>
+                            <td>中等風險</td>
+                        </tr>
+                        <tr>
+                            <td>吸菸</td>
+                            <td>1.8 (1.3-2.4)</td>
+                            <td>輕度增加</td>
+                        </tr>
+                        <tr>
+                            <td>年齡 &gt;35歲</td>
+                            <td>1.4 (1.1-1.8)</td>
+                            <td>輕度增加</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div className="tip">
+                    <strong>💡 臨床要點</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        約50%的子宮外孕發生在沒有已知危險因子的女性。因此，<strong>沒有危險因子並不能排除子宮外孕的可能</strong>。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>📋 症狀的診斷價值</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>症狀</th>
+                            <th>LR+ (95% CI)</th>
+                            <th>LR-</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>腹痛</td>
+                            <td>1.0 (0.97-1.05)</td>
+                            <td>0.83</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>陰道出血</td>
+                            <td>1.1 (0.93-1.37)</td>
+                            <td>0.86</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>噁心嘔吐</td>
+                            <td>0.92 (0.71-1.20)</td>
+                            <td>1.05</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>頭暈</td>
+                            <td>0.97 (0.67-1.41)</td>
+                            <td>1.01</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div className="danger">
+                    <strong>⚠️ 重要發現</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        個別症狀的LR+都接近1.0，這意味著<strong>沒有任何單一症狀可以有效確認或排除子宮外孕</strong>。症狀對於提高診斷信心的幫助有限。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--info)', marginBottom: 14 }}>🔺 經典三聯症(Triad)</h3>
+                <div style={{
+                    background: 'linear-gradient(135deg, #FCE4EC, #F8BBD9)',
+                    padding: 20,
+                    borderRadius: 16,
+                    textAlign: 'center',
+                    marginBottom: 14
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
+                        <div style={{
+                            background: 'var(--pri)',
+                            color: '#fff',
+                            padding: '12px 20px',
+                            borderRadius: 12,
+                            fontWeight: 600
+                        }}>
+                            腹痛
+                        </div>
+                        <div style={{
+                            background: 'var(--sec)',
+                            color: '#fff',
+                            padding: '12px 20px',
+                            borderRadius: 12,
+                            fontWeight: 600
+                        }}>
+                            陰道出血
+                        </div>
+                        <div style={{
+                            background: '#C2185B',
+                            color: '#fff',
+                            padding: '12px 20px',
+                            borderRadius: 12,
+                            fontWeight: 600
+                        }}>
+                            附件腫塊
+                        </div>
+                    </div>
+                </div>
+                <div className="tip">
+                    <strong>💡 三聯症的限制</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        三者同時出現僅見於<strong>約45%</strong>的子宮外孕患者。因此，缺乏完整三聯症不能排除診斷，而存在三聯症也不能確診。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#6A1B9A', marginBottom: 14 }}>🩸 陰道出血的特徵</h3>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginBottom: 12, lineHeight: 1.8 }}>
+                    子宮外孕的陰道出血通常有以下特徵：
+                </p>
+                <div style={{ display: 'grid', gap: 10 }}>
+                    {[
+                        '量少到中等（通常比正常月經量少）',
+                        '暗紅色或褐色（非鮮紅色）',
+                        '持續性或間歇性',
+                        '可能在預期月經日期前後開始'
+                    ].map((item, i) => (
+                        <div key={i} style={{
+                            background: 'linear-gradient(135deg, #F3E5F5, #E1BEE7)',
+                            padding: '10px 14px',
+                            borderRadius: 10,
+                            fontSize: 14,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10
+                        }}>
+                            <span style={{
+                                background: '#6A1B9A',
+                                color: '#fff',
+                                borderRadius: '50%',
+                                width: 22,
+                                height: 22,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 12,
+                                fontWeight: 700,
+                                flexShrink: 0
+                            }}>{i + 1}</span>
+                            {item}
+                        </div>
+                    ))}
+                </div>
+                <div className="info" style={{ marginTop: 14 }}>
+                    <strong>⚠️ 注意</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        出血特徵與正常子宮內懷孕的先兆流產可能相似，無法單獨用於區分。需結合其他檢查。
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+
+    // Lesson 3: 理學檢查與實驗室檢查
+    const L3 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>🔍 理學檢查發現</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>理學檢查</th>
+                            <th>LR+ (95% CI)</th>
+                            <th>LR-</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#FCE4EC' }}>
+                            <td style={{ fontWeight: 700, color: 'var(--pri)' }}>子宮頸移動痛</td>
+                            <td><span className="lr-badge lr-high">4.9 (1.0-25)</span></td>
+                            <td>0.74</td>
+                        </tr>
+                        <tr style={{ background: '#FCE4EC' }}>
+                            <td style={{ fontWeight: 600 }}>腹膜刺激徵象</td>
+                            <td><span className="lr-badge lr-high">4.2-4.5</span></td>
+                            <td>0.7</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>附件腫塊</td>
+                            <td><span className="lr-badge lr-mod">2.4 (1.6-3.7)</span></td>
+                            <td>0.55</td>
+                        </tr>
+                        <tr>
+                            <td>附件壓痛</td>
+                            <td>1.2 (0.97-1.4)</td>
+                            <td>0.67</td>
+                        </tr>
+                        <tr>
+                            <td>腹部壓痛</td>
+                            <td>1.0 (0.84-1.3)</td>
+                            <td>0.93</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div className="tip">
+                    <strong>💡 臨床解讀</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        子宮頸移動痛和腹膜刺激徵象的LR+較高，但95%信賴區間較寬。<strong>沒有任何理學檢查可以單獨確認或排除子宮外孕</strong>。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--danger)', marginBottom: 14 }}>🚨 破裂的警示徵象</h3>
+                <div className="danger">
+                    <strong>需緊急處置的徵象：</strong>
+                    <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
+                        {[
+                            '血流動力學不穩定（低血壓、心搏過速）',
+                            '急性腹部徵象（反彈痛、防衛）',
+                            '顯著腹部膨脹',
+                            '肩膀痛（橫膈刺激，Kehr sign）',
+                            '意識改變、嚴重虛弱'
+                        ].map((item, i) => (
+                            <div key={i} style={{
+                                background: '#FFEBEE',
+                                padding: '10px 14px',
+                                borderRadius: 8,
+                                fontSize: 14,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 10
+                            }}>
+                                <span style={{ color: 'var(--danger)', fontWeight: 700 }}>⚠️</span>
+                                {item}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--info)', marginBottom: 14 }}>🧪 β-hCG檢測</h3>
+                <div className="formula">
+                    鑑別閾值(Discriminatory Zone) = 1500-3000 mIU/mL
+                </div>
+                <p style={{ fontSize: 14, color: 'var(--txt2)', marginBottom: 14, lineHeight: 1.8 }}>
+                    鑑別閾值是指使用經陰道超音波時，應可在子宮內看到妊娠囊的最低β-hCG值。
+                </p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>情境</th>
+                            <th>臨床意義</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>β-hCG &gt;閾值 + 無子宮內妊娠</td>
+                            <td style={{ color: 'var(--danger)', fontWeight: 600 }}>高度懷疑子宮外孕</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>β-hCG &lt;閾值 + 無子宮內妊娠</td>
+                            <td>需連續追蹤β-hCG</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>子宮內確認妊娠囊+胚胎</td>
+                            <td style={{ color: 'var(--suc)', fontWeight: 600 }}>排除子宮外孕*</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div className="info" style={{ marginTop: 14 }}>
+                    <strong>*例外：異位妊娠(Heterotopic Pregnancy)</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        子宮內懷孕與子宮外孕同時存在，自然懷孕中約1/30,000，人工生殖後可達1/100。因此接受人工生殖的患者即使看到子宮內妊娠囊，仍需注意附件情況。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#6A1B9A', marginBottom: 14 }}>📈 連續β-hCG追蹤</h3>
+                <div className="formula">
+                    正常子宮內懷孕：β-hCG每48小時增加≥53%
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>β-hCG變化模式</th>
+                            <th>可能診斷</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#E8F5E9' }}>
+                            <td>48小時增加≥53%</td>
+                            <td style={{ color: 'var(--suc)', fontWeight: 600 }}>可能正常子宮內懷孕</td>
+                        </tr>
+                        <tr style={{ background: '#FFF3E0' }}>
+                            <td>48小時增加&lt;53%</td>
+                            <td style={{ color: 'var(--warn)', fontWeight: 600 }}>異常懷孕（子宮外孕或流產）</td>
+                        </tr>
+                        <tr style={{ background: '#FCE4EC' }}>
+                            <td>下降但緩慢</td>
+                            <td style={{ color: 'var(--pri)', fontWeight: 600 }}>可能子宮外孕</td>
+                        </tr>
+                        <tr style={{ background: '#E8F5E9' }}>
+                            <td>快速下降（&gt;50%/48hr）</td>
+                            <td style={{ fontWeight: 600 }}>可能流產中</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div className="tip">
+                    <strong>💡 臨床應用</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        β-hCG上升緩慢（小於53%/48hr）的敏感度約75%、特異度約95%用於診斷異常懷孕，但無法區分子宮外孕與流產。
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+
+    // Lesson 4: 超音波與診斷策略
+    const L4 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>🔊 經陰道超音波(TVS)發現</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>TVS發現</th>
+                            <th>敏感度</th>
+                            <th>特異度</th>
+                            <th>LR+</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{ background: '#FCE4EC' }}>
+                            <td style={{ fontWeight: 700, color: 'var(--pri)' }}>附件腫塊</td>
+                            <td>26%</td>
+                            <td>99.7%</td>
+                            <td><span className="lr-badge lr-high">111 (12-1028)</span></td>
+                        </tr>
+                        <tr style={{ background: '#FCE4EC' }}>
+                            <td style={{ fontWeight: 600 }}>附件處有胚胎/卵黃囊</td>
+                            <td>-</td>
+                            <td>~100%</td>
+                            <td>確診</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>附件異常（非特異性）</td>
+                            <td>84%</td>
+                            <td>84%</td>
+                            <td>5.3 (3.8-7.4)</td>
+                        </tr>
+                        <tr>
+                            <td>腹腔游離液體</td>
+                            <td>31%</td>
+                            <td>95%</td>
+                            <td>5.9 (3.0-12)</td>
+                        </tr>
+                        <tr>
+                            <td>中量/大量腹腔液體</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>9.0 (2.0-40)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div className="good">
+                    <strong>✓ 最有價值的發現</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        TVS看到<strong>附件腫塊</strong>是最有診斷價值的發現(LR+ = 111)，特異度極高。但敏感度僅26%，陰性結果無法排除子宮外孕。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>👁️ 超音波發現分類</h3>
+                <div style={{ display: 'grid', gap: 12 }}>
+                    <div style={{
+                        background: 'linear-gradient(135deg, #E8F5E9, #C8E6C9)',
+                        padding: '16px',
+                        borderRadius: 12,
+                        border: '2px solid var(--suc)'
+                    }}>
+                        <h4 style={{ color: 'var(--suc)', marginBottom: 8 }}>✓ 確認子宮內懷孕(IUP)</h4>
+                        <ul style={{ marginLeft: 16, fontSize: 13, color: 'var(--txt2)' }}>
+                            <li>妊娠囊內有卵黃囊(yolk sac)</li>
+                            <li>妊娠囊內有胚胎(embryo)</li>
+                            <li>可見胚胎心跳</li>
+                        </ul>
+                        <p style={{ fontSize: 12, color: 'var(--suc)', marginTop: 8, fontWeight: 600 }}>
+                            → 排除子宮外孕（異位妊娠例外）
+                        </p>
+                    </div>
+                    <div style={{
+                        background: 'linear-gradient(135deg, #FCE4EC, #F8BBD9)',
+                        padding: '16px',
+                        borderRadius: 12,
+                        border: '2px solid var(--pri)'
+                    }}>
+                        <h4 style={{ color: 'var(--pri)', marginBottom: 8 }}>⚠️ 確認子宮外孕</h4>
+                        <ul style={{ marginLeft: 16, fontSize: 13, color: 'var(--txt2)' }}>
+                            <li>附件處有卵黃囊或胚胎</li>
+                            <li>附件處有妊娠囊樣結構</li>
+                        </ul>
+                        <p style={{ fontSize: 12, color: 'var(--pri)', marginTop: 8, fontWeight: 600 }}>
+                            → 確診子宮外孕
+                        </p>
+                    </div>
+                    <div style={{
+                        background: 'linear-gradient(135deg, #FFF3E0, #FFE0B2)',
+                        padding: '16px',
+                        borderRadius: 12,
+                        border: '2px solid var(--warn)'
+                    }}>
+                        <h4 style={{ color: 'var(--warn)', marginBottom: 8 }}>? 不確定(PUL - Pregnancy of Unknown Location)</h4>
+                        <ul style={{ marginLeft: 16, fontSize: 13, color: 'var(--txt2)' }}>
+                            <li>驗孕陽性但無明確子宮內或子宮外妊娠</li>
+                            <li>可能僅見子宮內液體</li>
+                        </ul>
+                        <p style={{ fontSize: 12, color: 'var(--warn)', marginTop: 8, fontWeight: 600 }}>
+                            → 需追蹤β-hCG和重複超音波
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--danger)', marginBottom: 14 }}>⚠️ 假妊娠囊(Pseudogestational Sac)</h3>
+                <div className="danger">
+                    <strong>什麼是假妊娠囊？</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        假妊娠囊是子宮外孕時，子宮內膜蛻膜反應形成的液體積聚，在超音波下可能被誤認為早期妊娠囊。
+                    </p>
+                    <div style={{ marginTop: 12 }}>
+                        <strong>與真妊娠囊的區分：</strong>
+                    </div>
+                    <table style={{ marginTop: 8 }}>
+                        <thead>
+                            <tr>
+                                <th>特徵</th>
+                                <th>真妊娠囊</th>
+                                <th>假妊娠囊</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>位置</td>
+                                <td>偏心位置(eccentric)</td>
+                                <td>中央位置</td>
+                            </tr>
+                            <tr>
+                                <td>雙環徵</td>
+                                <td>可見(double ring)</td>
+                                <td>通常無</td>
+                            </tr>
+                            <tr>
+                                <td>卵黃囊/胚胎</td>
+                                <td>稍後可見</td>
+                                <td>永不出現</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--info)', marginBottom: 14 }}>📊 診斷策略流程</h3>
+                <div style={{
+                    background: 'linear-gradient(135deg, #FCE4EC, #F8BBD9)',
+                    padding: 20,
+                    borderRadius: 16,
+                    textAlign: 'center'
+                }}>
+                    <div style={{ marginBottom: 16 }}>
+                        <div style={{
+                            background: 'var(--pri)',
+                            color: '#fff',
+                            padding: '10px 20px',
+                            borderRadius: 10,
+                            display: 'inline-block',
+                            fontWeight: 600
+                        }}>
+                            懷孕早期有症狀女性<br/>(腹痛/出血 + 驗孕陽性)
+                        </div>
+                    </div>
+                    <div style={{ fontSize: 24, marginBottom: 16 }}>↓</div>
+                    <div style={{ marginBottom: 16 }}>
+                        <div style={{
+                            background: 'var(--sec)',
+                            color: '#fff',
+                            padding: '10px 20px',
+                            borderRadius: 10,
+                            display: 'inline-block',
+                            fontWeight: 600
+                        }}>
+                            經陰道超音波 + β-hCG
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 14, color: 'var(--suc)', fontWeight: 600 }}>確認IUP</div>
+                            <div style={{ fontSize: 18 }}>↓</div>
+                            <div style={{
+                                background: 'var(--suc)',
+                                color: '#fff',
+                                padding: '8px 14px',
+                                borderRadius: 8,
+                                fontSize: 12
+                            }}>
+                                排除子宮外孕
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 14, color: 'var(--danger)', fontWeight: 600 }}>確認EP</div>
+                            <div style={{ fontSize: 18 }}>↓</div>
+                            <div style={{
+                                background: 'var(--danger)',
+                                color: '#fff',
+                                padding: '8px 14px',
+                                borderRadius: 8,
+                                fontSize: 12
+                            }}>
+                                治療(MTX/手術)
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 14, color: 'var(--warn)', fontWeight: 600 }}>PUL</div>
+                            <div style={{ fontSize: 18 }}>↓</div>
+                            <div style={{
+                                background: 'var(--warn)',
+                                color: '#fff',
+                                padding: '8px 14px',
+                                borderRadius: 8,
+                                fontSize: 12
+                            }}>
+                                追蹤β-hCG<br/>48-72hr
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    // Lesson 5: 臨床應用整合
+    const L5 = () => (
+        <div className="fade-in">
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>🏥 Case 1：28歲女性急性腹痛</h3>
+                <div className="info">
+                    <strong>病史</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        28歲女性，最後月經6週前，因右下腹急性疼痛和少量陰道出血就診。曾有骨盆腔發炎病史。
+                        血壓110/70，心率95。腹部觸診右下腹壓痛但無反彈痛。驗孕陽性。
+                    </p>
+                </div>
+                <div style={{ marginTop: 14 }}>
+                    <h4 style={{ color: 'var(--sec)', marginBottom: 10 }}>📋 風險評估</h4>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>危險因子</td>
+                                <td>曾有PID (OR 2.5)</td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>症狀</td>
+                                <td>腹痛、陰道出血（LR接近1.0）</td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>生命徵象</td>
+                                <td>穩定</td>
+                            </tr>
+                            <tr style={{ background: '#FFF3E0' }}>
+                                <td style={{ fontWeight: 700 }}>前測機率</td>
+                                <td style={{ fontWeight: 700, color: 'var(--warn)' }}>~15% (急診有症狀女性)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style={{ marginTop: 14 }}>
+                    <h4 style={{ color: 'var(--info)', marginBottom: 10 }}>🔍 檢查結果</h4>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>β-hCG</td>
+                                <td>2,500 mIU/mL</td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>TVS</td>
+                                <td>子宮內無妊娠囊，右附件有2cm腫塊</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div className="danger" style={{ marginTop: 14 }}>
+                    <strong>後測機率計算</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        β-hCG &gt;鑑別閾值(1500-3000) + 無子宮內妊娠 + 附件腫塊(LR+ = 111)<br/>
+                        前測機率 15% × LR 111 → 後測機率 &gt;<strong>95%</strong>
+                    </p>
+                </div>
+                <div className="tip" style={{ marginTop: 14 }}>
+                    <strong>💡 處置</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        高度懷疑子宮外孕。血流動力學穩定，可考慮Methotrexate藥物治療。需討論治療選項和追蹤計畫。
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>🏥 Case 2：32歲女性少量出血</h3>
+                <div className="info">
+                    <strong>病史</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        32歲女性，最後月經5週前，因少量陰道出血就診。無腹痛。無特殊危險因子。
+                        生命徵象穩定。腹部和骨盆檢查無異常發現。驗孕陽性。
+                    </p>
+                </div>
+                <div style={{ marginTop: 14 }}>
+                    <h4 style={{ color: 'var(--info)', marginBottom: 10 }}>🔍 檢查結果</h4>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>β-hCG</td>
+                                <td>800 mIU/mL</td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: 600 }}>TVS</td>
+                                <td>子宮內無明確妊娠囊，附件無腫塊</td>
+                            </tr>
+                            <tr style={{ background: '#FFF3E0' }}>
+                                <td style={{ fontWeight: 700 }}>診斷</td>
+                                <td style={{ fontWeight: 700, color: 'var(--warn)' }}>PUL (位置不明懷孕)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style={{ marginTop: 14 }}>
+                    <h4 style={{ color: '#6A1B9A', marginBottom: 10 }}>📈 追蹤β-hCG</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>時間</th>
+                                <th>β-hCG</th>
+                                <th>變化</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>第0天</td>
+                                <td>800</td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>第2天(48hr)</td>
+                                <td>1,100</td>
+                                <td style={{ color: 'var(--warn)', fontWeight: 600 }}>+37.5% (&lt;53%異常)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div className="tip" style={{ marginTop: 14 }}>
+                    <strong>💡 處置</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        β-hCG上升低於53%/48hr，符合異常懷孕。需重複超音波。若仍無法定位，可能需要：<br/>
+                        (1) 繼續追蹤直到β-hCG達鑑別閾值<br/>
+                        (2) 子宮內膜取樣（D&C）以確認是否為流產<br/>
+                        (3) 若高度懷疑子宮外孕，考慮治療
+                    </p>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--info)', marginBottom: 14 }}>💊 治療選項</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>治療</th>
+                            <th>適應症</th>
+                            <th>禁忌症</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>Methotrexate<br/>(MTX)</td>
+                            <td>
+                                <ul style={{ marginLeft: 16, fontSize: 12 }}>
+                                    <li>血流動力學穩定</li>
+                                    <li>未破裂</li>
+                                    <li>β-hCG &lt;5000</li>
+                                    <li>腫塊&lt;4cm無胎心</li>
+                                </ul>
+                            </td>
+                            <td>
+                                <ul style={{ marginLeft: 16, fontSize: 12 }}>
+                                    <li>不穩定</li>
+                                    <li>肝腎功能異常</li>
+                                    <li>免疫缺陷</li>
+                                    <li>母乳哺育</li>
+                                </ul>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600 }}>腹腔鏡手術</td>
+                            <td>
+                                <ul style={{ marginLeft: 16, fontSize: 12 }}>
+                                    <li>MTX禁忌或失敗</li>
+                                    <li>較大腫塊</li>
+                                    <li>患者偏好</li>
+                                </ul>
+                            </td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td style={{ fontWeight: 600, color: 'var(--danger)' }}>緊急剖腹探查</td>
+                            <td>
+                                <ul style={{ marginLeft: 16, fontSize: 12 }}>
+                                    <li>血流動力學不穩定</li>
+                                    <li>明顯腹腔內出血</li>
+                                </ul>
+                            </td>
+                            <td>-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="card">
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--suc)', marginBottom: 14 }}>✅ 核心重點總結</h3>
+                <div style={{ display: 'grid', gap: 12 }}>
+                    {[
+                        '急診有症狀女性子宮外孕盛行率約15%',
+                        '曾有子宮外孕病史是最強危險因子(OR 8.3)',
+                        '症狀和理學檢查的LR+大多接近1.0，診斷價值有限',
+                        '子宮頸移動痛LR+ = 4.9，腹膜刺激徵象LR+ = 4.2-4.5',
+                        'TVS看到附件腫塊LR+ = 111，但敏感度僅26%',
+                        'β-hCG鑑別閾值為1500-3000 mIU/mL',
+                        '正常懷孕β-hCG每48小時增加≥53%'
+                    ].map((item, i) => (
+                        <div key={i} style={{
+                            background: 'linear-gradient(135deg, #E8F5E9, #C8E6C9)',
+                            padding: '12px 16px',
+                            borderRadius: 12,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 12
+                        }}>
+                            <span style={{
+                                background: 'var(--suc)',
+                                color: '#fff',
+                                borderRadius: '50%',
+                                width: 24,
+                                height: 24,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 12,
+                                fontWeight: 700,
+                                flexShrink: 0
+                            }}>✓</span>
+                            <span style={{ fontSize: 14, color: 'var(--txt)' }}>{item}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+
+    const Lesson = () => {
+        const l = lessons.find(x => x.id === lessonId);
+        return (
+            <div className="fade-in">
+                <Header title={l.title} />
+                <div style={{ background: `linear-gradient(135deg, ${l.color}, ${l.color}88)`, padding: '20px', color: '#fff' }}>
+                    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                        <div style={{ fontSize: 12, opacity: 0.9 }}>Lesson {l.id} • {l.sub}</div>
+                        <h1 style={{ fontSize: 24, fontWeight: 700 }}>{l.title}</h1>
+                    </div>
+                </div>
+                <div style={{ padding: '20px 16px' }}>
+                    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                        {lessonId === 1 && <L1 />}
+                        {lessonId === 2 && <L2 />}
+                        {lessonId === 3 && <L3 />}
+                        {lessonId === 4 && <L4 />}
+                        {lessonId === 5 && <L5 />}
+                        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+                            {lessonId > 1 && (
+                                <button className="btn" style={{ flex: 1, background: '#fff', border: '2px solid var(--pri)', color: 'var(--pri)' }} onClick={() => setLessonId(lessonId - 1)}>
+                                    ← 上一課
+                                </button>
+                            )}
+                            {lessonId < 5 ? (
+                                <button className="btn btn-pri" style={{ flex: 1 }} onClick={() => setLessonId(lessonId + 1)}>
+                                    下一課 →
+                                </button>
+                            ) : (
+                                <button className="btn btn-sec" style={{ flex: 1 }} onClick={() => { setQIdx(0); setScore(0); setSel(null); setShow(false); setDone(false); setPage('quiz'); }}>
+                                    開始測驗 📝
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const Quiz = () => {
+        const pick = (i) => { if (show) return; setSel(i); setShow(true); if (i === quiz[qIdx].c) setScore(score + 1); };
+        const next = () => { if (qIdx < quiz.length - 1) { setQIdx(qIdx + 1); setSel(null); setShow(false); } else setDone(true); };
+
+        if (done) {
+            const pct = Math.round((score / quiz.length) * 100);
+            return (
+                <div className="fade-in">
+                    <Header title="測驗結果" />
+                    <div style={{ padding: '48px 16px', textAlign: 'center' }}>
+                        <div style={{
+                            width: 150,
+                            height: 150,
+                            borderRadius: '50%',
+                            background: `conic-gradient(${pct >= 80 ? 'var(--suc)' : pct >= 60 ? 'var(--warn)' : 'var(--danger)'} ${pct * 3.6}deg, #E5E5E5 0deg)`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto 28px',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+                        }}>
+                            <div style={{
+                                width: 126,
+                                height: 126,
+                                borderRadius: '50%',
+                                background: '#fff',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <div style={{ fontSize: 40, fontWeight: 700, color: 'var(--txt)' }}>{pct}%</div>
+                                <div style={{ fontSize: 15, color: 'var(--txt2)' }}>{score}/{quiz.length}</div>
+                            </div>
+                        </div>
+                        <h2 style={{ fontSize: 26, fontWeight: 700, marginBottom: 10 }}>
+                            {pct >= 80 ? '🎉 優秀！' : pct >= 60 ? '👍 不錯！' : '💪 加油！'}
+                        </h2>
+                        <p style={{ color: 'var(--txt2)', marginBottom: 36, fontSize: 15 }}>
+                            {pct >= 80 ? '你對子宮外孕評估掌握良好！' : pct >= 60 ? '再複習可以更進步！' : '建議重新閱讀課程內容'}
+                        </p>
+                        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <button className="btn btn-pri" onClick={() => { setQIdx(0); setScore(0); setSel(null); setShow(false); setDone(false); }}>
+                                重新測驗
+                            </button>
+                            <button className="btn" style={{ background: '#fff', border: '2px solid var(--pri)', color: 'var(--pri)' }} onClick={() => setPage('home')}>
+                                返回課程
+                            </button>
+                        </div>
+                    </div>
+                    <footer style={{ background: 'linear-gradient(135deg, #FCE4EC, #F8BBD9)', padding: '28px 16px', textAlign: 'center', marginTop: 48 }}>
+                        <p style={{ fontSize: 12, color: 'var(--txt2)' }}>新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        const q = quiz[qIdx];
+        return (
+            <div className="fade-in">
+                <Header title="自我測驗" />
+                <div style={{ padding: '20px 16px' }}>
+                    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: 14 }}>
+                            <span style={{ color: 'var(--txt2)' }}>進度</span>
+                            <span style={{ fontWeight: 600, color: 'var(--pri)' }}>{qIdx + 1}/{quiz.length}</span>
+                        </div>
+                        <div style={{ height: 10, background: '#E5E5E5', borderRadius: 5, marginBottom: 24, overflow: 'hidden' }}>
+                            <div style={{
+                                height: '100%',
+                                width: `${((qIdx + 1) / quiz.length) * 100}%`,
+                                background: 'linear-gradient(90deg, var(--pri), var(--pri2))',
+                                borderRadius: 5,
+                                transition: 'width 0.4s ease'
+                            }} />
+                        </div>
+                        <div className="card">
+                            <h3 style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.7, marginBottom: 22, color: 'var(--txt)' }}>{q.q}</h3>
+                            {q.o.map((opt, i) => {
+                                let bg = '#fff', bd = '#E5E5E5';
+                                if (show) {
+                                    if (i === q.c) { bg = '#E8F5E9'; bd = 'var(--suc)'; }
+                                    else if (i === sel) { bg = '#FFEBEE'; bd = 'var(--danger)'; }
+                                } else if (i === sel) { bg = '#FCE4EC'; bd = 'var(--pri)'; }
+                                return (
+                                    <button
+                                        key={i}
+                                        onClick={() => pick(i)}
+                                        disabled={show}
+                                        style={{
+                                            width: '100%',
+                                            padding: '14px 16px',
+                                            marginBottom: 12,
+                                            background: bg,
+                                            border: `2px solid ${bd}`,
+                                            borderRadius: 14,
+                                            textAlign: 'left',
+                                            fontSize: 14,
+                                            cursor: show ? 'default' : 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 14,
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                    >
+                                        <span style={{
+                                            width: 30,
+                                            height: 30,
+                                            borderRadius: 10,
+                                            background: show && i === q.c ? 'var(--suc)' : show && i === sel ? 'var(--danger)' : 'linear-gradient(135deg, #FCE4EC, #F8BBD9)',
+                                            color: show && (i === q.c || i === sel) ? '#fff' : 'var(--pri)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontWeight: 700,
+                                            fontSize: 14,
+                                            flexShrink: 0
+                                        }}>
+                                            {show && i === q.c ? '✓' : show && i === sel && i !== q.c ? '✗' : String.fromCharCode(65 + i)}
+                                        </span>
+                                        <span style={{ lineHeight: 1.6, color: 'var(--txt)' }}>{opt}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {show && (
+                            <div className={sel === q.c ? 'good' : 'tip'}>
+                                <strong style={{ color: sel === q.c ? 'var(--suc)' : '#F57F17' }}>
+                                    {sel === q.c ? '✓ 正確！' : '✗ 答錯了'}
+                                </strong>
+                                <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 10, lineHeight: 1.8 }}>{q.e}</p>
+                            </div>
+                        )}
+                        {show && (
+                            <button className="btn btn-pri" style={{ width: '100%', justifyContent: 'center', marginTop: 20 }} onClick={next}>
+                                {qIdx < quiz.length - 1 ? '下一題 →' : '查看結果'}
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div style={{ maxWidth: '100%', minHeight: '100vh', background: 'var(--bg)' }}>
+            {page === 'home' ? <Home /> : page === 'lesson' ? <Lesson /> : <Quiz />}
+        </div>
+    );
+};
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>輸液反應性評估 | JAMA Rational Clinical Examination</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--pri:#1565C0;--pri2:#42A5F5;--acc:#FF7043;--suc:#26A69A;--warn:#FFC107;--err:#EF5350;--pur:#7E57C2;--blue:#42A5F5;--pink:#EC407A;--teal:#00897B;--bg:#FAFCFF;--txt:#1A2E40;--txt2:#6B7280}
+        body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+        .container{max-width:480px;margin:0 auto}
+        .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(21,101,192,0.1)}
+        .btn{padding:14px 24px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all 0.3s;width:100%}
+        .btn-pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}
+        .btn-acc{background:linear-gradient(135deg,var(--acc),#FF8A65);color:#fff}
+        .btn-out{background:#fff;border:2px solid var(--pri);color:var(--pri)}
+        table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+        th,td{padding:10px;text-align:center;border-bottom:1px solid #eee}
+        th{background:#E3F2FD;font-weight:600;color:var(--pri)}
+        .formula{background:linear-gradient(135deg,#E3F2FD,#BBDEFB);border:2px solid var(--pri);border-radius:12px;padding:16px;margin:12px 0;text-align:center;font-size:17px;color:#0D47A1}
+        .tip{background:#FFF3E0;border-left:4px solid var(--acc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .good{background:#E0F2F1;border-left:4px solid var(--suc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .info{background:#E3F2FD;border-left:4px solid var(--blue);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .warn{background:#FFF8E1;border-left:4px solid var(--warn);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .purple{background:#EDE7F6;border-left:4px solid var(--pur);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .pink{background:#FCE4EC;border-left:4px solid var(--pink);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .teal{background:#E0F2F1;border-left:4px solid var(--teal);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .key-point{background:linear-gradient(135deg,#1565C0,#42A5F5);color:#fff;border-radius:12px;padding:16px;margin:16px 0}
+        .lr-high{background:#C8E6C9;color:#2E7D32;padding:2px 8px;border-radius:4px;font-weight:600}
+        .lr-mod{background:#FFF9C4;color:#F57F17;padding:2px 8px;border-radius:4px;font-weight:600}
+        .lr-low{background:#FFCDD2;color:#C62828;padding:2px 8px;border-radius:4px;font-weight:600}
+        header{background:#fff;border-bottom:1px solid #eee;padding:12px 16px;position:sticky;top:0;z-index:10}
+        .header-inner{max-width:480px;margin:0 auto;display:flex;align-items:center;gap:12px}
+        .back-btn{background:#E3F2FD;border:none;border-radius:10px;width:40px;height:40px;cursor:pointer;color:var(--pri);display:flex;align-items:center;justify-content:center}
+        .hero{background:linear-gradient(135deg,#1565C0,#42A5F5);padding:32px 20px;color:#fff}
+        .tag{background:rgba(255,255,255,0.2);display:inline-block;padding:6px 14px;border-radius:50px;font-size:12px;font-weight:600;margin-bottom:16px}
+        .badge-row{display:flex;gap:10px;flex-wrap:wrap}
+        .badge{background:rgba(255,255,255,0.2);padding:6px 12px;border-radius:20px;font-size:11px}
+        .content{padding:0 16px;margin-top:-20px}
+        .lesson-item{display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:8px;background:#F5F9FF;border-radius:12px;cursor:pointer;border:2px solid transparent;transition:border-color 0.2s}
+        .lesson-item:hover{border-color:var(--pri)}
+        .lesson-num{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+        .goal-item{display:flex;gap:10px;margin-bottom:8px;font-size:14px}
+        .goal-num{background:var(--suc);color:#fff;border-radius:6px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+        footer{background:#E3F2FD;padding:24px 16px;border-radius:16px;text-align:center;margin:20px 0 40px}
+        .page{display:none}
+        .page.active{display:block}
+        .lesson-header{padding:20px;color:#fff}
+        .lesson-content{padding:20px 16px}
+        .nav-buttons{display:flex;gap:12px;margin-top:24px}
+        .nav-buttons .btn{flex:1}
+        .progress-bar{height:8px;background:#E5E5E5;border-radius:4px;margin-bottom:20px}
+        .progress-fill{height:100%;background:linear-gradient(90deg,var(--pri),var(--pri2));border-radius:4px;transition:width 0.3s}
+        .quiz-option{width:100%;padding:12px 14px;margin-bottom:10px;background:#fff;border:2px solid #E5E5E5;border-radius:12px;text-align:left;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:12px}
+        .quiz-option:hover{border-color:var(--pri)}
+        .quiz-option.selected{background:#E3F2FD;border-color:var(--pri)}
+        .quiz-option.correct{background:#E8F5E9;border-color:var(--suc)}
+        .quiz-option.wrong{background:#FFEBEE;border-color:var(--err)}
+        .quiz-option.disabled{cursor:default}
+        .option-label{width:26px;height:26px;border-radius:8px;background:#E3F2FD;color:var(--pri);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+        .option-label.correct{background:var(--suc);color:#fff}
+        .option-label.wrong{background:var(--err);color:#fff}
+        .result-circle{width:140px;height:140px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px}
+        .result-inner{width:120px;height:120px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+        .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .stat-box{border-radius:12px;padding:16px;text-align:center}
+        .stat-box .label{font-size:11px;color:var(--txt2)}
+        .stat-box .value{font-size:20px;font-weight:700}
+    </style>
+</head>
+<body>
+    <!-- 首頁 -->
+    <div id="home" class="page active">
+        <header>
+            <div class="header-inner">
+                <button class="back-btn" onclick="location.href='jama-rational-exam.html'">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style="font-weight:700;color:#0D47A1">輸液反應性評估</span>
+            </div>
+        </header>
+        <div class="hero">
+            <div class="container">
+                <div class="tag">💧 JAMA Rational Clinical Examination</div>
+                <h1 style="font-size:22px;font-weight:700;margin-bottom:8px">Will This Hemodynamically Unstable Patient Respond to a Bolus of Intravenous Fluids?</h1>
+                <h2 style="font-size:15px;font-weight:500;margin-bottom:12px;opacity:0.95">血流動力學不穩定患者的輸液反應性評估</h2>
+                <a href="https://jamanetwork.com/journals/jama/article-abstract/2556129" target="_blank" style="display:inline-block;background:rgba(255,255,255,0.25);padding:8px 16px;border-radius:8px;color:#fff;text-decoration:none;font-size:13px;margin-bottom:16px;transition:background 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.25)'">📄 JAMA 2016;316(12):1298-1309 ↗</a>
+                <div class="badge-row">
+                    <div class="badge">📊 N=2,260</div>
+                    <div class="badge">📚 50 Studies</div>
+                    <div class="badge">🎯 LR Analysis</div>
+                </div>
+            </div>
+        </div>
+        <div class="content">
+            <div class="container">
+                <div class="card">
+                    <h3 style="font-size:16px;font-weight:700;color:var(--pri);margin-bottom:12px">🎯 學習目標</h3>
+                    <div class="goal-item"><span class="goal-num">1</span><span style="color:var(--txt2)">了解輸液反應性的定義與重要性</span></div>
+                    <div class="goal-item"><span class="goal-num">2</span><span style="color:var(--txt2)">掌握身體檢查與CVP的診斷價值</span></div>
+                    <div class="goal-item"><span class="goal-num">3</span><span style="color:var(--txt2)">學會超音波下腔靜脈評估技術</span></div>
+                    <div class="goal-item"><span class="goal-num">4</span><span style="color:var(--txt2)">理解被動抬腿試驗 (PLR) 的臨床應用</span></div>
+                    <div class="goal-item"><span class="goal-num">5</span><span style="color:var(--txt2)">臨床綜合判斷與決策應用</span></div>
+                </div>
+                <div class="card">
+                    <h3 style="font-size:16px;font-weight:700;color:var(--pri);margin-bottom:12px">📖 課程單元</h3>
+                    <div class="lesson-item" onclick="showLesson(1)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#1565C0,#1565C088)">1</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">輸液反應性概論</div><div style="font-size:12px;color:var(--txt2)">Fluid Responsiveness Basics</div></div>
+                        <svg viewBox="0 0 24 24" fill="#1565C0" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="lesson-item" onclick="showLesson(2)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#42A5F5,#42A5F588)">2</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">身體檢查與CVP</div><div style="font-size:12px;color:var(--txt2)">Physical Exam & CVP</div></div>
+                        <svg viewBox="0 0 24 24" fill="#42A5F5" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="lesson-item" onclick="showLesson(3)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#26A69A,#26A69A88)">3</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">超音波IVC評估</div><div style="font-size:12px;color:var(--txt2)">Ultrasound IVC Assessment</div></div>
+                        <svg viewBox="0 0 24 24" fill="#26A69A" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="lesson-item" onclick="showLesson(4)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#7E57C2,#7E57C288)">4</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">被動抬腿試驗</div><div style="font-size:12px;color:var(--txt2)">Passive Leg Raising (PLR)</div></div>
+                        <svg viewBox="0 0 24 24" fill="#7E57C2" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="lesson-item" onclick="showLesson(5)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#FF7043,#FF704388)">5</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">臨床決策應用</div><div style="font-size:12px;color:var(--txt2)">Clinical Decision Making</div></div>
+                        <svg viewBox="0 0 24 24" fill="#FF7043" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                </div>
+                <button class="btn btn-acc" onclick="startQuiz()">📝 開始自我測驗</button>
+                <div class="card" style="background:linear-gradient(135deg,#E3F2FD,#BBDEFB);margin-top:16px">
+                    <h3 style="font-size:14px;font-weight:700;color:var(--pri);margin-bottom:8px">📌 臨床要點</h3>
+                    <p style="font-size:13px;color:var(--txt2);line-height:1.8">輸液過量可能對重症患者造成不良預後。被動抬腿試驗 (PLR) 結合心輸出量測量是預測輸液反應性最可靠的方法 (LR+ 11, LR- 0.13)。CVP和身體檢查的診斷價值有限。</p>
+                </div>
+                <footer>
+                    <p style="font-size:12px;color:var(--txt2);margin-bottom:8px">新竹台大分院教學部</p>
+                    <p style="font-size:11px;color:var(--txt2)">謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    <p style="font-size:10px;color:var(--txt2);margin-top:8px">資料來源: JAMA 2016;316(12):1298-1309</p>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- 課程頁 -->
+    <div id="lesson" class="page">
+        <header>
+            <div class="header-inner">
+                <button class="back-btn" onclick="showHome()">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span id="lesson-title" style="font-weight:700;color:#0D47A1"></span>
+            </div>
+        </header>
+        <div id="lesson-header" class="lesson-header"></div>
+        <div class="lesson-content">
+            <div class="container">
+                <div id="lesson-body"></div>
+                <div class="nav-buttons">
+                    <button id="prev-btn" class="btn btn-out" onclick="prevLesson()">← 上一課</button>
+                    <button id="next-btn" class="btn btn-pri" onclick="nextLesson()">下一課 →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 測驗頁 -->
+    <div id="quiz" class="page">
+        <header>
+            <div class="header-inner">
+                <button class="back-btn" onclick="showHome()">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style="font-weight:700;color:#0D47A1">自我測驗</span>
+            </div>
+        </header>
+        <div style="padding:20px 16px">
+            <div class="container">
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px">
+                    <span style="color:var(--txt2)">進度</span>
+                    <span id="quiz-progress" style="font-weight:600;color:var(--pri)"></span>
+                </div>
+                <div class="progress-bar">
+                    <div id="quiz-progress-bar" class="progress-fill"></div>
+                </div>
+                <div id="quiz-content" class="card"></div>
+                <div id="quiz-feedback"></div>
+                <button id="quiz-next" class="btn btn-pri" onclick="nextQuestion()" style="display:none;margin-top:16px">下一題 →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 結果頁 -->
+    <div id="result" class="page">
+        <header>
+            <div class="header-inner">
+                <button class="back-btn" onclick="showHome()">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style="font-weight:700;color:#0D47A1">測驗結果</span>
+            </div>
+        </header>
+        <div style="padding:40px 16px;text-align:center">
+            <div class="container">
+                <div id="result-circle" class="result-circle">
+                    <div class="result-inner">
+                        <div id="result-pct" style="font-size:36px;font-weight:700;color:var(--pri)"></div>
+                        <div id="result-score" style="font-size:14px;color:var(--txt2)"></div>
+                    </div>
+                </div>
+                <h2 id="result-title" style="font-size:24px;font-weight:700;margin-bottom:8px"></h2>
+                <p id="result-msg" style="color:var(--txt2);margin-bottom:32px"></p>
+                <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                    <button class="btn btn-pri" onclick="startQuiz()">重新測驗</button>
+                    <button class="btn btn-out" onclick="showHome()">返回課程</button>
+                </div>
+            </div>
+        </div>
+        <footer style="margin-top:40px">
+            <p style="font-size:12px;color:var(--txt2)">新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+        </footer>
+    </div>
+
+<script>
+const lessons = [
+    {id:1, title:'輸液反應性概論', sub:'Fluid Responsiveness Basics', color:'#1565C0'},
+    {id:2, title:'身體檢查與CVP', sub:'Physical Exam & CVP', color:'#42A5F5'},
+    {id:3, title:'超音波IVC評估', sub:'Ultrasound IVC Assessment', color:'#26A69A'},
+    {id:4, title:'被動抬腿試驗', sub:'Passive Leg Raising (PLR)', color:'#7E57C2'},
+    {id:5, title:'臨床決策應用', sub:'Clinical Decision Making', color:'#FF7043'}
+];
+
+const lessonContent = {
+    1: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 核心概念</h4><p style="font-size:13px">輸液反應性 (Fluid Responsiveness) 是指給予靜脈輸液後心輸出量顯著增加的能力。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">💧 為什麼重要？</h4>
+    <div class="info"><strong>📊 臨床背景</strong><p style="font-size:13px;margin-top:6px">在血流動力學不穩定的重症患者中，輸液過量可能導致不良預後。因此，初始輸液復甦後，識別哪些患者會從進一步輸液中獲益至關重要。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📖 定義與標準</h4>
+    <div class="formula">輸液反應性 = 靜脈輸液後心輸出量增加</div>
+    <table><thead><tr><th>術語</th><th>定義</th></tr></thead>
+    <tbody>
+    <tr><td style="text-align:left;font-weight:600">Fluid Responder</td><td style="text-align:left">輸液後 CO 增加 ≥10-15%</td></tr>
+    <tr><td style="text-align:left;font-weight:600">Non-responder</td><td style="text-align:left">輸液後 CO 增加 < 10%</td></tr>
+    <tr><td style="text-align:left;font-weight:600">Hemodynamic Instability</td><td style="text-align:left">頑固性低血壓或器官灌注不足</td></tr>
+    </tbody></table>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 研究概況</h4>
+    <div class="stat-box" style="background:#E3F2FD;margin-bottom:16px">
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
+            <div><div class="label">研究數量</div><div class="value" style="color:var(--pri)">50</div></div>
+            <div><div class="label">患者總數</div><div class="value" style="color:var(--pri)">2,260</div></div>
+            <div><div class="label">Responder比例</div><div class="value" style="color:var(--suc)">50%</div></div>
+        </div>
+    </div>
+    <div class="warn"><strong>⚠️ 重要發現</strong><p style="font-size:13px;margin-top:6px">在研究中，平均只有 <strong>50%</strong> (95% CI: 42%-56%) 的血流動力學不穩定患者對輸液有反應，這意味著另一半患者可能因不必要的輸液而受害。</p></div>
+    <div class="good" style="margin-top:16px"><strong>✔ Frank-Starling 曲線</strong><p style="font-size:13px;margin-top:6px">輸液反應性取決於患者在 Frank-Starling 曲線上的位置：<br>• 曲線上升段：前負荷增加 → CO 增加（有反應）<br>• 曲線平台段：前負荷增加 → CO 不增加（無反應）</p></div>`,
+    
+    2: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 身體檢查的診斷價值</h4><p style="font-size:13px">傳統身體檢查發現對預測輸液反應性的價值有限。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🩺 身體檢查發現</h4>
+    <div class="warn"><strong>⚠️ 重要結論</strong><p style="font-size:13px;margin-top:6px">身體檢查發現無法可靠預測輸液反應性，所有發現的似然比 95% CI 都跨越 1.0。</p></div>
+    <table><thead><tr><th>身體檢查發現</th><th>LR+</th><th>95% CI</th></tr></thead>
+    <tbody>
+    <tr><td style="text-align:left;font-weight:600">皮膚花斑 (Mottling)</td><td>~1.0</td><td>跨越 1.0</td></tr>
+    <tr><td style="text-align:left;font-weight:600">毛細血管再充盈時間延長</td><td>~1.0</td><td>跨越 1.0</td></tr>
+    <tr><td style="text-align:left;font-weight:600">周邊脈搏減弱</td><td>~1.0</td><td>跨越 1.0</td></tr>
+    <tr><td style="text-align:left;font-weight:600">皮膚濕冷</td><td>~1.0</td><td>跨越 1.0</td></tr>
+    </tbody></table>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 中心靜脈壓 (CVP)</h4>
+    <div class="info"><strong>💡 CVP 的角色</strong><p style="font-size:13px;margin-top:6px">CVP 是臨床常用的前負荷指標，但其預測輸液反應性的能力中等。</p></div>
+    <div class="stat-box" style="background:#E3F2FD;margin-bottom:16px">
+        <div style="font-weight:700;color:var(--pri);margin-bottom:10px">低 CVP (< 8 mmHg)</div>
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center">
+            <div><div class="label">敏感度</div><div class="value" style="color:var(--pri)">62%</div></div>
+            <div><div class="label">特異度</div><div class="value" style="color:var(--pri)">76%</div></div>
+            <div><div class="label">LR+</div><div class="value" style="color:var(--suc)">2.6</div></div>
+            <div><div class="label">LR-</div><div class="value" style="color:var(--acc)">0.50</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:8px">LR+ 95% CI: 1.4-4.6 | LR- 95% CI: 0.39-0.65</div>
+    </div>
+    <div class="tip"><strong>🔍 臨床解讀</strong><p style="font-size:13px;margin-top:6px">• 低 CVP (< 8 mmHg)：LR+ 2.6 輕度增加輸液反應性可能<br>• 高 CVP (≥ 8 mmHg)：LR- 0.50 輕度降低輸液反應性可能<br>• 單獨 CVP 無法可靠預測輸液反應性</p></div>
+    <div class="purple"><strong>📝 關鍵概念</strong><p style="font-size:13px;margin-top:6px">CVP 反映右心房壓力，但不能直接反映心臟在 Frank-Starling 曲線上的位置，因此預測輸液反應性的能力有限。</p></div>`,
+    
+    3: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 超音波下腔靜脈評估</h4><p style="font-size:13px">IVC 呼吸變異度是評估輸液反應性的非侵入性方法，但僅適用於無自主呼吸的機械通氣患者。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🔬 IVC 擴張指數 (Distensibility Index)</h4>
+    <div class="formula">IVC-DI = (IVC<sub>max</sub> - IVC<sub>min</sub>) / IVC<sub>min</sub> × 100%</div>
+    <div class="info"><strong>💡 測量方法</strong><p style="font-size:13px;margin-top:6px">• 使用床邊超音波測量 IVC 直徑<br>• 測量呼吸週期中的最大與最小直徑<br>• 計算呼吸變異百分比</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 IVC 擴張指數 > 15% 的診斷價值</h4>
+    <div class="warn"><strong>⚠️ 重要限制</strong><p style="font-size:13px;margin-top:6px">以下數據僅適用於<strong>無自主呼吸努力的機械通氣患者</strong>！</p></div>
+    <div class="stat-box" style="background:#E0F2F1;margin-bottom:16px">
+        <div style="font-weight:700;color:var(--teal);margin-bottom:10px">IVC 擴張指數 > 15%</div>
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center">
+            <div><div class="label">敏感度</div><div class="value" style="color:var(--teal)">77%</div></div>
+            <div><div class="label">特異度</div><div class="value" style="color:var(--teal)">85%</div></div>
+            <div><div class="label">LR+</div><div class="value" style="color:var(--suc)">5.3</div></div>
+            <div><div class="label">LR-</div><div class="value" style="color:var(--suc)">0.27</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:8px">LR+ 95% CI: 1.1-27 | LR- 95% CI: 0.08-0.87</div>
+    </div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">⚠️ 使用限制</h4>
+    <table><thead><tr><th>情況</th><th>IVC 評估可靠性</th></tr></thead>
+    <tbody>
+    <tr><td style="text-align:left;font-weight:600">完全機械通氣（無自主呼吸）</td><td style="color:var(--suc)">✓ 可靠</td></tr>
+    <tr><td style="text-align:left;font-weight:600">有自主呼吸努力</td><td style="color:var(--err)">✗ 不可靠</td></tr>
+    <tr><td style="text-align:left;font-weight:600">自主呼吸患者</td><td style="color:var(--err)">✗ 不可靠</td></tr>
+    <tr><td style="text-align:left;font-weight:600">低潮氣量通氣</td><td style="color:var(--warn)">? 需進一步研究</td></tr>
+    </tbody></table>
+    <div class="good" style="margin-top:16px"><strong>✔ 臨床應用建議</strong><p style="font-size:13px;margin-top:6px">IVC 擴張指數在特定情況下有用，但研究作者指出此方法需要更多確認性研究。建議結合其他評估方法使用。</p></div>`,
+    
+    4: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 被動抬腿試驗 (PLR)</h4><p style="font-size:13px">PLR 是預測輸液反應性最可靠的床邊測試，透過將下肢血液轉移至中心循環來模擬輸液挑戰。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🦵 PLR 操作方法</h4>
+    <div class="info"><strong>💡 標準操作步驟</strong><p style="font-size:13px;margin-top:6px">1. 患者先呈半臥位 (45°)<br>2. 將雙腿抬高至 45°，同時軀幹放平<br>3. 1-2 分鐘內測量心輸出量或相關參數變化<br>4. 效果具可逆性，可重複進行</p></div>
+    <div class="formula">PLR 陽性 = 心輸出量或相關參數增加 ≥ 10-15%</div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 PLR 的診斷準確度</h4>
+    <div class="stat-box" style="background:#EDE7F6;margin-bottom:16px">
+        <div style="font-weight:700;color:var(--pur);margin-bottom:10px">PLR 引起 CO 增加</div>
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center">
+            <div><div class="label">敏感度</div><div class="value" style="color:var(--pur)">88%</div></div>
+            <div><div class="label">特異度</div><div class="value" style="color:var(--pur)">92%</div></div>
+            <div><div class="label">LR+</div><div class="value" style="color:var(--suc)">11</div></div>
+            <div><div class="label">LR-</div><div class="value" style="color:var(--suc)">0.13</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:8px">LR+ 95% CI: 7.6-17 | LR- 95% CI: 0.07-0.22</div>
+    </div>
+    <div class="good"><strong>✔ 臨床意義</strong><p style="font-size:13px;margin-top:6px"><strong>LR+ = 11</strong>：PLR 陽性強烈支持輸液反應性<br><strong>LR- = 0.13</strong>：PLR 陰性幾乎可排除輸液反應性</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📈 測量方法比較</h4>
+    <table><thead><tr><th>測量參數</th><th>優點</th><th>可行性</th></tr></thead>
+    <tbody>
+    <tr><td style="text-align:left;font-weight:600">心輸出量 (CO)</td><td style="text-align:left">最準確</td><td style="text-align:left">需侵入性監測</td></tr>
+    <tr><td style="text-align:left;font-weight:600">脈壓變異 (PPV)</td><td style="text-align:left">非侵入</td><td style="text-align:left">需動脈導管</td></tr>
+    <tr><td style="text-align:left;font-weight:600">LVOT VTI</td><td style="text-align:left">超音波</td><td style="text-align:left">需技術熟練</td></tr>
+    <tr><td style="text-align:left;font-weight:600">頸動脈血流</td><td style="text-align:left">非侵入</td><td style="text-align:left">操作簡單</td></tr>
+    </tbody></table>
+    <div class="tip" style="margin-top:16px"><strong>🔍 PLR 優勢</strong><p style="font-size:13px;margin-top:6px">• 不需給予實際輸液即可評估<br>• 效果可逆，不會造成輸液過量<br>• 適用於自主呼吸和機械通氣患者<br>• 適用於心律不整患者</p></div>`,
+    
+    5: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 臨床決策</h4><p style="font-size:13px">綜合多項因素評估，PLR 結合心輸出量測量是最可靠的方法。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 診斷方法比較總表</h4>
+    <table><thead><tr><th>方法</th><th>LR+</th><th>LR-</th><th>推薦度</th></tr></thead>
+    <tbody>
+    <tr><td style="text-align:left;font-weight:600">PLR + CO 測量</td><td><span class="lr-high">11</span></td><td><span class="lr-high">0.13</span></td><td>⭐⭐⭐</td></tr>
+    <tr><td style="text-align:left;font-weight:600">IVC 擴張指數 >15%*</td><td><span class="lr-high">5.3</span></td><td><span class="lr-mod">0.27</span></td><td>⭐⭐</td></tr>
+    <tr><td style="text-align:left;font-weight:600">低 CVP (< 8 mmHg)</td><td><span class="lr-mod">2.6</span></td><td><span class="lr-low">0.50</span></td><td>⭐</td></tr>
+    <tr style="background:#FFEBEE"><td style="text-align:left;font-weight:600">身體檢查</td><td><span class="lr-low">~1.0</span></td><td><span class="lr-low">~1.0</span></td><td>✗</td></tr>
+    </tbody></table>
+    <p style="font-size:11px;color:var(--txt2);margin-top:4px">* 僅適用於無自主呼吸的機械通氣患者</p>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🩺 臨床決策流程</h4>
+    <div class="info"><strong>Step 1：評估臨床情境</strong><p style="font-size:13px;margin-top:6px">• 患者是否血流動力學不穩定？<br>• 是否有器官灌注不足的徵象？<br>• 是否已完成初始輸液復甦？</p></div>
+    <div class="purple" style="margin-top:12px"><strong>Step 2：選擇評估方法</strong><p style="font-size:13px;margin-top:6px">• <strong>首選：</strong>PLR 試驗 + 心輸出量測量<br>• <strong>次選：</strong>IVC 擴張指數（僅適用於完全機械通氣）<br>• <strong>參考：</strong>CVP 值（需結合其他資訊）</p></div>
+    <div class="teal" style="margin-top:12px"><strong>Step 3：解讀結果</strong><p style="font-size:13px;margin-top:6px">• PLR 陽性 → 高度可能對輸液有反應 → 考慮給予輸液<br>• PLR 陰性 → 不太可能對輸液有反應 → 考慮其他治療（如血管加壓劑）</p></div>
+    <div class="warn" style="margin-top:16px"><strong>⚠️ 研究結論與限制</strong><p style="font-size:13px;margin-top:6px"><strong>主要發現：</strong>PLR 結合心輸出量測量可能是預測輸液反應性最有用的測試。<br><br><strong>限制：</strong>IVC 呼吸變異度的使用需要更多確認性研究。身體檢查和單獨 CVP 無法可靠預測輸液反應性。</p></div>
+    <div class="good" style="margin-top:16px"><strong>✔ 臨床應用重點</strong><p style="font-size:13px;margin-top:6px">1. 不要僅依賴身體檢查判斷輸液需求<br>2. 單獨 CVP 預測價值有限<br>3. PLR 是最可靠的床邊評估方法<br>4. 約 50% 的血流動力學不穩定患者不會對輸液有反應<br>5. 避免不必要輸液對患者預後很重要</p></div>`
+};
+
+const quiz = [
+    {q:'根據 JAMA 系統性回顧，在血流動力學不穩定的重症患者中，對輸液有反應的比例約為多少？',o:['約 30%','約 50%','約 70%','約 90%'],c:1,e:'研究顯示平均有 50% (95% CI: 42%-56%) 的患者對輸液有反應，這意味著約一半的患者可能因不必要的輸液而受害。'},
+    {q:'關於身體檢查預測輸液反應性，以下何者正確？',o:['皮膚花斑是可靠的預測指標','毛細血管再充盈時間延長可準確預測','所有身體檢查發現的 LR 95% CI 都跨越 1.0','周邊脈搏減弱的 LR+ > 5'],c:2,e:'研究發現所有身體檢查發現對預測輸液反應性都無診斷價值，其似然比的 95% CI 都跨越 1.0。'},
+    {q:'低 CVP (< 8 mmHg) 預測輸液反應性的陽性似然比 (LR+) 約為多少？',o:['0.5','1.0','2.6','5.3'],c:2,e:'低 CVP (< 8 mmHg) 的 LR+ = 2.6 (95% CI: 1.4-4.6)，輕度增加輸液反應性的可能性。'},
+    {q:'IVC 擴張指數 > 15% 預測輸液反應性的主要限制是什麼？',o:['只適用於清醒患者','只適用於無自主呼吸的機械通氣患者','只適用於心律不整患者','只適用於自主呼吸患者'],c:1,e:'IVC 擴張指數的診斷價值僅在無自主呼吸努力的機械通氣患者中得到驗證，在有自主呼吸的患者中不可靠。'},
+    {q:'被動抬腿試驗 (PLR) 引起心輸出量增加的陽性似然比 (LR+) 為多少？',o:['2.6','5.3','11','15'],c:2,e:'PLR 引起 CO 增加的 LR+ = 11 (95% CI: 7.6-17)，是所有評估方法中最高的。'},
+    {q:'被動抬腿試驗 (PLR) 的陰性似然比 (LR-) 為多少？',o:['0.50','0.27','0.13','0.05'],c:2,e:'PLR 的 LR- = 0.13 (95% CI: 0.07-0.22)，陰性結果幾乎可以排除輸液反應性。'},
+    {q:'進行 PLR 試驗時，最準確的測量參數是什麼？',o:['血壓變化','心率變化','心輸出量變化','CVP 變化'],c:2,e:'PLR 試驗需要測量心輸出量或相關參數（如 LVOT VTI）的變化，單純血壓或心率變化不夠可靠。'},
+    {q:'IVC 擴張指數的公式為何？',o:['(IVC_max - IVC_min) / IVC_max × 100%','(IVC_max - IVC_min) / IVC_min × 100%','IVC_max / IVC_min × 100%','(IVC_max + IVC_min) / 2'],c:1,e:'IVC 擴張指數 = (IVC_max - IVC_min) / IVC_min × 100%，閾值 > 15% 表示可能對輸液有反應。'},
+    {q:'根據研究結論，預測輸液反應性最有用的測試是什麼？',o:['單獨 CVP 測量','身體檢查綜合評估','被動抬腿試驗結合心輸出量測量','IVC 擴張指數'],c:2,e:'研究結論指出，被動抬腿試驗結合心輸出量測量可能是預測輸液反應性最有用的測試。'},
+    {q:'關於輸液反應性評估，以下何者錯誤？',o:['PLR 效果可逆，不會造成輸液過量','CVP 可以單獨準確預測輸液反應性','約 50% 的血流動力學不穩定患者不會對輸液有反應','避免不必要輸液對患者預後很重要'],c:1,e:'CVP 單獨使用無法準確預測輸液反應性 (LR+ 2.6, LR- 0.50)，需結合其他評估方法。'}
+];
+
+const MODULE_ID = 'jama-fluid-responsiveness';
+
+const ProgressTracker = {
+    STORAGE_KEY: 'ebm-progress',
+    getProgress: () => {
+        try {
+            const d = localStorage.getItem(ProgressTracker.STORAGE_KEY);
+            return d ? JSON.parse(d) : { version: 1, modules: {}, badges: [], totalTimeSpent: 0 };
+        } catch { return { version: 1, modules: {}, badges: [], totalTimeSpent: 0 }; }
+    },
+    saveQuizResult: (moduleId, score, total, timeSpent) => {
+        const progress = ProgressTracker.getProgress();
+        const mod = progress.modules[moduleId] || {
+            bestScore: 0, totalAttempts: 0, allAttempts: [],
+            lessonsViewed: [], completed: false, firstCompleted: null
+        };
+        const attempt = { date: new Date().toISOString(), score, timeSpent };
+        mod.allAttempts.push(attempt);
+        mod.totalAttempts++;
+        if (score > mod.bestScore) mod.bestScore = score;
+        const passingScore = Math.ceil(total * 0.7);
+        if (score >= passingScore && !mod.completed) {
+            mod.completed = true;
+            mod.firstCompleted = attempt.date;
+        }
+        progress.modules[moduleId] = mod;
+        progress.totalTimeSpent += timeSpent;
+        progress.lastUpdated = new Date().toISOString();
+        ProgressTracker.checkBadges(progress, score, total, timeSpent);
+        localStorage.setItem(ProgressTracker.STORAGE_KEY, JSON.stringify(progress));
+        return progress;
+    },
+    checkBadges: (progress, score, total, timeSpent) => {
+        const dominated = progress.badges || [];
+        const badgeIds = dominated.map(b => b.id);
+        const now = new Date().toISOString();
+        if (!badgeIds.includes('first-quiz')) dominated.push({ id: 'first-quiz', earnedAt: now });
+        if (score === total && !badgeIds.includes('perfect-score')) dominated.push({ id: 'perfect-score', earnedAt: now });
+        if (timeSpent <= 120 && !badgeIds.includes('speed-demon')) dominated.push({ id: 'speed-demon', earnedAt: now });
+        const completed = Object.values(progress.modules).filter(m => m.completed).length;
+        if (completed >= 5 && !badgeIds.includes('five-complete')) dominated.push({ id: 'five-complete', earnedAt: now });
+        if (completed >= 10 && !badgeIds.includes('ten-complete')) dominated.push({ id: 'ten-complete', earnedAt: now });
+        if (completed >= 18 && !badgeIds.includes('master')) dominated.push({ id: 'master', earnedAt: now });
+        const mod = progress.modules[MODULE_ID];
+        if (mod && mod.totalAttempts >= 3 && !badgeIds.includes('persistent')) dominated.push({ id: 'persistent', earnedAt: now });
+        progress.badges = dominated;
+    }
+};
+
+let currentLesson = 1;
+let currentQ = 0;
+let score = 0;
+let answered = false;
+let quizStartTime = null;
+
+function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+function showHome() { showPage('home'); }
+
+function showLesson(id) {
+    currentLesson = id;
+    const l = lessons[id-1];
+    document.getElementById('lesson-title').textContent = l.title;
+    document.getElementById('lesson-header').style.background = `linear-gradient(135deg,${l.color},${l.color}88)`;
+    document.getElementById('lesson-header').innerHTML = `<div class="container"><div style="font-size:12px;opacity:0.9">Lesson ${l.id} • ${l.sub}</div><h1 style="font-size:22px;font-weight:700">${l.title}</h1></div>`;
+    document.getElementById('lesson-body').innerHTML = lessonContent[id];
+    document.getElementById('prev-btn').style.display = id > 1 ? 'block' : 'none';
+    document.getElementById('next-btn').textContent = id < 5 ? '下一課 →' : '開始測驗 📝';
+    document.getElementById('next-btn').onclick = id < 5 ? nextLesson : startQuiz;
+    showPage('lesson');
+}
+
+function prevLesson() { if (currentLesson > 1) showLesson(currentLesson - 1); }
+function nextLesson() { if (currentLesson < 5) showLesson(currentLesson + 1); }
+
+function startQuiz() {
+    currentQ = 0; score = 0; answered = false;
+    quizStartTime = Date.now();
+    renderQuestion();
+    showPage('quiz');
+}
+
+function renderQuestion() {
+    const q = quiz[currentQ];
+    document.getElementById('quiz-progress').textContent = `${currentQ+1}/${quiz.length}`;
+    document.getElementById('quiz-progress-bar').style.width = `${((currentQ+1)/quiz.length)*100}%`;
+    
+    let html = `<h3 style="font-size:15px;font-weight:600;line-height:1.7;margin-bottom:20px">${q.q}</h3>`;
+    q.o.forEach((opt, i) => {
+        html += `<button class="quiz-option" onclick="selectAnswer(${i})" id="opt${i}">
+            <span class="option-label" id="lbl${i}">${String.fromCharCode(65+i)}</span>
+            <span style="line-height:1.5">${opt}</span>
+        </button>`;
+    });
+    document.getElementById('quiz-content').innerHTML = html;
+    document.getElementById('quiz-feedback').innerHTML = '';
+    document.getElementById('quiz-next').style.display = 'none';
+    answered = false;
+}
+
+function selectAnswer(i) {
+    if (answered) return;
+    answered = true;
+    const q = quiz[currentQ];
+    
+    document.querySelectorAll('.quiz-option').forEach((btn, idx) => {
+        btn.classList.add('disabled');
+        if (idx === q.c) {
+            btn.classList.add('correct');
+            document.getElementById('lbl'+idx).classList.add('correct');
+            document.getElementById('lbl'+idx).textContent = '✔';
+        } else if (idx === i && i !== q.c) {
+            btn.classList.add('wrong');
+            document.getElementById('lbl'+idx).classList.add('wrong');
+            document.getElementById('lbl'+idx).textContent = '✗';
+        }
+    });
+    
+    if (i === q.c) score++;
+    
+    const feedbackClass = i === q.c ? 'good' : 'tip';
+    const feedbackTitle = i === q.c ? '✔ 正確！' : '✗ 答錯了';
+    const feedbackColor = i === q.c ? 'var(--suc)' : 'var(--acc)';
+    document.getElementById('quiz-feedback').innerHTML = `<div class="${feedbackClass}"><strong style="color:${feedbackColor}">${feedbackTitle}</strong><p style="font-size:13px;color:var(--txt2);margin-top:8px;line-height:1.7">${q.e}</p></div>`;
+    
+    document.getElementById('quiz-next').style.display = 'block';
+    document.getElementById('quiz-next').textContent = currentQ < quiz.length - 1 ? '下一題 →' : '查看結果';
+}
+
+function nextQuestion() {
+    if (currentQ < quiz.length - 1) {
+        currentQ++;
+        renderQuestion();
+    } else {
+        showResult();
+    }
+}
+
+function showResult() {
+    const pct = Math.round((score / quiz.length) * 100);
+    const color = pct >= 80 ? 'var(--suc)' : pct >= 60 ? 'var(--warn)' : 'var(--err)';
+    document.getElementById('result-circle').style.background = `conic-gradient(${color} ${pct*3.6}deg, #E5E5E5 0deg)`;
+    document.getElementById('result-pct').textContent = pct + '%';
+    document.getElementById('result-score').textContent = `${score}/${quiz.length}`;
+    document.getElementById('result-title').textContent = pct >= 80 ? '🎉 太棒了！' : pct >= 60 ? '👍 不錯！' : '💪 加油！';
+    document.getElementById('result-msg').textContent = pct >= 80 ? '你已經掌握輸液反應性評估！' : pct >= 60 ? '再複習可以更進步！' : '建議重新閱讀課程';
+
+    // Save progress
+    if (quizStartTime) {
+        const timeSpent = Math.round((Date.now() - quizStartTime) / 1000);
+        ProgressTracker.saveQuizResult(MODULE_ID, score, quiz.length, timeSpent);
+    }
+
+    showPage('result');
+}
+</script>
+</body>
+</html>

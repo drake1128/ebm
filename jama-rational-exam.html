@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JAMA 臨床理學檢查 | EBM 教學平台</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--pri:#0077B6;--pri2:#00B4D8;--acc:#FF6B35;--suc:#2EC4B6;--warn:#FFBE0B;--err:#EF476F;--pur:#7209B7;--bg:#FAFBFC;--txt:#1A1A2E;--txt2:#6B7280}
+        body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+        .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,119,182,0.08);transition:all 0.3s ease}
+        .card:hover{box-shadow:0 4px 20px rgba(0,119,182,0.15)}
+        .btn{padding:14px 24px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all 0.3s}
+        .btn-pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}
+        .btn-acc{background:linear-gradient(135deg,var(--acc),#F7931E);color:#fff}
+        table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+        th,td{padding:10px;text-align:center;border-bottom:1px solid #eee}
+        th{background:#F0F7FF;font-weight:600}
+        .formula{background:linear-gradient(135deg,#F0F7FF,#E8F4FD);border:2px solid var(--pri2);border-radius:12px;padding:16px;margin:12px 0;text-align:center;font-family:serif;font-size:17px;color:#03045E}
+        .tip{background:#FFF9F0;border-left:4px solid var(--acc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .good{background:#F0FFF4;border-left:4px solid var(--suc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .search-box{background:#fff;border:2px solid #E5E5E5;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:20px;transition:all 0.3s}
+        .search-box:focus-within{border-color:var(--pri);box-shadow:0 0 0 3px rgba(0,119,182,0.1)}
+        .search-box input{border:none;outline:none;flex:1;font-size:15px;font-family:inherit}
+        .category-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+        .category-tab{padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:2px solid #E5E5E5;background:#fff;transition:all 0.3s}
+        .category-tab.active{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;border-color:transparent}
+        .category-tab:hover:not(.active){border-color:var(--pri);color:var(--pri)}
+        .module-count{background:rgba(0,119,182,0.1);color:var(--pri);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+        .no-results{text-align:center;padding:40px 20px;color:var(--txt2)}
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useMemo}=React;
+
+const ProgressTracker = {
+    STORAGE_KEY: 'ebm-progress',
+    getProgress: () => {
+        try {
+            const d = localStorage.getItem(ProgressTracker.STORAGE_KEY);
+            return d ? JSON.parse(d) : { version: 1, modules: {}, badges: [], totalTimeSpent: 0 };
+        } catch { return { version: 1, modules: {}, badges: [], totalTimeSpent: 0 }; }
+    },
+    getModuleProgress: (moduleId) => {
+        const progress = ProgressTracker.getProgress();
+        return progress.modules[moduleId] || null;
+    }
+};
+
+const modules=[
+    {id:'chest-pain-acs',title:'胸痛與急性冠心症候群',titleEn:'Does This Patient Have ACS?',href:'jama-chest-pain-acs.html',icon:'❤️',color:'#C62828',colorBg:'#FFEBEE',year:2015,citation:'Fanaroff AC, et al. JAMA 2015;314(18):1955-1965',category:'cardio',keywords:['胸痛','chest pain','ACS','急性冠心症','HEART','TIMI','心肌梗塞','MI','ECG','troponin'],isNew:false,status:'online'},
+    {id:'luts-boo',title:'下泌尿道症狀與膀胱出口阻塞',titleEn:'Does This Man With LUTS Have BOO?',href:'jama-luts-boo.html',icon:'🩺',color:'#00838F',colorBg:'#E0F2F1',year:2014,citation:"D'Silva KA, et al. JAMA 2014;312(5):535-542",category:'uro',keywords:['下泌尿道症狀','LUTS','膀胱出口阻塞','BOO','BPH','前列腺','IPSS','夜尿','頻尿','尿流','殘餘尿量','PVR'],isNew:false,status:'online'},
+    {id:'osa',title:'阻塞性睡眠呼吸中止症',titleEn:'Does This Patient Have OSA?',href:'jama-osa.html',icon:'😴',color:'#5E35B1',colorBg:'#EDE7F6',year:2013,citation:'Myers KA, et al. JAMA 2013;310(7):731-741',category:'sleep',keywords:['睡眠呼吸中止','OSA','打鼾','snoring','嗜睡','STOP-Bang','Berlin','AHI','Mallampati','頸圍','肥胖'],isNew:true,status:'online'},
+    {id:'ectopic-pregnancy',title:'子宮外孕',titleEn:'Does This Woman Have an Ectopic Pregnancy?',href:'jama-ectopic-pregnancy.html',icon:'🤰',color:'#AD1457',colorBg:'#FCE4EC',year:2013,citation:'Crochet JR, et al. JAMA 2013;309(16):1722-1729',category:'obgyn',keywords:['子宮外孕','ectopic pregnancy','異位妊娠','hCG','超音波','陰道出血','腹痛','附件腫塊','輸卵管'],isNew:true,status:'online'},
+    {id:'syncope',title:'暈厥的臨床診斷',titleEn:'Did This Patient Have Cardiac Syncope?',href:'jama-syncope.html',icon:'🫀',color:'#7209B7',colorBg:'#F3E5F5',year:2019,citation:'Puppala VK, et al. JAMA 2019;321(24):2448-2457',category:'cardio',keywords:['暈厥','syncope','昏倒','心因性','cardiac'],isNew:false,status:'online'},
+    {id:'hypertension',title:'高血壓診斷評估',titleEn:'Does This Adult Have Hypertension?',href:'jama-hypertension.html',icon:'🩺',color:'#E63946',colorBg:'#FFF5F5',year:2021,citation:'Viera AJ, et al. JAMA 2021;326(4):339-347',category:'cardio',keywords:['高血壓','hypertension','HTN','血壓','ABPM'],isNew:false,status:'online'},
+    {id:'fluid',title:'輸液反應性評估',titleEn:'Will This Patient Respond to IV Fluids?',href:'jama-fluid-responsiveness.html',icon:'💧',color:'#1565C0',colorBg:'#E3F2FD',year:2016,citation:'Bentzer P, et al. JAMA 2016;316(12):1298-1309',category:'critical',keywords:['輸液','fluid','休克','shock','PLR','CVP'],isNew:true,status:'online'},
+    {id:'peds-htn',title:'兒童繼發性高血壓診斷',titleEn:'Does This Child Have Secondary HTN?',href:'jama-pediatric-htn.html',icon:'👶',color:'#5B8C5A',colorBg:'#E8F5E9',year:2023,citation:'Riley M, et al. JAMA 2023;329(12):1012-1021',category:'pediatric',keywords:['兒童','pediatric','繼發性高血壓'],isNew:false,status:'online'},
+    {id:'intubation',title:'困難插管預測',titleEn:'Will This Patient Be Difficult to Intubate?',href:'jama-difficult-intubation.html',icon:'🫁',color:'#D84315',colorBg:'#FBE9E7',year:2019,citation:'Detsky ME, et al. JAMA 2019;321(5):493-503',category:'critical',keywords:['插管','intubation','airway','Mallampati','LEMON'],isNew:false,status:'online'},
+    {id:'hip-oa',title:'髖關節骨關節炎診斷',titleEn:'Does This Patient Have Hip OA?',href:'jama-hip-oa.html',icon:'🦴',color:'#6D4C41',colorBg:'#EFEBE9',year:2019,citation:'Metcalfe D, et al. JAMA 2019;322(23):2323-2333',category:'msk',keywords:['髖關節','hip','骨關節炎','OA','FABER'],isNew:true,status:'online'},
+    {id:'head-trauma',title:'輕微頭部創傷評估',titleEn:'Minor Head Trauma & Intracranial Injury',href:'jama-head-trauma.html',icon:'🧠',color:'#1E88E5',colorBg:'#E3F2FD',year:2015,citation:'Easter JS, et al. JAMA 2015;314(24):2672-2681',category:'neuro',keywords:['頭部創傷','head trauma','TBI','Canadian CT','GCS'],isNew:true,status:'online'},
+    {id:'pleural-effusion',title:'滲出性肋膜積液診斷',titleEn:'Does This Patient Have an Exudative Pleural Effusion?',href:'jama-pleural-effusion.html',icon:'🫁',color:'#00838F',colorBg:'#E0F7FA',year:2014,citation:'Wilcox ME, et al. JAMA 2014;311(23):2422-2431',category:'pulm',keywords:['肋膜積液','pleural effusion','胸水','Light criteria','thoracentesis','胸腔穿刺','滲出液','漏出液','exudate','transudate'],isNew:true,status:'online'},
+    {id:'pe',title:'肺栓塞臨床診斷',titleEn:'Does This Patient Have PE?',href:'#',icon:'🩻',color:'#999',colorBg:'#F5F5F5',year:null,citation:'即將推出',category:'pulm',keywords:['肺栓塞','PE','D-dimer','Wells'],isNew:false,status:'coming'},
+    {id:'dvt',title:'深部靜脈栓塞評估',titleEn:'Does This Patient Have DVT?',href:'#',icon:'🦵',color:'#999',colorBg:'#F5F5F5',year:null,citation:'即將推出',category:'cardio',keywords:['DVT','深部靜脈栓塞'],isNew:false,status:'coming'}
+];
+
+const categories=[
+    {id:'all',name:'全部',icon:'📚'},
+    {id:'cardio',name:'心血管',icon:'❤️'},
+    {id:'critical',name:'重症急診',icon:'🚨'},
+    {id:'neuro',name:'神經',icon:'🧠'},
+    {id:'pulm',name:'胸腔',icon:'🫁'},
+    {id:'msk',name:'骨骼肌肉',icon:'🦴'},
+    {id:'uro',name:'泌尿',icon:'🩺'},
+    {id:'sleep',name:'睡眠',icon:'😴'},
+    {id:'obgyn',name:'婦產科',icon:'🤰'},
+    {id:'pediatric',name:'兒科',icon:'👶'}
+];
+
+const lessons=[
+    {id:1,title:'敏感度與特異度',sub:'Sensitivity & Specificity',color:'#0077B6'},
+    {id:2,title:'似然比',sub:'Likelihood Ratio',color:'#7209B7'},
+    {id:3,title:'前測與後測機率',sub:'Pre & Post-test Probability',color:'#2EC4B6'},
+    {id:4,title:'臨床應用案例',sub:'Clinical Application',color:'#FF6B35'}
+];
+
+const quiz=[
+    {q:'敏感度的定義是什麼？',o:['所有陰性病人中，檢驗陰性的比例','所有陽性病人中，檢驗陽性的比例','所有檢驗陽性者中，真正有病的比例','所有檢驗陰性者中，真正沒病的比例'],c:1,e:'敏感度是在所有真正有病的人中，檢查陽性的比例。公式：TP/(TP+FN)'},
+    {q:'特異度的臨床意義為何？',o:['用來排除疾病','用來確認疾病','評估疾病嚴重度','評估治療效果'],c:1,e:'高特異度檢查適合確認診斷(Rule In)。口訣：SpPIn'},
+    {q:'LR+的公式為何？',o:['特異度/(1-敏感度)','敏感度/特異度','敏感度/(1-特異度)','(1-敏感度)/特異度'],c:2,e:'LR+ = Sensitivity/(1-Specificity)'},
+    {q:'當LR+=10時，代表什麼？',o:['陽性結果在有病者是無病者的10倍','後測機率是前測的10倍','敏感度是特異度的10倍','有病機率是90%'],c:0,e:'LR+=10代表陽性結果在有病者出現機率是無病者的10倍'},
+    {q:'LR-的公式為何？',o:['敏感度/(1-特異度)','(1-敏感度)/特異度','特異度/(1-敏感度)','(1-特異度)/敏感度'],c:1,e:'LR- = (1-Sensitivity)/Specificity'},
+    {q:'何者最適合排除疾病？',o:['高敏感度、高LR+','高敏感度、低LR-','高特異度、高LR+','高特異度、低LR-'],c:1,e:'高敏感度+低LR-可有效排除疾病'},
+    {q:'前測機率主要取決於？',o:['檢查的敏感度','檢查的特異度','疾病盛行率與臨床判斷','實驗室標準值'],c:2,e:'前測機率由盛行率與臨床判斷決定'},
+    {q:'Fagan nomogram需要哪三要素？',o:['敏感度、特異度、盛行率','前測機率、似然比、後測機率','TP、FP、TN、FN','PPV、NPV、準確度'],c:1,e:'Fagan圖需要：前測機率、似然比、後測機率'},
+    {q:'敏感度90%、特異度80%，LR+為多少？',o:['4.5','0.125','7.2','1.125'],c:0,e:'LR+ = 0.90/(1-0.80) = 0.90/0.20 = 4.5'},
+    {q:'關於似然比，何者錯誤？',o:['不受盛行率影響','LR+>10為強力證據','LR=1表示不影響診斷','似然比可直接換算為後測機率'],c:3,e:'似然比需結合前測機率才能計算後測機率'}
+];
+
+const App=()=>{
+    const[page,setPage]=useState('home');
+    const[lessonId,setLessonId]=useState(1);
+    const[qIdx,setQIdx]=useState(0);
+    const[score,setScore]=useState(0);
+    const[sel,setSel]=useState(null);
+    const[show,setShow]=useState(false);
+    const[done,setDone]=useState(false);
+    const[searchTerm,setSearchTerm]=useState('');
+    const[activeCategory,setActiveCategory]=useState('all');
+
+    const filteredModules=useMemo(()=>{
+        return modules.filter(m=>{
+            if(activeCategory!=='all'&&m.category!==activeCategory)return false;
+            if(searchTerm){
+                const term=searchTerm.toLowerCase();
+                return m.title.toLowerCase().includes(term)||m.titleEn.toLowerCase().includes(term)||m.keywords.some(k=>k.toLowerCase().includes(term));
+            }
+            return true;
+        });
+    },[searchTerm,activeCategory]);
+
+    const categoryCounts=useMemo(()=>{
+        const counts={all:modules.filter(m=>m.status==='online').length};
+        categories.forEach(c=>{if(c.id!=='all')counts[c.id]=modules.filter(m=>m.category===c.id&&m.status==='online').length;});
+        return counts;
+    },[]);
+
+    const Header=({title})=>(
+        <header style={{background:'#fff',borderBottom:'1px solid #eee',padding:'12px 16px',position:'sticky',top:0,zIndex:10}}>
+            <div style={{maxWidth:480,margin:'0 auto',display:'flex',alignItems:'center',gap:12}}>
+                <button onClick={()=>page==='home'?window.location.href='index.html':setPage('home')} style={{background:'#F0F7FF',border:'none',borderRadius:10,width:40,height:40,cursor:'pointer',color:'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style={{fontWeight:700,color:'#03045E'}}>{title}</span>
+            </div>
+        </header>
+    );
+
+    const ModuleCard=({m})=>{
+        const isOnline=m.status==='online';
+        const moduleProgress = isOnline ? ProgressTracker.getModuleProgress('jama-' + m.id) : null;
+        const isCompleted = moduleProgress?.completed;
+        return(
+            <a href={isOnline?m.href:undefined} style={{textDecoration:'none'}}>
+                <div className="card" style={{cursor:isOnline?'pointer':'default',border:`2px solid ${isCompleted?'#2EC4B6':isOnline?m.color:'#E5E5E5'}`,background:`linear-gradient(135deg,${m.colorBg},#FFF)`,opacity:isOnline?1:0.6,position:'relative'}}>
+                    {isCompleted&&<div style={{position:'absolute',top:8,right:8,fontSize:18}}>✅</div>}
+                    <div style={{display:'flex',alignItems:'center',gap:16}}>
+                        <div style={{width:56,height:56,borderRadius:14,background:isOnline?`linear-gradient(135deg,${m.color},${m.color}99)`:'#E5E5E5',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:24}}>{m.icon}</div>
+                        <div style={{flex:1}}>
+                            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4,flexWrap:'wrap'}}>
+                                {isOnline?(isCompleted?<span style={{background:'linear-gradient(135deg,#2EC4B6,#06D6A0)',color:'#fff',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>✔ 已完成</span>:m.isNew?<span style={{background:`linear-gradient(135deg,${m.color},${m.color}99)`,color:'#fff',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>🆕 NEW</span>:<span style={{background:'linear-gradient(135deg,#0077B6,#00B4D8)',color:'#fff',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>📖 已上線</span>):<span style={{background:'#FFD166',color:'#333',padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:700}}>即將推出</span>}
+                                {m.year&&<span style={{fontSize:11,color:m.color,fontWeight:600}}>JAMA {m.year}</span>}
+                                {moduleProgress&&moduleProgress.bestScore>0&&<span style={{fontSize:10,color:'var(--txt2)'}}>最佳: {moduleProgress.bestScore}/10</span>}
+                            </div>
+                            <div style={{fontSize:16,fontWeight:700,color:isOnline?'var(--txt)':'#999'}}>{m.title}</div>
+                            <div style={{fontSize:13,color:isOnline?'var(--txt2)':'#bbb'}}>{m.titleEn}</div>
+                            {isOnline&&<div style={{fontSize:11,color:'var(--txt2)',marginTop:4}}>{m.citation}</div>}
+                        </div>
+                        {isOnline&&<svg viewBox="0 0 24 24" fill={m.color} width="20" height="20"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/></svg>}
+                    </div>
+                </div>
+            </a>
+        );
+    };
+
+    const Home=()=>(
+        <div>
+            <Header title="JAMA 臨床理學檢查"/>
+            <div style={{background:'linear-gradient(135deg,#0077B6,#00B4D8)',padding:'32px 20px',color:'#fff'}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div style={{background:'rgba(255,255,255,0.2)',display:'inline-block',padding:'6px 14px',borderRadius:50,fontSize:12,fontWeight:600,marginBottom:16}}>📖 JAMA Rational Clinical Examination</div>
+                    <h1 style={{fontSize:26,fontWeight:700,marginBottom:8}}>The Rational Clinical Examination</h1>
+                    <p style={{opacity:0.9,fontSize:14}}>系統性學習診斷學核心概念與臨床應用</p>
+                </div>
+            </div>
+            <div style={{padding:'0 16px',marginTop:-20}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div className="card">
+                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🎯 學習目標</h3>
+                        {['理解敏感度與特異度的定義','計算並解讀似然比LR+/LR-','運用似然比調整機率','應用於臨床檢查評估'].map((t,i)=>(
+                            <div key={i} style={{display:'flex',gap:10,marginBottom:8,fontSize:14}}>
+                                <span style={{background:'var(--suc)',color:'#fff',borderRadius:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,flexShrink:0}}>{i+1}</span>
+                                <span style={{color:'var(--txt2)'}}>{t}</span>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+                        <h3 style={{fontSize:18,fontWeight:700}}>🔑 JAMA 系列文章</h3>
+                        <div className="module-count">📄 {modules.filter(m=>m.status==='online').length} 個模組</div>
+                    </div>
+                    
+                    <div className="search-box">
+                        <svg viewBox="0 0 24 24" fill="#9CA3AF" width="22" height="22"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                        <input type="text" placeholder="搜尋主題、關鍵字..." value={searchTerm} onChange={(e)=>setSearchTerm(e.target.value)}/>
+                        {searchTerm&&<button onClick={()=>setSearchTerm('')} style={{background:'none',border:'none',cursor:'pointer',padding:4}}><svg viewBox="0 0 24 24" fill="#9CA3AF" width="20" height="20"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>}
+                    </div>
+                    
+                    <div className="category-tabs">
+                        {categories.map(c=>(
+                            <button key={c.id} className={`category-tab ${activeCategory===c.id?'active':''}`} onClick={()=>setActiveCategory(c.id)}>
+                                {c.icon} {c.name}{categoryCounts[c.id]>0&&<span style={{marginLeft:4,fontSize:11,opacity:0.8}}>({categoryCounts[c.id]})</span>}
+                            </button>
+                        ))}
+                    </div>
+                    
+                    {searchTerm&&<div style={{fontSize:13,color:'var(--txt2)',marginBottom:12}}>找到 <strong style={{color:'var(--pri)'}}>{filteredModules.length}</strong> 個符合「{searchTerm}」的模組</div>}
+                    
+                    {filteredModules.length>0?filteredModules.map(m=><ModuleCard key={m.id} m={m}/>):<div className="no-results"><div style={{fontSize:48,marginBottom:16}}>🔍</div><div style={{fontSize:16,fontWeight:600,marginBottom:8}}>找不到相關模組</div><div style={{fontSize:14}}>請嘗試其他關鍵字</div></div>}
+
+                    <div style={{height:24}}></div>
+                    <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>📚 診斷學基礎課程</h3>
+                    {lessons.map(l=>(
+                        <div key={l.id} className="card" onClick={()=>{setLessonId(l.id);setPage('lesson')}} style={{cursor:'pointer'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:14}}>
+                                <div style={{width:44,height:44,borderRadius:12,background:`linear-gradient(135deg,${l.color},${l.color}88)`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}}>{l.id}</div>
+                                <div style={{flex:1}}>
+                                    <div style={{fontSize:12,color:l.color,fontWeight:600}}>Lesson {l.id}</div>
+                                    <div style={{fontSize:15,fontWeight:600}}>{l.title}</div>
+                                    <div style={{fontSize:12,color:'var(--txt2)'}}>{l.sub}</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" fill={l.color} width="20" height="20"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/></svg>
+                            </div>
+                        </div>
+                    ))}
+                    <button className="btn btn-acc" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}} style={{width:'100%',justifyContent:'center',marginTop:16}}>📝 開始自我測驗</button>
+                </div>
+            </div>
+            <footer style={{background:'#F0F7FF',padding:'24px 16px',textAlign:'center',marginTop:32}}>
+                <p style={{fontSize:13,color:'var(--txt2)',fontWeight:600}}>新竹台大分院教學部</p>
+                <p style={{fontSize:12,color:'var(--txt2)',marginTop:4}}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+        </div>
+    );
+
+    const L1=()=>(<div><div className="card"><h3 style={{fontSize:17,fontWeight:700,color:'var(--pri)',marginBottom:10}}>📐 2×2 表格基礎</h3><table><thead><tr><th></th><th>疾病(+)</th><th>疾病(-)</th></tr></thead><tbody><tr><td style={{fontWeight:600}}>檢查(+)</td><td style={{background:'#D4EDDA'}}>TP</td><td style={{background:'#F8D7DA'}}>FP</td></tr><tr><td style={{fontWeight:600}}>檢查(-)</td><td style={{background:'#F8D7DA'}}>FN</td><td style={{background:'#D4EDDA'}}>TN</td></tr></tbody></table></div><div className="card"><h3 style={{fontSize:17,fontWeight:700,color:'var(--pur)',marginBottom:10}}>🎯 敏感度</h3><div className="formula">敏感度 = TP / (TP + FN)</div><div className="tip"><strong>SnNOut</strong><br/>高敏感度檢查陰性可排除疾病</div></div><div className="card"><h3 style={{fontSize:17,fontWeight:700,color:'var(--suc)',marginBottom:10}}>🔒 特異度</h3><div className="formula">特異度 = TN / (TN + FP)</div><div className="good"><strong>SpPIn</strong><br/>高特異度檢查陽性可確認疾病</div></div></div>);
+
+    const L2=()=>(<div><div className="card"><h3 style={{fontSize:17,fontWeight:700,color:'var(--pri)',marginBottom:10}}>📊 似然比</h3><div className="formula">LR+ = Sensitivity / (1 - Specificity)</div><div className="formula" style={{marginTop:8}}>LR- = (1 - Sensitivity) / Specificity</div></div><div className="card"><h3 style={{fontSize:17,fontWeight:700,color:'var(--acc)',marginBottom:10}}>📈 LR 解讀</h3><table><thead><tr><th>LR+</th><th>價值</th><th>LR-</th><th>價值</th></tr></thead><tbody><tr><td>&gt;10</td><td style={{color:'var(--suc)'}}>強力確認</td><td>&lt;0.1</td><td style={{color:'var(--suc)'}}>強力排除</td></tr><tr><td>5-10</td><td>中度</td><td>0.1-0.2</td><td>中度</td></tr><tr><td>2-5</td><td>輕度</td><td>0.2-0.5</td><td>輕度</td></tr></tbody></table></div></div>);
+
+    const L3=()=>(<div><div className="card"><h3 style={{fontSize:17,fontWeight:700,color:'var(--pri)',marginBottom:10}}>🎲 前測機率</h3><p style={{fontSize:14,color:'var(--txt2)'}}>根據盛行率與臨床判斷估計患者有此疾病的機率</p></div><div className="card"><h3 style={{fontSize:17,fontWeight:700,color:'var(--suc)',marginBottom:10}}>📊 後測機率</h3><div className="formula">後測勝算 = 前測勝算 × LR</div><div className="formula" style={{marginTop:8,fontSize:15}}>勝算 = 機率 / (1 - 機率)</div></div><div className="card"><h3 style={{fontSize:17,fontWeight:700,color:'var(--pur)',marginBottom:10}}>📐 Fagan Nomogram</h3><div className="good"><strong>範例</strong><br/>前測20% + LR+=5 → 後測≈56%</div></div></div>);
+
+    const L4=()=>(<div><div className="card"><h3 style={{fontSize:17,fontWeight:700,color:'var(--pri)',marginBottom:10}}>🏥 案例：胸痛</h3><p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>55歲男性典型胸痛</p><table><thead><tr><th>Troponin</th><th>敏感度</th><th>特異度</th><th>LR+</th><th>LR-</th></tr></thead><tbody><tr><td>升高</td><td>90%</td><td>94%</td><td>15</td><td>0.1</td></tr></tbody></table></div><div className="good"><strong>✓ Troponin (+)</strong><br/>前測30% + LR+=15 → 後測87%</div><div className="tip"><strong>🎯 Troponin (-)</strong><br/>前測30% + LR-=0.1 → 後測4%</div></div>);
+
+    const Lesson=()=>{
+        const l=lessons[lessonId-1];
+        return(<div><Header title={l.title}/><div style={{background:`linear-gradient(135deg,${l.color},${l.color}88)`,padding:'20px',color:'#fff'}}><div style={{maxWidth:480,margin:'0 auto'}}><div style={{fontSize:12,opacity:0.9}}>Lesson {l.id}</div><h1 style={{fontSize:24,fontWeight:700}}>{l.title}</h1></div></div><div style={{padding:'20px 16px'}}><div style={{maxWidth:480,margin:'0 auto'}}>{lessonId===1&&<L1/>}{lessonId===2&&<L2/>}{lessonId===3&&<L3/>}{lessonId===4&&<L4/>}<div style={{display:'flex',gap:12,marginTop:24}}>{lessonId>1&&<button className="btn" style={{flex:1,background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setLessonId(lessonId-1)}>← 上一課</button>}{lessonId<4?<button className="btn btn-pri" style={{flex:1}} onClick={()=>setLessonId(lessonId+1)}>下一課 →</button>:<button className="btn btn-acc" style={{flex:1}} onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}}>開始測驗 📝</button>}</div></div></div></div>);
+    };
+
+    const Quiz=()=>{
+        const pick=(i)=>{if(show)return;setSel(i);setShow(true);if(i===quiz[qIdx].c)setScore(score+1)};
+        const next=()=>{if(qIdx<quiz.length-1){setQIdx(qIdx+1);setSel(null);setShow(false)}else setDone(true)};
+        if(done){
+            const pct=Math.round((score/quiz.length)*100);
+            return(<div><Header title="測驗結果"/><div style={{padding:'40px 16px',textAlign:'center'}}><div style={{width:140,height:140,borderRadius:'50%',background:`conic-gradient(${pct>=80?'var(--suc)':pct>=60?'var(--warn)':'var(--err)'} ${pct*3.6}deg,#E5E5E5 0deg)`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 24px'}}><div style={{width:120,height:120,borderRadius:'50%',background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}><div style={{fontSize:36,fontWeight:700}}>{pct}%</div><div style={{fontSize:14,color:'var(--txt2)'}}>{score}/{quiz.length}</div></div></div><h2 style={{fontSize:24,fontWeight:700,marginBottom:8}}>{pct>=80?'🎉 太棒了！':pct>=60?'👍 不錯！':'💪 加油！'}</h2><p style={{color:'var(--txt2)',marginBottom:32}}>{pct>=80?'掌握良好！':pct>=60?'再複習可以更好！':'建議重新閱讀'}</p><div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}><button className="btn btn-pri" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false)}}>重新測驗</button><button className="btn" style={{background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setPage('home')}>返回</button></div></div><footer style={{background:'#F0F7FF',padding:'24px 16px',textAlign:'center',marginTop:40}}><p style={{fontSize:12,color:'var(--txt2)'}}>新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p></footer></div>);
+        }
+        const q=quiz[qIdx];
+        return(<div><Header title="自我測驗"/><div style={{padding:'20px 16px'}}><div style={{maxWidth:480,margin:'0 auto'}}><div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:14}}><span style={{color:'var(--txt2)'}}>進度</span><span style={{fontWeight:600,color:'var(--pri)'}}>{qIdx+1}/{quiz.length}</span></div><div style={{height:8,background:'#E5E5E5',borderRadius:4,marginBottom:20}}><div style={{height:'100%',width:`${((qIdx+1)/quiz.length)*100}%`,background:'linear-gradient(90deg,var(--pri),var(--pri2))',borderRadius:4,transition:'width 0.3s'}}/></div><div className="card"><h3 style={{fontSize:16,fontWeight:600,lineHeight:1.6,marginBottom:20}}>{q.q}</h3>{q.o.map((opt,i)=>{let bg='#fff',bd='#E5E5E5';if(show){if(i===q.c){bg='#F0FFF4';bd='var(--suc)'}else if(i===sel){bg='#FFEBEE';bd='var(--err)'}}else if(i===sel){bg='#F0F7FF';bd='var(--pri)'}return(<button key={i} onClick={()=>pick(i)} disabled={show} style={{width:'100%',padding:'12px 14px',marginBottom:10,background:bg,border:`2px solid ${bd}`,borderRadius:12,textAlign:'left',fontSize:14,cursor:show?'default':'pointer',display:'flex',alignItems:'center',gap:12}}><span style={{width:26,height:26,borderRadius:8,background:show&&i===q.c?'var(--suc)':show&&i===sel?'var(--err)':'#F0F7FF',color:show&&(i===q.c||i===sel)?'#fff':'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13,flexShrink:0}}>{show&&i===q.c?'✔':show&&i===sel&&i!==q.c?'✗':String.fromCharCode(65+i)}</span><span style={{lineHeight:1.5}}>{opt}</span></button>);})}</div>{show&&(<div className={sel===q.c?'good':'tip'}><strong style={{color:sel===q.c?'var(--suc)':'var(--acc)'}}>{sel===q.c?'✔ 正確！':'✗ 答錯了'}</strong><p style={{fontSize:14,color:'var(--txt2)',marginTop:8,lineHeight:1.7}}>{q.e}</p></div>)}{show&&<button className="btn btn-pri" style={{width:'100%',justifyContent:'center',marginTop:16}} onClick={next}>{qIdx<quiz.length-1?'下一題 →':'查看結果'}</button>}</div></div></div>);
+    };
+
+    return <div style={{maxWidth:'100%',minHeight:'100vh',background:'var(--bg)'}}>{page==='home'?<Home/>:page==='lesson'?<Lesson/>:<Quiz/>}</div>;
+};
+
+ReactDOM.render(<App/>,document.getElementById('root'));
+</script>
+</body>
+</html>

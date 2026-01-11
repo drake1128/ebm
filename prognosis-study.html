@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>預後研究評讀 | EBM 教學平台</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--pri:#4361EE;--pri2:#3A0CA3;--blue:#0077B6;--pur:#7209B7;--teal:#2EC4B6;--orange:#FF6B35;--pink:#F72585;--suc:#38A169;--warn:#D69E2E;--err:#E53E3E;--bg:#F0F4FF;--txt:#1A1A2E;--txt2:#6B7280}
+        body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+        .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(67,97,238,0.08)}
+        .btn{padding:14px 24px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+        .btn-pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}
+        table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+        th,td{padding:10px;text-align:center;border-bottom:1px solid #eee}
+        th{background:#EEF2FF;font-weight:600;color:var(--pri)}
+        .formula{background:linear-gradient(135deg,#EEF2FF,#E0E7FF);border:2px solid var(--pri);border-radius:12px;padding:16px;margin:12px 0;text-align:center;font-size:16px;color:#3730A3;font-weight:600}
+        .tip{background:#FFFBEB;border-left:4px solid var(--warn);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .good{background:#F0FFF4;border-left:4px solid var(--suc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .info{background:#EBF8FF;border-left:4px solid var(--blue);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .alertbox{background:#FFF5F5;border-left:4px solid var(--err);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .purple{background:#FAF5FF;border-left:4px solid var(--pur);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect}=React;
+
+const MODULE_ID='prognosis-study';
+
+const ProgressTracker={
+    STORAGE_KEY:'ebm-progress',
+    getProgress:()=>{try{const d=localStorage.getItem(ProgressTracker.STORAGE_KEY);return d?JSON.parse(d):{version:1,modules:{},badges:[],totalTimeSpent:0}}catch{return{version:1,modules:{},badges:[],totalTimeSpent:0}}},
+    saveQuizResult:(moduleId,score,total,timeSpent)=>{
+        const progress=ProgressTracker.getProgress();
+        const mod=progress.modules[moduleId]||{bestScore:0,totalAttempts:0,allAttempts:[],lessonsViewed:[],completed:false,firstCompleted:null};
+        const attempt={date:new Date().toISOString(),score,timeSpent};
+        mod.allAttempts.push(attempt);mod.totalAttempts++;
+        if(score>mod.bestScore)mod.bestScore=score;
+        const passingScore=Math.ceil(total*0.7);
+        if(score>=passingScore&&!mod.completed){mod.completed=true;mod.firstCompleted=attempt.date}
+        progress.modules[moduleId]=mod;progress.totalTimeSpent+=timeSpent;progress.lastUpdated=new Date().toISOString();
+        ProgressTracker.checkBadges(progress,score,total,timeSpent);
+        localStorage.setItem(ProgressTracker.STORAGE_KEY,JSON.stringify(progress));return progress;
+    },
+    checkBadges:(progress,score,total,timeSpent)=>{
+        const badges=progress.badges||[];const ids=badges.map(b=>b.id);const now=new Date().toISOString();
+        if(!ids.includes('first-quiz'))badges.push({id:'first-quiz',earnedAt:now});
+        if(score===total&&!ids.includes('perfect-score'))badges.push({id:'perfect-score',earnedAt:now});
+        if(timeSpent<120&&!ids.includes('speed-demon'))badges.push({id:'speed-demon',earnedAt:now});
+        const completed=Object.values(progress.modules).filter(m=>m.completed).length;
+        if(completed>=5&&!ids.includes('five-complete'))badges.push({id:'five-complete',earnedAt:now});
+        if(completed>=10&&!ids.includes('ten-complete'))badges.push({id:'ten-complete',earnedAt:now});
+        if(completed>=18&&!ids.includes('master'))badges.push({id:'master',earnedAt:now});
+        const mod=progress.modules[MODULE_ID];
+        if(mod&&mod.totalAttempts>=3&&!ids.includes('persistent'))badges.push({id:'persistent',earnedAt:now});
+        progress.badges=badges;
+    }
+};
+
+const lessons=[
+    {id:1,title:'預後研究基本概念',sub:'Prognosis Study Basics',color:'#4361EE'},
+    {id:2,title:'存活分析與KM曲線',sub:'Survival Analysis',color:'#7209B7'},
+    {id:3,title:'Cox比例風險模型',sub:'Cox Model & HR',color:'#2EC4B6'},
+    {id:4,title:'預測模型與驗證',sub:'Prediction Models',color:'#FF6B35'},
+    {id:5,title:'TRIPOD與臨床應用',sub:'Clinical Application',color:'#F72585'}
+];
+
+const quiz=[
+    {q:'預後研究的主要目的為何？',o:['評估治療效果','診斷疾病','預測疾病的未來走向與結局','比較不同藥物的副作用'],c:2,e:'預後研究旨在預測疾病的自然病程、結局發生的可能性，以及識別影響預後的因子。'},
+    {q:'下列何種研究設計最適合進行預後研究？',o:['橫斷性研究','病例對照研究','世代研究（Cohort Study）','病例報告'],c:2,e:'世代研究從特定時間點開始追蹤病人，觀察結局發生，是預後研究的最佳設計。'},
+    {q:'Kaplan-Meier曲線的Y軸代表什麼？',o:['累積發生率','存活機率','風險比','死亡人數'],c:1,e:'KM曲線的Y軸代表存活機率，從1.0開始隨時間下降。每個階梯代表事件發生。'},
+    {q:'關於設限（Censoring）的敘述，何者正確？',o:['只發生在前瞻性研究','代表病人已死亡','代表病人在研究結束前未發生事件或失去追蹤','會導致研究無效'],c:2,e:'設限是存活分析的重要概念，當病人在研究結束時仍存活或失去追蹤時，其資料被設限。'},
+    {q:'Log-rank test的主要用途為何？',o:['計算存活率','比較兩條或多條存活曲線是否有差異','估計風險比','驗證比例風險假設'],c:1,e:'Log-rank test是比較兩組或多組存活曲線是否有統計顯著差異的標準方法。'},
+    {q:'Cox模型中HR=2.0代表什麼意義？',o:['存活率增加2倍','死亡風險是對照組的2倍','存活時間延長2倍','中位存活期為2年'],c:1,e:'HR=2.0表示暴露組的瞬時風險是對照組的2倍。HR大於1代表風險增加。'},
+    {q:'Cox模型的比例風險假設是什麼意思？',o:['所有病人風險相同','風險比隨時間保持恆定','風險呈指數增長','只適用於死亡結局'],c:1,e:'比例風險假設要求HR在整個追蹤期間保持恆定，不隨時間變化。'},
+    {q:'預測模型的校準度（Calibration）是指什麼？',o:['模型區分高低風險的能力','預測機率與實際發生率的吻合程度','模型在新族群的表現','模型的統計顯著性'],c:1,e:'校準度評估預測機率與實際觀察到的事件發生率是否一致。'},
+    {q:'C-statistic=0.75代表什麼？',o:['模型無預測能力','模型有中等區辨能力','模型有完美預測能力','模型過度配適'],c:1,e:'C-statistic等同於AUC，0.75代表中等至良好的區辨能力。0.5無預測力，1.0完美預測。'},
+    {q:'關於預測模型的外部驗證，下列何者正確？',o:['使用建立模型的同一資料集','在不同時間或地點的新資料集測試模型','只需要內部驗證即可','外部驗證通常會提高模型表現'],c:1,e:'外部驗證是在獨立的資料集測試模型表現，是評估模型泛化能力的關鍵步驟。'}
+];
+
+function App(){
+    const[page,setPage]=useState('home');
+    const[lessonId,setLessonId]=useState(1);
+    const[qIdx,setQIdx]=useState(0);
+    const[score,setScore]=useState(0);
+    const[sel,setSel]=useState(null);
+    const[show,setShow]=useState(false);
+    const[done,setDone]=useState(false);
+    const[quizStartTime,setQuizStartTime]=useState(null);
+
+    useEffect(function(){if(page==='quiz'&&!done&&!quizStartTime)setQuizStartTime(Date.now())},[page,done]);
+    useEffect(function(){if(done&&quizStartTime){var t=Math.round((Date.now()-quizStartTime)/1000);ProgressTracker.saveQuizResult(MODULE_ID,score,quiz.length,t)}},[done]);
+
+    function Header(props){
+        return(
+            <header style={{background:'#fff',borderBottom:'1px solid #C7D2FE',padding:'12px 16px',position:'sticky',top:0,zIndex:10}}>
+                <div style={{maxWidth:480,margin:'0 auto',display:'flex',alignItems:'center',gap:12}}>
+                    <button onClick={function(){if(page==='home'){window.location.href='index.html'}else{setPage('home')}}} style={{background:'#EEF2FF',border:'none',borderRadius:10,width:40,height:40,cursor:'pointer',color:'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                    </button>
+                    <span style={{fontWeight:700,color:'#3730A3'}}>{props.title}</span>
+                </div>
+            </header>
+        );
+    }
+
+    function Home(){
+        return(
+            <div>
+                <Header title="預後研究評讀"/>
+                <div style={{background:'linear-gradient(135deg,#4361EE,#3A0CA3)',padding:'32px 20px',color:'#fff'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{background:'rgba(255,255,255,0.2)',display:'inline-block',padding:'6px 14px',borderRadius:50,fontSize:12,fontWeight:600,marginBottom:16}}>Prognosis Study Appraisal</div>
+                        <h1 style={{fontSize:26,fontWeight:700,marginBottom:12}}>預後研究評讀</h1>
+                        <p style={{opacity:0.95,fontSize:14}}>學習評估預後因子與風險預測模型的方法</p>
+                    </div>
+                </div>
+                <div style={{padding:'0 16px',marginTop:-20}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div className="card">
+                            <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:12}}>學習目標</h3>
+                            {['理解預後研究的設計與目的','解讀Kaplan-Meier存活曲線','理解Cox模型與風險比HR','評估預測模型的區辨與校準','應用TRIPOD指引評讀文獻'].map(function(t,i){
+                                return(
+                                    <div key={i} style={{display:'flex',gap:10,marginBottom:8,fontSize:14}}>
+                                        <span style={{background:'var(--suc)',color:'#fff',borderRadius:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,flexShrink:0}}>{i+1}</span>
+                                        <span style={{color:'var(--txt2)'}}>{t}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>課程內容</h3>
+                        {lessons.map(function(l){
+                            return(
+                                <div key={l.id} className="card" onClick={function(){setLessonId(l.id);setPage('lesson')}} style={{cursor:'pointer'}}>
+                                    <div style={{display:'flex',alignItems:'center',gap:16}}>
+                                        <div style={{width:48,height:48,borderRadius:12,background:'linear-gradient(135deg,'+l.color+','+l.color+'88)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}}>{l.id}</div>
+                                        <div style={{flex:1}}>
+                                            <div style={{fontSize:11,color:l.color,fontWeight:600}}>Lesson {l.id}</div>
+                                            <div style={{fontSize:16,fontWeight:700}}>{l.title}</div>
+                                            <div style={{fontSize:13,color:'var(--txt2)'}}>{l.sub}</div>
+                                        </div>
+                                        <svg viewBox="0 0 24 24" fill={l.color} width="20" height="20"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/></svg>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        <button className="btn btn-pri" onClick={function(){setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}} style={{width:'100%',justifyContent:'center',marginTop:20,marginBottom:32}}>
+                            開始測驗 (10題)
+                        </button>
+                    </div>
+                </div>
+                <footer style={{background:'#EEF2FF',padding:'24px 16px',textAlign:'center'}}>
+                    <p style={{fontSize:13,color:'var(--txt2)'}}>新竹台大分院教學部</p>
+                    <p style={{fontSize:12,color:'var(--txt2)'}}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                </footer>
+            </div>
+        );
+    }
+
+    function L1(){
+        return(
+            <div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>什麼是預後研究？</h3>
+                    <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>預後研究探討疾病的<strong>自然病程</strong>與<strong>結局</strong>，回答「接下來會發生什麼？」的問題。</p>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                        <div style={{background:'#EEF2FF',padding:14,borderRadius:12,textAlign:'center'}}>
+                            <div style={{fontSize:28,marginBottom:8}}>📊</div>
+                            <div style={{fontWeight:600,color:'var(--pri)',marginBottom:4}}>預後因子研究</div>
+                            <div style={{fontSize:12,color:'var(--txt2)'}}>哪些因素影響結局？</div>
+                        </div>
+                        <div style={{background:'#FAF5FF',padding:14,borderRadius:12,textAlign:'center'}}>
+                            <div style={{fontSize:28,marginBottom:8}}>🎯</div>
+                            <div style={{fontWeight:600,color:'var(--pur)',marginBottom:4}}>預測模型研究</div>
+                            <div style={{fontSize:12,color:'var(--txt2)'}}>如何預測個人風險？</div>
+                        </div>
+                    </div>
+                </div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>預後研究的關鍵要素</h3>
+                    <div style={{fontSize:14,color:'var(--txt2)',lineHeight:2}}>
+                        <div>🚀 <strong>起始點</strong>：明確定義追蹤開始時間點</div>
+                        <div>⏱️ <strong>追蹤時間</strong>：足夠長以觀察結局事件</div>
+                        <div>🎯 <strong>結局定義</strong>：客觀且可靠測量的臨床結局</div>
+                        <div>👁️ <strong>完整追蹤</strong>：盡量減少失去追蹤比例</div>
+                    </div>
+                </div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--teal)',marginBottom:12}}>適合的研究設計</h3>
+                    <table>
+                        <thead><tr><th>設計</th><th>說明</th><th>適用性</th></tr></thead>
+                        <tbody>
+                            <tr><td style={{fontWeight:600,color:'var(--suc)'}}>前瞻性世代</td><td>從診斷開始向前追蹤</td><td style={{color:'var(--suc)'}}>最佳</td></tr>
+                            <tr><td style={{fontWeight:600,color:'var(--blue)'}}>回溯性世代</td><td>利用過去紀錄追蹤</td><td style={{color:'var(--blue)'}}>良好</td></tr>
+                            <tr><td style={{fontWeight:600,color:'var(--warn)'}}>巢式病例對照</td><td>適用罕見結局</td><td style={{color:'var(--warn)'}}>可接受</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div className="alertbox">
+                    <strong style={{color:'var(--err)'}}>預後研究常見偏差</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>• 起始點偏差：納入時間不一致<br/>• 失去追蹤偏差：流失者與留下者不同<br/>• 測量偏差：結局判定不客觀</span>
+                </div>
+            </div>
+        );
+    }
+
+    function L2(){
+        return(
+            <div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>存活分析簡介</h3>
+                    <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>存活分析處理<strong>事件發生時間</strong>資料，可分析死亡、復發、疾病進展等各種結局。</p>
+                    <div style={{background:'#FAF5FF',padding:16,borderRadius:12}}>
+                        <div style={{fontWeight:600,color:'var(--pur)',marginBottom:8}}>為什麼需要存活分析？</div>
+                        <div style={{fontSize:13,color:'var(--txt2)'}}>• 追蹤時間長短不一<br/>• 部分病人未發生事件（設限資料）<br/>• 需考慮「何時」發生，而非只有「是否」發生</div>
+                    </div>
+                </div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>設限（Censoring）</h3>
+                    <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>當我們無法觀察到事件發生時，資料被「設限」：</p>
+                    <div style={{fontSize:14,color:'var(--txt2)'}}>✅ 研究結束時仍存活<br/>❓ 失去追蹤<br/>🚪 因其他原因退出</div>
+                    <div className="tip" style={{marginTop:12}}>
+                        <strong style={{color:'var(--warn)'}}>重要假設</strong><br/>
+                        <span style={{fontSize:14,color:'var(--txt2)'}}>設限為「非資訊性」：設限原因與結局發生無關</span>
+                    </div>
+                </div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--teal)',marginBottom:12}}>Kaplan-Meier曲線</h3>
+                    <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>最常用的存活曲線呈現方法</p>
+                    <div style={{background:'#F8F9FA',padding:16,borderRadius:12,textAlign:'center'}}>
+                        <svg viewBox="0 0 300 180" style={{width:'100%',maxWidth:300}}>
+                            <line x1="40" y1="150" x2="280" y2="150" stroke="#333" strokeWidth="2"/>
+                            <line x1="40" y1="20" x2="40" y2="150" stroke="#333" strokeWidth="2"/>
+                            <path d="M40 25 H70 V40 H100 V60 H130 V85 H160 V105 H190 V120 H220 V135 H280" fill="none" stroke="#E53E3E" strokeWidth="2.5"/>
+                            <path d="M40 25 H80 V35 H120 V48 H160 V62 H200 V78 H240 V90 H280" fill="none" stroke="#4361EE" strokeWidth="2.5"/>
+                            <text x="40" y="168" fontSize="10" fill="#666">0</text>
+                            <text x="160" y="168" fontSize="10" fill="#666">2年</text>
+                            <text x="270" y="168" fontSize="10" fill="#666">4年</text>
+                            <text x="35" y="28" fontSize="10" fill="#666" textAnchor="end">1.0</text>
+                            <text x="35" y="90" fontSize="10" fill="#666" textAnchor="end">0.5</text>
+                        </svg>
+                        <div style={{display:'flex',justifyContent:'center',gap:20,marginTop:8,fontSize:12}}>
+                            <span style={{color:'#4361EE'}}>━ 低風險組</span>
+                            <span style={{color:'#E53E3E'}}>━ 高風險組</span>
+                        </div>
+                    </div>
+                </div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--orange)',marginBottom:12}}>KM曲線解讀要點</h3>
+                    <div style={{fontSize:14,color:'var(--txt2)',lineHeight:2}}>
+                        📉 <strong>階梯下降</strong>：每個階梯代表事件發生<br/>
+                        ⏱️ <strong>中位存活期</strong>：曲線通過Y=0.5時的時間<br/>
+                        ↔️ <strong>曲線分離</strong>：兩組差異越大，分離越明顯
+                    </div>
+                </div>
+                <div className="info">
+                    <strong style={{color:'var(--blue)'}}>Log-rank Test</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>比較兩條或多條存活曲線是否有統計顯著差異<br/>• H0：各組存活曲線相同<br/>• p小於0.05：存活曲線有顯著差異</span>
+                </div>
+            </div>
+        );
+    }
+
+    function L3(){
+        return(
+            <div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--teal)',marginBottom:12}}>Cox比例風險模型</h3>
+                    <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>存活分析中最常用的多變量分析方法，可同時評估多個預後因子。</p>
+                    <div className="formula">h(t) = h₀(t) × exp(β₁X₁ + β₂X₂ + ...)</div>
+                    <div style={{fontSize:13,color:'var(--txt2)',marginTop:12}}>
+                        <strong>h(t)</strong>：時間t的瞬時風險<br/>
+                        <strong>h₀(t)</strong>：基準風險函數<br/>
+                        <strong>β</strong>：迴歸係數<br/>
+                        <strong>X</strong>：預後因子
+                    </div>
+                </div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>風險比 Hazard Ratio (HR)</h3>
+                    <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>HR是Cox模型最重要的產出，代表相對風險</p>
+                    <div className="formula" style={{background:'linear-gradient(135deg,#FAF5FF,#F3E5F5)',borderColor:'var(--pur)'}}>HR = exp(β) = 暴露組風險 / 對照組風險</div>
+                    <table style={{marginTop:16}}>
+                        <thead><tr><th>HR值</th><th>意義</th><th>解讀</th></tr></thead>
+                        <tbody>
+                            <tr><td style={{fontWeight:700,color:'var(--err)'}}>HR = 2.0</td><td>風險增加2倍</td><td>死亡風險是對照的2倍</td></tr>
+                            <tr><td style={{fontWeight:700,color:'var(--warn)'}}>HR = 1.5</td><td>風險增加50%</td><td>復發風險增加50%</td></tr>
+                            <tr><td style={{fontWeight:700,color:'var(--txt2)'}}>HR = 1.0</td><td>無差異</td><td>因子無預後價值</td></tr>
+                            <tr><td style={{fontWeight:700,color:'var(--suc)'}}>HR = 0.5</td><td>風險降低50%</td><td>進展風險減半</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--orange)',marginBottom:12}}>比例風險假設</h3>
+                    <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>Cox模型核心假設：<strong>HR在整個追蹤期間保持恆定</strong></p>
+                    <div style={{background:'#FFF9F0',padding:16,borderRadius:12}}>
+                        <div style={{fontWeight:600,color:'var(--orange)',marginBottom:8}}>如何檢驗？</div>
+                        <div style={{fontSize:13,color:'var(--txt2)'}}>• 圖形法：log(-log(S(t))) vs log(t)應呈平行<br/>• Schoenfeld殘差檢驗<br/>• 加入時間交互項</div>
+                    </div>
+                </div>
+                <div className="alertbox">
+                    <strong style={{color:'var(--err)'}}>違反假設時怎麼辦？</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>• 分段分析（不同時期分開）<br/>• 加入時間相依共變數<br/>• 使用其他模型（如AFT模型）</span>
+                </div>
+            </div>
+        );
+    }
+
+    function L4(){
+        return(
+            <div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--orange)',marginBottom:12}}>預測模型簡介</h3>
+                    <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>預測模型結合多個預後因子，為<strong>個別病人</strong>計算發生特定結局的機率。</p>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                        <div style={{background:'#FFF9F0',padding:14,borderRadius:12}}>
+                            <div style={{fontWeight:600,color:'var(--orange)',marginBottom:8}}>臨床應用</div>
+                            <div style={{fontSize:12,color:'var(--txt2)'}}>• 個人化風險評估<br/>• 共享決策<br/>• 治療分層</div>
+                        </div>
+                        <div style={{background:'#EEF2FF',padding:14,borderRadius:12}}>
+                            <div style={{fontWeight:600,color:'var(--pri)',marginBottom:8}}>常見範例</div>
+                            <div style={{fontSize:12,color:'var(--txt2)'}}>• Framingham Score<br/>• CHADS₂-VASc<br/>• APACHE II</div>
+                        </div>
+                    </div>
+                </div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>區辨能力（Discrimination）</h3>
+                    <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>模型區分「會發生事件」與「不會發生事件」者的能力</p>
+                    <div className="formula" style={{background:'linear-gradient(135deg,#FAF5FF,#F3E5F5)',borderColor:'var(--pur)'}}>C-statistic ≈ AUC</div>
+                    <table style={{marginTop:12}}>
+                        <thead><tr><th>C-statistic</th><th>區辨能力</th><th>臨床意義</th></tr></thead>
+                        <tbody>
+                            <tr><td style={{color:'var(--suc)',fontWeight:700}}>0.9-1.0</td><td>優秀</td><td>高度準確</td></tr>
+                            <tr><td style={{color:'var(--blue)',fontWeight:700}}>0.8-0.9</td><td>良好</td><td>臨床實用</td></tr>
+                            <tr><td style={{color:'var(--warn)',fontWeight:700}}>0.7-0.8</td><td>中等</td><td>可接受</td></tr>
+                            <tr><td style={{color:'var(--err)',fontWeight:700}}>0.5-0.6</td><td>無效</td><td>等同猜測</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--teal)',marginBottom:12}}>校準度（Calibration）</h3>
+                    <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>預測機率與實際觀察發生率的<strong>吻合程度</strong></p>
+                    <div className="good">
+                        <strong style={{color:'var(--suc)'}}>校準良好的意義</strong><br/>
+                        <span style={{fontSize:14,color:'var(--txt2)'}}>預測30%風險的群組，實際發生率應接近30%</span>
+                    </div>
+                    <div className="tip">
+                        <strong style={{color:'var(--warn)'}}>Hosmer-Lemeshow Test</strong><br/>
+                        <span style={{fontSize:14,color:'var(--txt2)'}}>• p大於0.05：校準良好<br/>• p小於0.05：校準不佳，需重新校正</span>
+                    </div>
+                </div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>模型驗證</h3>
+                    <div style={{display:'grid',gap:12}}>
+                        <div style={{background:'#EEF2FF',padding:14,borderRadius:12}}>
+                            <div style={{fontWeight:600,color:'var(--pri)',marginBottom:4}}>內部驗證 Internal</div>
+                            <div style={{fontSize:12,color:'var(--txt2)'}}>使用同一資料集（Bootstrap、Cross-validation）</div>
+                        </div>
+                        <div style={{background:'#F0FFF4',padding:14,borderRadius:12}}>
+                            <div style={{fontWeight:600,color:'var(--suc)',marginBottom:4}}>外部驗證 External</div>
+                            <div style={{fontSize:12,color:'var(--txt2)'}}>使用獨立資料集（不同時間/地點）- 更重要！</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    function L5(){
+        return(
+            <div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--pink)',marginBottom:12}}>TRIPOD指引</h3>
+                    <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}><strong>TRIPOD</strong>是預測模型研究的報告標準（Transparent Reporting of prediction model）</p>
+                    <div style={{background:'#FFF0F5',padding:16,borderRadius:12}}>
+                        <div style={{fontWeight:600,color:'var(--pink)',marginBottom:12}}>研究類型</div>
+                        <div style={{fontSize:13,color:'var(--txt2)',lineHeight:2}}>
+                            <span style={{background:'#E53E3E',color:'#fff',padding:'2px 8px',borderRadius:4,fontSize:11,marginRight:8}}>Type 1</span>模型發展（無/內部驗證）<br/>
+                            <span style={{background:'#38A169',color:'#fff',padding:'2px 8px',borderRadius:4,fontSize:11,marginRight:8}}>Type 2</span>模型發展+外部驗證<br/>
+                            <span style={{background:'#3182CE',color:'#fff',padding:'2px 8px',borderRadius:4,fontSize:11,marginRight:8}}>Type 3</span>外部驗證既有模型
+                        </div>
+                    </div>
+                </div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>預後研究評讀檢核表</h3>
+                    <div style={{fontSize:14,color:'var(--txt2)',lineHeight:2}}>
+                        ☑️ 研究族群是否明確定義？<br/>
+                        ☑️ 起始點是否一致且明確？<br/>
+                        ☑️ 追蹤時間是否足夠長？<br/>
+                        ☑️ 結局是否客觀且定義明確？<br/>
+                        ☑️ 失去追蹤比例是否可接受？<br/>
+                        ☑️ 是否調整重要干擾因子？<br/>
+                        ☑️ 是否報告HR及95% CI？<br/>
+                        ☑️ 預測模型是否經過驗證？
+                    </div>
+                </div>
+                <div className="card">
+                    <h3 style={{fontSize:18,fontWeight:700,color:'var(--teal)',marginBottom:12}}>臨床應用案例：CHADS₂-VASc</h3>
+                    <p style={{fontSize:13,color:'var(--txt2)',marginBottom:12}}>預測心房顫動病人中風風險，決定抗凝血治療</p>
+                    <table>
+                        <thead><tr><th>分數</th><th>年中風風險</th><th>建議</th></tr></thead>
+                        <tbody>
+                            <tr><td>0</td><td style={{color:'var(--suc)'}}>0.2%</td><td>可不用抗凝血</td></tr>
+                            <tr><td>1</td><td style={{color:'var(--warn)'}}>0.6%</td><td>考慮抗凝血</td></tr>
+                            <tr><td>2+</td><td style={{color:'var(--err)'}}>2.2%+</td><td>建議抗凝血</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div className="good">
+                    <strong style={{color:'var(--suc)'}}>臨床應用要點</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>1. 確認模型在類似族群驗證過<br/>2. 了解模型的區辨與校準表現<br/>3. 風險預測應結合臨床判斷<br/>4. 與病人共享決策</span>
+                </div>
+                <div className="purple">
+                    <strong style={{color:'var(--pur)'}}>預後研究的臨床價值</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>• 病人衛教：讓病人了解可能的未來走向<br/>• 治療決策：高風險者可能需更積極治療<br/>• 追蹤計畫：根據風險調整追蹤頻率</span>
+                </div>
+            </div>
+        );
+    }
+
+    function Lesson(){
+        var l=lessons.find(function(x){return x.id===lessonId});
+        return(
+            <div>
+                <Header title={l.title}/>
+                <div style={{background:'linear-gradient(135deg,'+l.color+','+l.color+'88)',padding:'20px',color:'#fff'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{fontSize:12,opacity:0.9}}>Lesson {l.id} - {l.sub}</div>
+                        <h1 style={{fontSize:24,fontWeight:700}}>{l.title}</h1>
+                    </div>
+                </div>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        {lessonId===1 && <L1/>}
+                        {lessonId===2 && <L2/>}
+                        {lessonId===3 && <L3/>}
+                        {lessonId===4 && <L4/>}
+                        {lessonId===5 && <L5/>}
+                        <div style={{display:'flex',gap:12,marginTop:24}}>
+                            {lessonId>1 && <button className="btn" style={{flex:1,background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={function(){setLessonId(lessonId-1)}}>上一課</button>}
+                            {lessonId<5 ? <button className="btn btn-pri" style={{flex:1}} onClick={function(){setLessonId(lessonId+1)}}>下一課</button>
+                            : <button className="btn btn-pri" style={{flex:1}} onClick={function(){setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}}>開始測驗</button>}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    function Quiz(){
+        function pick(i){if(show)return;setSel(i);setShow(true);if(i===quiz[qIdx].c)setScore(score+1)}
+        function next(){if(qIdx<quiz.length-1){setQIdx(qIdx+1);setSel(null);setShow(false)}else{setDone(true)}}
+
+        if(done){
+            var pct=Math.round((score/quiz.length)*100);
+            var col=pct>=80?'var(--suc)':pct>=60?'var(--warn)':'var(--err)';
+            return(
+                <div>
+                    <Header title="測驗結果"/>
+                    <div style={{padding:'40px 16px',textAlign:'center'}}>
+                        <div style={{width:140,height:140,borderRadius:'50%',background:'conic-gradient('+col+' '+(pct*3.6)+'deg,#E5E5E5 0deg)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 24px'}}>
+                            <div style={{width:120,height:120,borderRadius:'50%',background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                                <div style={{fontSize:36,fontWeight:700}}>{pct}%</div>
+                                <div style={{fontSize:14,color:'var(--txt2)'}}>{score}/{quiz.length}</div>
+                            </div>
+                        </div>
+                        <h2 style={{fontSize:24,fontWeight:700,marginBottom:8}}>{pct>=80?'太棒了！':pct>=60?'不錯！':'加油！'}</h2>
+                        <p style={{color:'var(--txt2)',marginBottom:32}}>{pct>=80?'你對預後研究有很好的掌握！':pct>=60?'再複習可以更進步！':'建議重新閱讀課程'}</p>
+                        <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+                            <button className="btn btn-pri" onClick={function(){setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false)}}>重新測驗</button>
+                            <button className="btn" style={{background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={function(){setPage('home')}}>返回課程</button>
+                        </div>
+                    </div>
+                    <footer style={{background:'#EEF2FF',padding:'24px 16px',textAlign:'center',marginTop:40}}>
+                        <p style={{fontSize:12,color:'var(--txt2)'}}>新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        var q=quiz[qIdx];
+        return(
+            <div>
+                <Header title="自我測驗"/>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:14}}>
+                            <span style={{color:'var(--txt2)'}}>進度</span>
+                            <span style={{fontWeight:600,color:'var(--pri)'}}>{qIdx+1}/{quiz.length}</span>
+                        </div>
+                        <div style={{height:8,background:'#E5E5E5',borderRadius:4,marginBottom:20}}>
+                            <div style={{height:'100%',width:((qIdx+1)/quiz.length*100)+'%',background:'linear-gradient(90deg,var(--pri),var(--pri2))',borderRadius:4}}/>
+                        </div>
+                        <div className="card">
+                            <h3 style={{fontSize:16,fontWeight:600,lineHeight:1.6,marginBottom:20}}>{q.q}</h3>
+                            {q.o.map(function(opt,i){
+                                var bg='#fff',bd='#E5E5E5';
+                                if(show){
+                                    if(i===q.c){bg='#F0FFF4';bd='var(--suc)'}
+                                    else if(i===sel){bg='#FFF5F5';bd='var(--err)'}
+                                }else if(i===sel){bg='#EEF2FF';bd='var(--pri)'}
+                                return(
+                                    <button key={i} onClick={function(){pick(i)}} disabled={show} style={{width:'100%',padding:'12px 14px',marginBottom:10,background:bg,border:'2px solid '+bd,borderRadius:12,textAlign:'left',fontSize:14,cursor:show?'default':'pointer',display:'flex',alignItems:'center',gap:12}}>
+                                        <span style={{width:26,height:26,borderRadius:8,background:show&&i===q.c?'var(--suc)':show&&i===sel?'var(--err)':'#EEF2FF',color:show&&(i===q.c||i===sel)?'#fff':'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13,flexShrink:0}}>
+                                            {show&&i===q.c?'O':show&&i===sel&&i!==q.c?'X':String.fromCharCode(65+i)}
+                                        </span>
+                                        <span style={{lineHeight:1.5}}>{opt}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {show && (
+                            <div className={sel===q.c?'good':'tip'}>
+                                <strong style={{color:sel===q.c?'var(--suc)':'var(--warn)'}}>{sel===q.c?'正確！':'答錯了'}</strong>
+                                <p style={{fontSize:14,color:'var(--txt2)',marginTop:8,lineHeight:1.7}}>{q.e}</p>
+                            </div>
+                        )}
+                        {show && <button className="btn btn-pri" style={{width:'100%',justifyContent:'center',marginTop:16}} onClick={next}>{qIdx<quiz.length-1?'下一題':'查看結果'}</button>}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return(
+        <div style={{maxWidth:'100%',minHeight:'100vh',background:'var(--bg)'}}>
+            {page==='home' && <Home/>}
+            {page==='lesson' && <Lesson/>}
+            {page==='quiz' && <Quiz/>}
+        </div>
+    );
+}
+
+ReactDOM.render(React.createElement(App),document.getElementById('root'));
+</script>
+</body>
+</html>

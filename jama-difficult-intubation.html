@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>困難插管預測 | JAMA Rational Clinical Examination</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--pri:#D84315;--pri2:#FF7043;--acc:#FFB300;--suc:#26A69A;--warn:#FFC107;--err:#EF5350;--pur:#7E57C2;--blue:#42A5F5;--pink:#EC407A;--teal:#00897B;--bg:#FFFAF8;--txt:#2D1810;--txt2:#6B7280}
+        body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+        .container{max-width:480px;margin:0 auto}
+        .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(216,67,21,0.1)}
+        .btn{padding:14px 24px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all 0.3s;width:100%}
+        .btn-pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}
+        .btn-acc{background:linear-gradient(135deg,var(--acc),#FFCA28);color:#333}
+        .btn-out{background:#fff;border:2px solid var(--pri);color:var(--pri)}
+        table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+        th,td{padding:10px;text-align:center;border-bottom:1px solid #eee}
+        th{background:#FBE9E7;font-weight:600;color:var(--pri)}
+        .formula{background:linear-gradient(135deg,#FBE9E7,#FFCCBC);border:2px solid var(--pri);border-radius:12px;padding:16px;margin:12px 0;text-align:center;font-size:17px;color:#BF360C}
+        .tip{background:#FFF8E1;border-left:4px solid var(--acc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .good{background:#E0F2F1;border-left:4px solid var(--suc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .info{background:#E3F2FD;border-left:4px solid var(--blue);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .warn{background:#FFF3E0;border-left:4px solid var(--warn);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .purple{background:#EDE7F6;border-left:4px solid var(--pur);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .pink{background:#FCE4EC;border-left:4px solid var(--pink);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .orange{background:#FBE9E7;border-left:4px solid var(--pri);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .key-point{background:linear-gradient(135deg,#D84315,#FF7043);color:#fff;border-radius:12px;padding:16px;margin:16px 0}
+        .lr-high{background:#C8E6C9;color:#2E7D32;padding:2px 8px;border-radius:4px;font-weight:600}
+        .lr-mod{background:#FFF9C4;color:#F57F17;padding:2px 8px;border-radius:4px;font-weight:600}
+        .lr-low{background:#FFCDD2;color:#C62828;padding:2px 8px;border-radius:4px;font-weight:600}
+        header{background:#fff;border-bottom:1px solid #eee;padding:12px 16px;position:sticky;top:0;z-index:10}
+        .header-inner{max-width:480px;margin:0 auto;display:flex;align-items:center;gap:12px}
+        .back-btn{background:#FBE9E7;border:none;border-radius:10px;width:40px;height:40px;cursor:pointer;color:var(--pri);display:flex;align-items:center;justify-content:center}
+        .hero{background:linear-gradient(135deg,#D84315,#FF7043);padding:32px 20px;color:#fff}
+        .tag{background:rgba(255,255,255,0.2);display:inline-block;padding:6px 14px;border-radius:50px;font-size:12px;font-weight:600;margin-bottom:16px}
+        .badge-row{display:flex;gap:10px;flex-wrap:wrap}
+        .badge{background:rgba(255,255,255,0.2);padding:6px 12px;border-radius:20px;font-size:11px}
+        .content{padding:0 16px;margin-top:-20px}
+        .lesson-item{display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:8px;background:#FFF5F2;border-radius:12px;cursor:pointer;border:2px solid transparent;transition:border-color 0.2s}
+        .lesson-item:hover{border-color:var(--pri)}
+        .lesson-num{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+        .goal-item{display:flex;gap:10px;margin-bottom:8px;font-size:14px}
+        .goal-num{background:var(--suc);color:#fff;border-radius:6px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+        footer{background:#FBE9E7;padding:24px 16px;border-radius:16px;text-align:center;margin:20px 0 40px}
+        .page{display:none}
+        .page.active{display:block}
+        .lesson-header{padding:20px;color:#fff}
+        .lesson-content{padding:20px 16px}
+        .nav-buttons{display:flex;gap:12px;margin-top:24px}
+        .nav-buttons .btn{flex:1}
+        .progress-bar{height:8px;background:#E5E5E5;border-radius:4px;margin-bottom:20px}
+        .progress-fill{height:100%;background:linear-gradient(90deg,var(--pri),var(--pri2));border-radius:4px;transition:width 0.3s}
+        .quiz-option{width:100%;padding:12px 14px;margin-bottom:10px;background:#fff;border:2px solid #E5E5E5;border-radius:12px;text-align:left;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:12px}
+        .quiz-option:hover{border-color:var(--pri)}
+        .quiz-option.selected{background:#FBE9E7;border-color:var(--pri)}
+        .quiz-option.correct{background:#E8F5E9;border-color:var(--suc)}
+        .quiz-option.wrong{background:#FFEBEE;border-color:var(--err)}
+        .quiz-option.disabled{cursor:default}
+        .option-label{width:26px;height:26px;border-radius:8px;background:#FBE9E7;color:var(--pri);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+        .option-label.correct{background:var(--suc);color:#fff}
+        .option-label.wrong{background:var(--err);color:#fff}
+        .result-circle{width:140px;height:140px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px}
+        .result-inner{width:120px;height:120px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+        .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .stat-box{border-radius:12px;padding:16px;text-align:center}
+        .stat-box .label{font-size:11px;color:var(--txt2)}
+        .stat-box .value{font-size:20px;font-weight:700}
+        .test-demo{background:#FFF;border:2px solid var(--pri);border-radius:16px;padding:20px;margin:16px 0;text-align:center}
+        .test-demo img{max-width:100%;border-radius:8px;margin:12px 0}
+    </style>
+</head>
+<body>
+    <!-- 首頁 -->
+    <div id="home" class="page active">
+        <header>
+            <div class="header-inner">
+                <button class="back-btn" onclick="location.href='jama-rational-exam.html'">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style="font-weight:700;color:#BF360C">困難插管預測</span>
+            </div>
+        </header>
+        <div class="hero">
+            <div class="container">
+                <div class="tag">🫁 JAMA Rational Clinical Examination</div>
+                <h1 style="font-size:22px;font-weight:700;margin-bottom:8px">Will This Patient Be Difficult to Intubate?</h1>
+                <h2 style="font-size:15px;font-weight:500;margin-bottom:12px;opacity:0.95">困難氣管內插管的臨床預測</h2>
+                <a href="https://jamanetwork.com/journals/jama/article-abstract/2724031" target="_blank" style="display:inline-block;background:rgba(255,255,255,0.25);padding:8px 16px;border-radius:8px;color:#fff;text-decoration:none;font-size:13px;margin-bottom:16px;transition:background 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.25)'">📄 JAMA 2019;321(5):493-503 ↗</a>
+                <div class="badge-row">
+                    <div class="badge">📊 N=33,559</div>
+                    <div class="badge">📚 62 Studies</div>
+                    <div class="badge">🎯 LR Analysis</div>
+                </div>
+            </div>
+        </div>
+        <div class="content">
+            <div class="container">
+                <div class="card">
+                    <h3 style="font-size:16px;font-weight:700;color:var(--pri);margin-bottom:12px">🎯 學習目標</h3>
+                    <div class="goal-item"><span class="goal-num">1</span><span style="color:var(--txt2)">了解困難插管的定義與盛行率</span></div>
+                    <div class="goal-item"><span class="goal-num">2</span><span style="color:var(--txt2)">掌握上唇咬合試驗 (ULBT) 的操作與判讀</span></div>
+                    <div class="goal-item"><span class="goal-num">3</span><span style="color:var(--txt2)">學會解剖學測量指標的臨床應用</span></div>
+                    <div class="goal-item"><span class="goal-num">4</span><span style="color:var(--txt2)">理解 Mallampati 分級的診斷價值</span></div>
+                    <div class="goal-item"><span class="goal-num">5</span><span style="color:var(--txt2)">臨床綜合評估與 Wilson Score</span></div>
+                </div>
+                <div class="card">
+                    <h3 style="font-size:16px;font-weight:700;color:var(--pri);margin-bottom:12px">📖 課程單元</h3>
+                    <div class="lesson-item" onclick="showLesson(1)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#D84315,#D8431588)">1</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">困難插管概論</div><div style="font-size:12px;color:var(--txt2)">Difficult Intubation Basics</div></div>
+                        <svg viewBox="0 0 24 24" fill="#D84315" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="lesson-item" onclick="showLesson(2)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#FF7043,#FF704388)">2</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">上唇咬合試驗</div><div style="font-size:12px;color:var(--txt2)">Upper Lip Bite Test (ULBT)</div></div>
+                        <svg viewBox="0 0 24 24" fill="#FF7043" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="lesson-item" onclick="showLesson(3)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#26A69A,#26A69A88)">3</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">解剖學測量指標</div><div style="font-size:12px;color:var(--txt2)">Anatomical Measurements</div></div>
+                        <svg viewBox="0 0 24 24" fill="#26A69A" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="lesson-item" onclick="showLesson(4)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#7E57C2,#7E57C288)">4</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">Mallampati 分級</div><div style="font-size:12px;color:var(--txt2)">Modified Mallampati Score</div></div>
+                        <svg viewBox="0 0 24 24" fill="#7E57C2" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="lesson-item" onclick="showLesson(5)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#FFB300,#FFB30088)">5</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">綜合評估與臨床應用</div><div style="font-size:12px;color:var(--txt2)">Wilson Score & Clinical Application</div></div>
+                        <svg viewBox="0 0 24 24" fill="#FFB300" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                </div>
+                <button class="btn btn-acc" onclick="startQuiz()">📝 開始自我測驗</button>
+                <div class="card" style="background:linear-gradient(135deg,#FBE9E7,#FFCCBC);margin-top:16px">
+                    <h3 style="font-size:14px;font-weight:700;color:var(--pri);margin-bottom:8px">📌 臨床要點</h3>
+                    <p style="font-size:13px;color:var(--txt2);line-height:1.8">上唇咬合試驗 (ULBT) 第3級是預測困難插管最佳的單一指標 (LR+ 14)，可將困難插管的機率從 10% 提升至超過 60%。但沒有任何單一檢查可以可靠地排除困難插管的可能性。</p>
+                </div>
+                <footer>
+                    <p style="font-size:12px;color:var(--txt2);margin-bottom:8px">新竹台大分院教學部</p>
+                    <p style="font-size:11px;color:var(--txt2)">謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    <p style="font-size:10px;color:var(--txt2);margin-top:8px">資料來源: JAMA 2019;321(5):493-503</p>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- 課程頁 -->
+    <div id="lesson" class="page">
+        <header>
+            <div class="header-inner">
+                <button class="back-btn" onclick="showHome()">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span id="lesson-title" style="font-weight:700;color:#BF360C"></span>
+            </div>
+        </header>
+        <div id="lesson-header" class="lesson-header"></div>
+        <div class="lesson-content">
+            <div class="container">
+                <div id="lesson-body"></div>
+                <div class="nav-buttons">
+                    <button id="prev-btn" class="btn btn-out" onclick="prevLesson()">← 上一課</button>
+                    <button id="next-btn" class="btn btn-pri" onclick="nextLesson()">下一課 →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 測驗頁 -->
+    <div id="quiz" class="page">
+        <header>
+            <div class="header-inner">
+                <button class="back-btn" onclick="showHome()">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style="font-weight:700;color:#BF360C">自我測驗</span>
+            </div>
+        </header>
+        <div style="padding:20px 16px">
+            <div class="container">
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px">
+                    <span style="color:var(--txt2)">進度</span>
+                    <span id="quiz-progress" style="font-weight:600;color:var(--pri)"></span>
+                </div>
+                <div class="progress-bar">
+                    <div id="quiz-progress-bar" class="progress-fill"></div>
+                </div>
+                <div id="quiz-content" class="card"></div>
+                <div id="quiz-feedback"></div>
+                <button id="quiz-next" class="btn btn-pri" onclick="nextQuestion()" style="display:none;margin-top:16px">下一題 →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 結果頁 -->
+    <div id="result" class="page">
+        <header>
+            <div class="header-inner">
+                <button class="back-btn" onclick="showHome()">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style="font-weight:700;color:#BF360C">測驗結果</span>
+            </div>
+        </header>
+        <div style="padding:40px 16px;text-align:center">
+            <div class="container">
+                <div id="result-circle" class="result-circle">
+                    <div class="result-inner">
+                        <div id="result-pct" style="font-size:36px;font-weight:700;color:var(--pri)"></div>
+                        <div id="result-score" style="font-size:14px;color:var(--txt2)"></div>
+                    </div>
+                </div>
+                <h2 id="result-title" style="font-size:24px;font-weight:700;margin-bottom:8px"></h2>
+                <p id="result-msg" style="color:var(--txt2);margin-bottom:32px"></p>
+                <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                    <button class="btn btn-pri" onclick="startQuiz()">重新測驗</button>
+                    <button class="btn btn-out" onclick="showHome()">返回課程</button>
+                </div>
+            </div>
+        </div>
+        <footer style="margin-top:40px">
+            <p style="font-size:12px;color:var(--txt2)">新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+        </footer>
+    </div>
+
+<script>
+const lessons = [
+    {id:1, title:'困難插管概論', sub:'Difficult Intubation Basics', color:'#D84315'},
+    {id:2, title:'上唇咬合試驗', sub:'Upper Lip Bite Test (ULBT)', color:'#FF7043'},
+    {id:3, title:'解剖學測量指標', sub:'Anatomical Measurements', color:'#26A69A'},
+    {id:4, title:'Mallampati 分級', sub:'Modified Mallampati Score', color:'#7E57C2'},
+    {id:5, title:'綜合評估與臨床應用', sub:'Wilson Score & Clinical Application', color:'#FFB300'}
+];
+
+const lessonContent = {
+    1: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 核心概念</h4><p style="font-size:13px">困難插管 (Difficult Intubation) 的早期識別可幫助臨床醫師準備進階氣道設備並尋求專業協助。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🫁 為什麼重要？</h4>
+    <div class="info"><strong>📊 臨床背景</strong><p style="font-size:13px;margin-top:6px">氣管內插管是急救、麻醉、加護病房的基本技術。無法預期的困難插管可能導致嚴重併發症，包括缺氧性腦損傷甚至死亡。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📖 定義</h4>
+    <div class="formula">困難插管 = 喉鏡檢查困難 或 需要多次嘗試才能成功</div>
+    <table><thead><tr><th>術語</th><th>定義</th></tr></thead>
+    <tbody>
+    <tr><td style="text-align:left;font-weight:600">Difficult Laryngoscopy</td><td style="text-align:left">Cormack-Lehane Grade 3-4</td></tr>
+    <tr><td style="text-align:left;font-weight:600">Difficult Intubation</td><td style="text-align:left">需要 >2 次嘗試或 >10 分鐘</td></tr>
+    <tr><td style="text-align:left;font-weight:600">Failed Intubation</td><td style="text-align:left">無法成功建立氣道</td></tr>
+    </tbody></table>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 研究概況</h4>
+    <div class="stat-box" style="background:#FBE9E7;margin-bottom:16px">
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
+            <div><div class="label">研究數量</div><div class="value" style="color:var(--pri)">62</div></div>
+            <div><div class="label">患者總數</div><div class="value" style="color:var(--pri)">33,559</div></div>
+            <div><div class="label">困難插管比例</div><div class="value" style="color:var(--err)">10%</div></div>
+        </div>
+    </div>
+    <div class="warn"><strong>⚠️ 重要發現</strong><p style="font-size:13px;margin-top:6px">在高品質研究中，約 <strong>10%</strong> (95% CI: 8.2%-12%) 的患者屬於困難插管。這意味著每 10 位需要插管的患者中，就有 1 位可能遇到困難。</p></div>
+    <div class="good" style="margin-top:16px"><strong>✔ 關鍵結論</strong><p style="font-size:13px;margin-top:6px">• 多種身體檢查可以預測困難插管<br>• <strong>沒有任何檢查可以可靠地排除困難插管</strong><br>• 最佳預測指標是上唇咬合試驗 (ULBT)</p></div>`,
+    
+    2: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 上唇咬合試驗 (ULBT)</h4><p style="font-size:13px">ULBT 是預測困難插管最準確的單一身體檢查，操作簡單且診斷價值最高。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🦷 操作方法</h4>
+    <div class="info"><strong>💡 測試步驟</strong><p style="font-size:13px;margin-top:6px">請患者用<strong>下排門牙</strong>咬住<strong>上嘴唇</strong>，觀察下顎前突的能力和下門牙可以延伸到達的位置。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 ULBT 分級標準</h4>
+    <table><thead><tr><th>分級</th><th>描述</th><th>預測</th></tr></thead>
+    <tbody>
+    <tr><td style="font-weight:600;color:var(--suc)">Class 1</td><td style="text-align:left">下門牙可咬住上唇紅唇線以上</td><td style="color:var(--suc)">容易插管</td></tr>
+    <tr><td style="font-weight:600;color:var(--warn)">Class 2</td><td style="text-align:left">下門牙可咬住上唇紅唇線以下</td><td style="color:var(--warn)">中等</td></tr>
+    <tr><td style="font-weight:600;color:var(--err)">Class 3</td><td style="text-align:left">下門牙無法延伸咬到上唇</td><td style="color:var(--err)">困難插管</td></tr>
+    </tbody></table>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📈 ULBT Class 3 的診斷價值</h4>
+    <div class="stat-box" style="background:#FBE9E7;margin-bottom:16px">
+        <div style="font-weight:700;color:var(--pri);margin-bottom:10px">ULBT Class 3（最佳預測指標）</div>
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center">
+            <div><div class="label">敏感度</div><div class="value" style="color:var(--pri)">28%</div></div>
+            <div><div class="label">特異度</div><div class="value" style="color:var(--pri)">96%</div></div>
+            <div><div class="label">LR+</div><div class="value" style="color:var(--suc)">14</div></div>
+            <div><div class="label">LR-</div><div class="value" style="color:var(--warn)">0.75</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:8px">LR+ 95% CI: 8.9-22</div>
+    </div>
+    <div class="good"><strong>✔ 臨床意義</strong><p style="font-size:13px;margin-top:6px"><strong>LR+ = 14</strong> 是所有單一檢查中最高的！<br>• 前測機率 10% → 後測機率 <strong>>60%</strong><br>• 當 ULBT Class 3 時，應高度警覺困難插管</p></div>
+    <div class="warn" style="margin-top:16px"><strong>⚠️ 限制</strong><p style="font-size:13px;margin-top:6px">• 敏感度僅 28%，大多數困難插管患者 ULBT 正常<br>• LR- = 0.75，ULBT 正常不能排除困難插管<br>• 需結合其他評估方法</p></div>`,
+    
+    3: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 解剖學測量指標</h4><p style="font-size:13px">下頦舌骨距離 (Hyomental Distance) 和小頜畸形 (Retrognathia) 是重要的解剖學預測指標。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📏 下頦舌骨距離 (Hyomental Distance)</h4>
+    <div class="info"><strong>💡 測量方法</strong><p style="font-size:13px;margin-top:6px">測量<strong>舌骨</strong>到<strong>下巴尖端</strong>的直線距離。<br>閾值：< 3-5.5 cm 為異常（各研究定義略有不同）</p></div>
+    <div class="stat-box" style="background:#E0F2F1;margin-bottom:16px">
+        <div style="font-weight:700;color:var(--teal);margin-bottom:10px">短下頦舌骨距離</div>
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center">
+            <div><div class="label">敏感度</div><div class="value" style="color:var(--teal)">20%</div></div>
+            <div><div class="label">特異度</div><div class="value" style="color:var(--teal)">97%</div></div>
+            <div><div class="label">LR+</div><div class="value" style="color:var(--suc)">6.4</div></div>
+            <div><div class="label">LR-</div><div class="value" style="color:var(--warn)">0.83</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:8px">LR+ 95% CI: 4.1-10</div>
+    </div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🦴 小頜畸形 (Retrognathia)</h4>
+    <div class="info"><strong>💡 評估方法</strong><p style="font-size:13px;margin-top:6px">• 客觀測量：下顎角到下巴尖端 < 9 cm<br>• 主觀評估：下巴明顯後縮</p></div>
+    <div class="stat-box" style="background:#EDE7F6;margin-bottom:16px">
+        <div style="font-weight:700;color:var(--pur);margin-bottom:10px">小頜畸形 (Retrognathia)</div>
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center">
+            <div><div class="label">敏感度</div><div class="value" style="color:var(--pur)">11%</div></div>
+            <div><div class="label">特異度</div><div class="value" style="color:var(--pur)">98%</div></div>
+            <div><div class="label">LR+</div><div class="value" style="color:var(--suc)">6.0</div></div>
+            <div><div class="label">LR-</div><div class="value" style="color:var(--warn)">0.91</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:8px">LR+ 95% CI: 3.1-11</div>
+    </div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📐 其他解剖學指標</h4>
+    <table><thead><tr><th>指標</th><th>異常定義</th><th>LR+</th></tr></thead>
+    <tbody>
+    <tr><td style="text-align:left;font-weight:600">甲頦距離 (TMD)</td><td>< 6-7 cm</td><td><span class="lr-mod">3.4</span></td></tr>
+    <tr><td style="text-align:left;font-weight:600">胸頦距離 (SMD)</td><td>< 12.5 cm</td><td><span class="lr-mod">3.3</span></td></tr>
+    <tr><td style="text-align:left;font-weight:600">張口度</td><td>< 3.5-4 cm</td><td><span class="lr-mod">3.1</span></td></tr>
+    </tbody></table>
+    <div class="tip" style="margin-top:16px"><strong>🔍 臨床要點</strong><p style="font-size:13px;margin-top:6px">解剖學測量的特異度很高 (96-98%)，但敏感度都很低。異常發現強烈提示困難插管，但正常不能排除。</p></div>`,
+    
+    4: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 Mallampati 分級</h4><p style="font-size:13px">Modified Mallampati Score (MMS) 是臨床最廣泛使用的氣道評估工具，但診斷價值中等。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">👄 操作方法</h4>
+    <div class="info"><strong>💡 標準操作</strong><p style="font-size:13px;margin-top:6px">1. 患者坐姿，頭部中立位<br>2. 張口到最大，舌頭伸出但不發聲<br>3. 觀察可見的咽部結構</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 MMS 分級標準</h4>
+    <table><thead><tr><th>分級</th><th>可見結構</th></tr></thead>
+    <tbody>
+    <tr><td style="font-weight:600;color:var(--suc)">Class 1</td><td style="text-align:left">軟顎、懸雍垂、扁桃體柱全部可見</td></tr>
+    <tr><td style="font-weight:600;color:var(--suc)">Class 2</td><td style="text-align:left">軟顎、懸雍垂可見</td></tr>
+    <tr><td style="font-weight:600;color:var(--warn)">Class 3</td><td style="text-align:left">僅軟顎可見</td></tr>
+    <tr><td style="font-weight:600;color:var(--err)">Class 4</td><td style="text-align:left">僅硬顎可見</td></tr>
+    </tbody></table>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📈 MMS ≥ 3 的診斷價值</h4>
+    <div class="stat-box" style="background:#EDE7F6;margin-bottom:16px">
+        <div style="font-weight:700;color:var(--pur);margin-bottom:10px">Modified Mallampati Score ≥ 3</div>
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center">
+            <div><div class="label">敏感度</div><div class="value" style="color:var(--pur)">53%</div></div>
+            <div><div class="label">特異度</div><div class="value" style="color:var(--pur)">87%</div></div>
+            <div><div class="label">LR+</div><div class="value" style="color:var(--warn)">4.1</div></div>
+            <div><div class="label">LR-</div><div class="value" style="color:var(--warn)">0.54</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:8px">LR+ 95% CI: 3.0-5.6</div>
+    </div>
+    <div class="warn"><strong>⚠️ MMS 的限制</strong><p style="font-size:13px;margin-top:6px">• LR+ = 4.1 僅為中等強度<br>• LR- = 0.54 無法有效排除困難插管<br>• 評估者間一致性較差<br>• 比 ULBT (LR+ 14) 的預測能力低</p></div>
+    <div class="tip" style="margin-top:16px"><strong>🔍 比較 ULBT vs MMS</strong><p style="font-size:13px;margin-top:6px">• <strong>ULBT Class 3</strong>：LR+ = 14，特異度 96%<br>• <strong>MMS ≥ 3</strong>：LR+ = 4.1，特異度 87%<br>• ULBT 預測困難插管的能力優於 MMS</p></div>`,
+    
+    5: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 綜合評估</h4><p style="font-size:13px">結合多項指標的 Wilson Score 可提高預測準確度，但仍無法完全排除困難插管。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 Wilson Score 計分系統</h4>
+    <div class="info"><strong>💡 評估項目（各0-2分）</strong><p style="font-size:13px;margin-top:6px">1. 體重<br>2. 頭頸活動度<br>3. 張口度<br>4. 小頜畸形<br>5. 暴牙</p></div>
+    <div class="stat-box" style="background:#FFF8E1;margin-bottom:16px">
+        <div style="font-weight:700;color:var(--acc);margin-bottom:10px">Wilson Score 異常</div>
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center">
+            <div><div class="label">敏感度</div><div class="value" style="color:var(--acc)">34%</div></div>
+            <div><div class="label">特異度</div><div class="value" style="color:var(--acc)">95%</div></div>
+            <div><div class="label">LR+</div><div class="value" style="color:var(--suc)">9.1</div></div>
+            <div><div class="label">LR-</div><div class="value" style="color:var(--warn)">0.69</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:8px">LR+ 95% CI: 5.1-16</div>
+    </div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 所有預測指標比較</h4>
+    <table><thead><tr><th>指標</th><th>LR+</th><th>特異度</th><th>排名</th></tr></thead>
+    <tbody>
+    <tr style="background:#FBE9E7"><td style="text-align:left;font-weight:600">ULBT Class 3</td><td><span class="lr-high">14</span></td><td>96%</td><td>⭐ #1</td></tr>
+    <tr><td style="text-align:left;font-weight:600">Wilson Score</td><td><span class="lr-high">9.1</span></td><td>95%</td><td>#2</td></tr>
+    <tr><td style="text-align:left;font-weight:600">短下頦舌骨距離</td><td><span class="lr-high">6.4</span></td><td>97%</td><td>#3</td></tr>
+    <tr><td style="text-align:left;font-weight:600">小頜畸形</td><td><span class="lr-high">6.0</span></td><td>98%</td><td>#4</td></tr>
+    <tr><td style="text-align:left;font-weight:600">MMS ≥ 3</td><td><span class="lr-mod">4.1</span></td><td>87%</td><td>#5</td></tr>
+    <tr><td style="text-align:left;font-weight:600">甲頦距離短</td><td><span class="lr-mod">3.4</span></td><td>92%</td><td>#6</td></tr>
+    </tbody></table>
+    <div class="warn" style="margin-top:16px"><strong>⚠️ 重要結論</strong><p style="font-size:13px;margin-top:6px"><strong>沒有任何單一檢查或組合可以可靠地排除困難插管！</strong><br>所有指標的 LR- 都接近 1，無法有效降低困難插管的可能性。</p></div>
+    <div class="good" style="margin-top:16px"><strong>✔ 臨床建議</strong><p style="font-size:13px;margin-top:6px">1. <strong>ULBT Class 3</strong> 是最佳單一預測指標<br>2. 異常發現時：準備進階氣道設備、尋求專業協助<br>3. 正常發現時：仍需保持警覺，準備後備計畫<br>4. 前測機率 10% + ULBT Class 3 → 後測機率 >60%</p></div>
+    <div class="orange" style="margin-top:16px"><strong>📋 實務流程</strong><p style="font-size:13px;margin-top:6px">• 所有需插管患者都應進行氣道評估<br>• 優先使用 ULBT（最準確且易操作）<br>• 結合 Mallampati、解剖學測量綜合判斷<br>• 永遠準備困難氣道處理計畫</p></div>`
+};
+
+const quiz = [
+    {q:'根據 JAMA 系統性回顧，在需要插管的患者中，困難插管的比例約為多少？',o:['約 3%','約 10%','約 20%','約 30%'],c:1,e:'在 62 項高品質研究中，約 10% (95% CI: 8.2%-12%) 的患者屬於困難插管。'},
+    {q:'上唇咬合試驗 (ULBT) 的操作方法為何？',o:['用上門牙咬下嘴唇','用下門牙咬上嘴唇','張嘴伸舌觀察咽部','測量張口度大小'],c:1,e:'ULBT 是請患者用下排門牙咬住上嘴唇，觀察下顎前突的能力。'},
+    {q:'ULBT Class 3 的定義是什麼？',o:['下門牙可咬住上唇紅唇線以上','下門牙可咬住上唇紅唇線以下','下門牙無法延伸咬到上唇','下門牙可完全覆蓋上唇'],c:2,e:'ULBT Class 3 表示下門牙無法延伸到達上唇，是預測困難插管的最佳指標。'},
+    {q:'ULBT Class 3 預測困難插管的陽性似然比 (LR+) 為多少？',o:['4.1','6.4','9.1','14'],c:3,e:'ULBT Class 3 的 LR+ = 14 (95% CI: 8.9-22)，是所有單一檢查中最高的。'},
+    {q:'Modified Mallampati Score ≥ 3 的 LR+ 為多少？',o:['4.1','6.0','9.1','14'],c:0,e:'MMS ≥ 3 的 LR+ = 4.1 (95% CI: 3.0-5.6)，預測能力不如 ULBT。'},
+    {q:'下列何者的特異度最高？',o:['ULBT Class 3 (96%)','小頜畸形 (98%)','MMS ≥ 3 (87%)','Wilson Score (95%)'],c:1,e:'小頜畸形的特異度最高 (98%)，但敏感度僅 11%。'},
+    {q:'關於困難插管預測，以下何者正確？',o:['MMS 是最準確的單一預測指標','ULBT 正常可以排除困難插管','沒有任何檢查可以可靠排除困難插管','Wilson Score 的 LR+ 最高'],c:2,e:'研究的重要結論：沒有任何單一檢查或組合可以可靠地排除困難插管。'},
+    {q:'短下頦舌骨距離預測困難插管的 LR+ 約為多少？',o:['3.4','4.1','6.4','14'],c:2,e:'短下頦舌骨距離的 LR+ = 6.4 (95% CI: 4.1-10)。'},
+    {q:'Wilson Score 評估哪些項目？',o:['體重、頭頸活動度、張口度、小頜畸形、暴牙','MMS、ULBT、TMD、SMD、張口度','年齡、性別、BMI、頸圍、MMS','身高、體重、張口度、甲頦距離、MMS'],c:0,e:'Wilson Score 評估：體重、頭頸活動度、張口度、小頜畸形、暴牙，各項 0-2 分。'},
+    {q:'若患者 ULBT 為 Class 3，困難插管的後測機率約為多少？（假設前測機率 10%）',o:['約 20%','約 40%','約 60%','約 80%'],c:2,e:'前測機率 10% + LR+ 14 = 後測機率約 60%。ULBT Class 3 可將困難插管機率從 10% 提升至 >60%。'}
+];
+
+const MODULE_ID = 'jama-difficult-intubation';
+
+const ProgressTracker = {
+    STORAGE_KEY: 'ebm-progress',
+    getProgress: () => {
+        try {
+            const d = localStorage.getItem(ProgressTracker.STORAGE_KEY);
+            return d ? JSON.parse(d) : { version: 1, modules: {}, badges: [], totalTimeSpent: 0 };
+        } catch { return { version: 1, modules: {}, badges: [], totalTimeSpent: 0 }; }
+    },
+    saveQuizResult: (moduleId, score, total, timeSpent) => {
+        const progress = ProgressTracker.getProgress();
+        const mod = progress.modules[moduleId] || {
+            bestScore: 0, totalAttempts: 0, allAttempts: [],
+            lessonsViewed: [], completed: false, firstCompleted: null
+        };
+        const attempt = { date: new Date().toISOString(), score, timeSpent };
+        mod.allAttempts.push(attempt);
+        mod.totalAttempts++;
+        if (score > mod.bestScore) mod.bestScore = score;
+        const passingScore = Math.ceil(total * 0.7);
+        if (score >= passingScore && !mod.completed) {
+            mod.completed = true;
+            mod.firstCompleted = attempt.date;
+        }
+        progress.modules[moduleId] = mod;
+        progress.totalTimeSpent += timeSpent;
+        progress.lastUpdated = new Date().toISOString();
+        ProgressTracker.checkBadges(progress, score, total, timeSpent);
+        localStorage.setItem(ProgressTracker.STORAGE_KEY, JSON.stringify(progress));
+        return progress;
+    },
+    checkBadges: (progress, score, total, timeSpent) => {
+        const badges = progress.badges || [];
+        const badgeIds = badges.map(b => b.id);
+        const now = new Date().toISOString();
+        if (!badgeIds.includes('first-quiz')) badges.push({ id: 'first-quiz', earnedAt: now });
+        if (score === total && !badgeIds.includes('perfect-score')) badges.push({ id: 'perfect-score', earnedAt: now });
+        if (timeSpent <= 120 && !badgeIds.includes('speed-demon')) badges.push({ id: 'speed-demon', earnedAt: now });
+        const completed = Object.values(progress.modules).filter(m => m.completed).length;
+        if (completed >= 5 && !badgeIds.includes('five-complete')) badges.push({ id: 'five-complete', earnedAt: now });
+        if (completed >= 10 && !badgeIds.includes('ten-complete')) badges.push({ id: 'ten-complete', earnedAt: now });
+        if (completed >= 18 && !badgeIds.includes('master')) badges.push({ id: 'master', earnedAt: now });
+        const mod = progress.modules[MODULE_ID];
+        if (mod && mod.totalAttempts >= 3 && !badgeIds.includes('persistent')) badges.push({ id: 'persistent', earnedAt: now });
+        progress.badges = badges;
+    }
+};
+
+let currentLesson = 1;
+let currentQ = 0;
+let score = 0;
+let answered = false;
+let quizStartTime = null;
+
+function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+function showHome() { showPage('home'); }
+
+function showLesson(id) {
+    currentLesson = id;
+    const l = lessons[id-1];
+    document.getElementById('lesson-title').textContent = l.title;
+    document.getElementById('lesson-header').style.background = `linear-gradient(135deg,${l.color},${l.color}88)`;
+    document.getElementById('lesson-header').innerHTML = `<div class="container"><div style="font-size:12px;opacity:0.9">Lesson ${l.id} • ${l.sub}</div><h1 style="font-size:22px;font-weight:700">${l.title}</h1></div>`;
+    document.getElementById('lesson-body').innerHTML = lessonContent[id];
+    document.getElementById('prev-btn').style.display = id > 1 ? 'block' : 'none';
+    document.getElementById('next-btn').textContent = id < 5 ? '下一課 →' : '開始測驗 📝';
+    document.getElementById('next-btn').onclick = id < 5 ? nextLesson : startQuiz;
+    showPage('lesson');
+}
+
+function prevLesson() { if (currentLesson > 1) showLesson(currentLesson - 1); }
+function nextLesson() { if (currentLesson < 5) showLesson(currentLesson + 1); }
+
+function startQuiz() {
+    currentQ = 0; score = 0; answered = false;
+    quizStartTime = Date.now();
+    renderQuestion();
+    showPage('quiz');
+}
+
+function renderQuestion() {
+    const q = quiz[currentQ];
+    document.getElementById('quiz-progress').textContent = `${currentQ+1}/${quiz.length}`;
+    document.getElementById('quiz-progress-bar').style.width = `${((currentQ+1)/quiz.length)*100}%`;
+    
+    let html = `<h3 style="font-size:15px;font-weight:600;line-height:1.7;margin-bottom:20px">${q.q}</h3>`;
+    q.o.forEach((opt, i) => {
+        html += `<button class="quiz-option" onclick="selectAnswer(${i})" id="opt${i}">
+            <span class="option-label" id="lbl${i}">${String.fromCharCode(65+i)}</span>
+            <span style="line-height:1.5">${opt}</span>
+        </button>`;
+    });
+    document.getElementById('quiz-content').innerHTML = html;
+    document.getElementById('quiz-feedback').innerHTML = '';
+    document.getElementById('quiz-next').style.display = 'none';
+    answered = false;
+}
+
+function selectAnswer(i) {
+    if (answered) return;
+    answered = true;
+    const q = quiz[currentQ];
+    
+    document.querySelectorAll('.quiz-option').forEach((btn, idx) => {
+        btn.classList.add('disabled');
+        if (idx === q.c) {
+            btn.classList.add('correct');
+            document.getElementById('lbl'+idx).classList.add('correct');
+            document.getElementById('lbl'+idx).textContent = '✔';
+        } else if (idx === i && i !== q.c) {
+            btn.classList.add('wrong');
+            document.getElementById('lbl'+idx).classList.add('wrong');
+            document.getElementById('lbl'+idx).textContent = '✗';
+        }
+    });
+    
+    if (i === q.c) score++;
+    
+    const feedbackClass = i === q.c ? 'good' : 'tip';
+    const feedbackTitle = i === q.c ? '✔ 正確！' : '✗ 答錯了';
+    const feedbackColor = i === q.c ? 'var(--suc)' : 'var(--acc)';
+    document.getElementById('quiz-feedback').innerHTML = `<div class="${feedbackClass}"><strong style="color:${feedbackColor}">${feedbackTitle}</strong><p style="font-size:13px;color:var(--txt2);margin-top:8px;line-height:1.7">${q.e}</p></div>`;
+    
+    document.getElementById('quiz-next').style.display = 'block';
+    document.getElementById('quiz-next').textContent = currentQ < quiz.length - 1 ? '下一題 →' : '查看結果';
+}
+
+function nextQuestion() {
+    if (currentQ < quiz.length - 1) {
+        currentQ++;
+        renderQuestion();
+    } else {
+        showResult();
+    }
+}
+
+function showResult() {
+    const pct = Math.round((score / quiz.length) * 100);
+    const color = pct >= 80 ? 'var(--suc)' : pct >= 60 ? 'var(--warn)' : 'var(--err)';
+    document.getElementById('result-circle').style.background = `conic-gradient(${color} ${pct*3.6}deg, #E5E5E5 0deg)`;
+    document.getElementById('result-pct').textContent = pct + '%';
+    document.getElementById('result-score').textContent = `${score}/${quiz.length}`;
+    document.getElementById('result-title').textContent = pct >= 80 ? '🎉 太棒了！' : pct >= 60 ? '👍 不錯！' : '💪 加油！';
+    document.getElementById('result-msg').textContent = pct >= 80 ? '你已經掌握困難插管預測！' : pct >= 60 ? '再複習可以更進步！' : '建議重新閱讀課程';
+
+    // Save progress
+    if (quizStartTime) {
+        const timeSpent = Math.round((Date.now() - quizStartTime) / 1000);
+        ProgressTracker.saveQuizResult(MODULE_ID, score, quiz.length, timeSpent);
+    }
+
+    showPage('result');
+}
+</script>
+</body>
+</html>

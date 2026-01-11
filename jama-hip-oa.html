@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>髖關節骨關節炎診斷 | JAMA Rational Clinical Examination</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--pri:#6D4C41;--pri2:#8D6E63;--acc:#FF8F00;--suc:#26A69A;--warn:#FFC107;--err:#EF5350;--pur:#7E57C2;--blue:#42A5F5;--pink:#EC407A;--teal:#00897B;--bg:#FAF9F7;--txt:#3E2723;--txt2:#6B7280}
+        body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+        .container{max-width:480px;margin:0 auto}
+        .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(109,76,65,0.1)}
+        .btn{padding:14px 24px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all 0.3s;width:100%}
+        .btn-pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}
+        .btn-acc{background:linear-gradient(135deg,var(--acc),#FFCA28);color:#333}
+        .btn-out{background:#fff;border:2px solid var(--pri);color:var(--pri)}
+        table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+        th,td{padding:10px;text-align:center;border-bottom:1px solid #eee}
+        th{background:#EFEBE9;font-weight:600;color:var(--pri)}
+        .formula{background:linear-gradient(135deg,#EFEBE9,#D7CCC8);border:2px solid var(--pri);border-radius:12px;padding:16px;margin:12px 0;text-align:center;font-size:17px;color:#4E342E}
+        .tip{background:#FFF8E1;border-left:4px solid var(--acc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .good{background:#E0F2F1;border-left:4px solid var(--suc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .info{background:#E3F2FD;border-left:4px solid var(--blue);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .warn{background:#FFF3E0;border-left:4px solid var(--warn);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .purple{background:#EDE7F6;border-left:4px solid var(--pur);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .pink{background:#FCE4EC;border-left:4px solid var(--pink);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .brown{background:#EFEBE9;border-left:4px solid var(--pri);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .key-point{background:linear-gradient(135deg,#6D4C41,#8D6E63);color:#fff;border-radius:12px;padding:16px;margin:16px 0}
+        .lr-high{background:#C8E6C9;color:#2E7D32;padding:2px 8px;border-radius:4px;font-weight:600}
+        .lr-mod{background:#FFF9C4;color:#F57F17;padding:2px 8px;border-radius:4px;font-weight:600}
+        .lr-low{background:#FFCDD2;color:#C62828;padding:2px 8px;border-radius:4px;font-weight:600}
+        .lr-exclude{background:#BBDEFB;color:#1565C0;padding:2px 8px;border-radius:4px;font-weight:600}
+        header{background:#fff;border-bottom:1px solid #eee;padding:12px 16px;position:sticky;top:0;z-index:10}
+        .header-inner{max-width:480px;margin:0 auto;display:flex;align-items:center;gap:12px}
+        .back-btn{background:#EFEBE9;border:none;border-radius:10px;width:40px;height:40px;cursor:pointer;color:var(--pri);display:flex;align-items:center;justify-content:center}
+        .hero{background:linear-gradient(135deg,#6D4C41,#8D6E63);padding:32px 20px;color:#fff}
+        .tag{background:rgba(255,255,255,0.2);display:inline-block;padding:6px 14px;border-radius:50px;font-size:12px;font-weight:600;margin-bottom:16px}
+        .badge-row{display:flex;gap:10px;flex-wrap:wrap}
+        .badge{background:rgba(255,255,255,0.2);padding:6px 12px;border-radius:20px;font-size:11px}
+        .content{padding:0 16px;margin-top:-20px}
+        .lesson-item{display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:8px;background:#FAF5F2;border-radius:12px;cursor:pointer;border:2px solid transparent;transition:border-color 0.2s}
+        .lesson-item:hover{border-color:var(--pri)}
+        .lesson-num{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+        .goal-item{display:flex;gap:10px;margin-bottom:8px;font-size:14px}
+        .goal-num{background:var(--suc);color:#fff;border-radius:6px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+        footer{background:#EFEBE9;padding:24px 16px;border-radius:16px;text-align:center;margin:20px 0 40px}
+        .page{display:none}
+        .page.active{display:block}
+        .lesson-header{padding:20px;color:#fff}
+        .lesson-content{padding:20px 16px}
+        .nav-buttons{display:flex;gap:12px;margin-top:24px}
+        .nav-buttons .btn{flex:1}
+        .progress-bar{height:8px;background:#E5E5E5;border-radius:4px;margin-bottom:20px}
+        .progress-fill{height:100%;background:linear-gradient(90deg,var(--pri),var(--pri2));border-radius:4px;transition:width 0.3s}
+        .quiz-option{width:100%;padding:12px 14px;margin-bottom:10px;background:#fff;border:2px solid #E5E5E5;border-radius:12px;text-align:left;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:12px}
+        .quiz-option:hover{border-color:var(--pri)}
+        .quiz-option.selected{background:#EFEBE9;border-color:var(--pri)}
+        .quiz-option.correct{background:#E8F5E9;border-color:var(--suc)}
+        .quiz-option.wrong{background:#FFEBEE;border-color:var(--err)}
+        .quiz-option.disabled{cursor:default}
+        .option-label{width:26px;height:26px;border-radius:8px;background:#EFEBE9;color:var(--pri);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+        .option-label.correct{background:var(--suc);color:#fff}
+        .option-label.wrong{background:var(--err);color:#fff}
+        .result-circle{width:140px;height:140px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px}
+        .result-inner{width:120px;height:120px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+        .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .stat-box{border-radius:12px;padding:16px;text-align:center}
+        .stat-box .label{font-size:11px;color:var(--txt2)}
+        .stat-box .value{font-size:20px;font-weight:700}
+    </style>
+</head>
+<body>
+    <!-- 首頁 -->
+    <div id="home" class="page active">
+        <header>
+            <div class="header-inner">
+                <button class="back-btn" onclick="location.href='jama-rational-exam.html'">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style="font-weight:700;color:#4E342E">髖關節骨關節炎</span>
+            </div>
+        </header>
+        <div class="hero">
+            <div class="container">
+                <div class="tag">🦴 JAMA Rational Clinical Examination</div>
+                <h1 style="font-size:22px;font-weight:700;margin-bottom:8px">Does This Patient Have Hip Osteoarthritis?</h1>
+                <h2 style="font-size:15px;font-weight:500;margin-bottom:12px;opacity:0.95">髖關節骨關節炎的臨床診斷</h2>
+                <a href="https://jamanetwork.com/journals/jama/article-abstract/2757584" target="_blank" style="display:inline-block;background:rgba(255,255,255,0.25);padding:8px 16px;border-radius:8px;color:#fff;text-decoration:none;font-size:13px;margin-bottom:16px;transition:background 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.25)'">📄 JAMA 2019;322(23):2323-2333 ↗</a>
+                <div class="badge-row">
+                    <div class="badge">📊 N=1,110 患者</div>
+                    <div class="badge">🦴 1,324 髖關節</div>
+                    <div class="badge">🎯 LR Analysis</div>
+                </div>
+            </div>
+        </div>
+        <div class="content">
+            <div class="container">
+                <div class="card">
+                    <h3 style="font-size:16px;font-weight:700;color:var(--pri);margin-bottom:12px">🎯 學習目標</h3>
+                    <div class="goal-item"><span class="goal-num">1</span><span style="color:var(--txt2)">了解髖關節骨關節炎的臨床表現</span></div>
+                    <div class="goal-item"><span class="goal-num">2</span><span style="color:var(--txt2)">掌握病史詢問的診斷價值</span></div>
+                    <div class="goal-item"><span class="goal-num">3</span><span style="color:var(--txt2)">學會關節活動度檢查技巧</span></div>
+                    <div class="goal-item"><span class="goal-num">4</span><span style="color:var(--txt2)">運用誘發疼痛試驗進行診斷</span></div>
+                    <div class="goal-item"><span class="goal-num">5</span><span style="color:var(--txt2)">整合臨床發現判斷 OA 可能性</span></div>
+                </div>
+                <div class="card">
+                    <h3 style="font-size:16px;font-weight:700;color:var(--pri);margin-bottom:12px">📖 課程單元</h3>
+                    <div class="lesson-item" onclick="showLesson(1)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#6D4C41,#6D4C4188)">1</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">髖關節 OA 概論</div><div style="font-size:12px;color:var(--txt2)">Hip OA Basics</div></div>
+                        <svg viewBox="0 0 24 24" fill="#6D4C41" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="lesson-item" onclick="showLesson(2)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#8D6E63,#8D6E6388)">2</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">病史詢問</div><div style="font-size:12px;color:var(--txt2)">Clinical History</div></div>
+                        <svg viewBox="0 0 24 24" fill="#8D6E63" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="lesson-item" onclick="showLesson(3)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#26A69A,#26A69A88)">3</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">關節活動度檢查</div><div style="font-size:12px;color:var(--txt2)">Range of Motion Tests</div></div>
+                        <svg viewBox="0 0 24 24" fill="#26A69A" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="lesson-item" onclick="showLesson(4)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#7E57C2,#7E57C288)">4</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">誘發疼痛試驗</div><div style="font-size:12px;color:var(--txt2)">Provocative Pain Tests</div></div>
+                        <svg viewBox="0 0 24 24" fill="#7E57C2" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                    <div class="lesson-item" onclick="showLesson(5)">
+                        <div class="lesson-num" style="background:linear-gradient(135deg,#FFB300,#FFB30088)">5</div>
+                        <div style="flex:1"><div style="font-weight:600;font-size:15px">臨床綜合判斷</div><div style="font-size:12px;color:var(--txt2)">Clinical Integration</div></div>
+                        <svg viewBox="0 0 24 24" fill="#FFB300" width="20" height="20"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                </div>
+                <button class="btn btn-acc" onclick="startQuiz()">📝 開始自我測驗</button>
+                <div class="card" style="background:linear-gradient(135deg,#EFEBE9,#D7CCC8);margin-top:16px">
+                    <h3 style="font-size:14px;font-weight:700;color:var(--pri);margin-bottom:8px">📌 臨床要點</h3>
+                    <p style="font-size:13px;color:var(--txt2);line-height:1.8">蹲下時後方疼痛 (LR+ 6.1) 和被動外展/內收時鼠蹊部疼痛 (LR+ 5.7) 是預測髖關節 OA 最有價值的檢查。正常的被動髖關節內收可有效排除 OA (LR- 0.25)。</p>
+                </div>
+                <footer>
+                    <p style="font-size:12px;color:var(--txt2);margin-bottom:8px">新竹台大分院教學部</p>
+                    <p style="font-size:11px;color:var(--txt2)">謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    <p style="font-size:10px;color:var(--txt2);margin-top:8px">資料來源: JAMA 2019;322(23):2323-2333</p>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- 課程頁 -->
+    <div id="lesson" class="page">
+        <header>
+            <div class="header-inner">
+                <button class="back-btn" onclick="showHome()">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span id="lesson-title" style="font-weight:700;color:#4E342E"></span>
+            </div>
+        </header>
+        <div id="lesson-header" class="lesson-header"></div>
+        <div class="lesson-content">
+            <div class="container">
+                <div id="lesson-body"></div>
+                <div class="nav-buttons">
+                    <button id="prev-btn" class="btn btn-out" onclick="prevLesson()">← 上一課</button>
+                    <button id="next-btn" class="btn btn-pri" onclick="nextLesson()">下一課 →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 測驗頁 -->
+    <div id="quiz" class="page">
+        <header>
+            <div class="header-inner">
+                <button class="back-btn" onclick="showHome()">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style="font-weight:700;color:#4E342E">自我測驗</span>
+            </div>
+        </header>
+        <div style="padding:20px 16px">
+            <div class="container">
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px">
+                    <span style="color:var(--txt2)">進度</span>
+                    <span id="quiz-progress" style="font-weight:600;color:var(--pri)"></span>
+                </div>
+                <div class="progress-bar">
+                    <div id="quiz-progress-bar" class="progress-fill"></div>
+                </div>
+                <div id="quiz-content" class="card"></div>
+                <div id="quiz-feedback"></div>
+                <button id="quiz-next" class="btn btn-pri" onclick="nextQuestion()" style="display:none;margin-top:16px">下一題 →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 結果頁 -->
+    <div id="result" class="page">
+        <header>
+            <div class="header-inner">
+                <button class="back-btn" onclick="showHome()">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style="font-weight:700;color:#4E342E">測驗結果</span>
+            </div>
+        </header>
+        <div style="padding:40px 16px;text-align:center">
+            <div class="container">
+                <div id="result-circle" class="result-circle">
+                    <div class="result-inner">
+                        <div id="result-pct" style="font-size:36px;font-weight:700;color:var(--pri)"></div>
+                        <div id="result-score" style="font-size:14px;color:var(--txt2)"></div>
+                    </div>
+                </div>
+                <h2 id="result-title" style="font-size:24px;font-weight:700;margin-bottom:8px"></h2>
+                <p id="result-msg" style="color:var(--txt2);margin-bottom:32px"></p>
+                <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                    <button class="btn btn-pri" onclick="startQuiz()">重新測驗</button>
+                    <button class="btn btn-out" onclick="showHome()">返回課程</button>
+                </div>
+            </div>
+        </div>
+        <footer style="margin-top:40px">
+            <p style="font-size:12px;color:var(--txt2)">新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+        </footer>
+    </div>
+
+<script>
+const lessons = [
+    {id:1, title:'髖關節 OA 概論', sub:'Hip OA Basics', color:'#6D4C41'},
+    {id:2, title:'病史詢問', sub:'Clinical History', color:'#8D6E63'},
+    {id:3, title:'關節活動度檢查', sub:'Range of Motion Tests', color:'#26A69A'},
+    {id:4, title:'誘發疼痛試驗', sub:'Provocative Pain Tests', color:'#7E57C2'},
+    {id:5, title:'臨床綜合判斷', sub:'Clinical Integration', color:'#FFB300'}
+];
+
+const lessonContent = {
+    1: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 核心概念</h4><p style="font-size:13px">髖關節骨關節炎 (Hip OA) 是導致髖部疼痛和失能的常見原因，簡單的關節活動度測試可以幫助識別最可能有 OA 的患者。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🦴 為什麼重要？</h4>
+    <div class="info"><strong>📊 臨床背景</strong><p style="font-size:13px;margin-top:6px">髖關節 OA 是造成成人關節疼痛和活動受限的主要原因之一，早期識別有助於適當治療計畫的制定，包括物理治療、藥物治療或手術評估。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 研究概況</h4>
+    <div class="stat-box" style="background:#EFEBE9;margin-bottom:16px">
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
+            <div><div class="label">研究數量</div><div class="value" style="color:var(--pri)">6</div></div>
+            <div><div class="label">患者數</div><div class="value" style="color:var(--pri)">1,110</div></div>
+            <div><div class="label">髖關節數</div><div class="value" style="color:var(--pri)">1,324</div></div>
+        </div>
+    </div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📈 盛行率</h4>
+    <div class="formula">髖或鼠蹊部疼痛患者中，X光證實 OA 的比例 = 34%</div>
+    <div class="warn"><strong>⚠️ 臨床意義</strong><p style="font-size:13px;margin-top:6px">在主訴髖部或鼠蹊部疼痛到基層醫療就診的患者中，約有 <strong>34%</strong> 的髖關節會在 X 光上顯示 OA 證據。<br><br>這代表前測機率約為 <strong>1/3</strong>，我們需要有效的臨床檢查來提高或降低這個機率。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🎯 診斷標準</h4>
+    <div class="good"><strong>✔ 參考標準</strong><p style="font-size:13px;margin-top:6px">本研究使用<strong>平面 X 光</strong>作為診斷髖關節 OA 的參考標準，評估：<br>• 關節間隙狹窄<br>• 骨贅形成<br>• 軟骨下硬化<br>• 軟骨下囊腫</p></div>`,
+    
+    2: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 病史詢問</h4><p style="font-size:13px">病史中的危險因子和症狀特徵可以提供中等程度的診斷價值，但單獨使用不足以確診或排除 OA。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📋 重要病史項目</h4>
+    <table><thead><tr><th>病史項目</th><th>敏感度</th><th>特異度</th><th>LR+</th></tr></thead>
+    <tbody>
+    <tr><td style="text-align:left;font-weight:600">OA 家族史</td><td>33%</td><td>84%</td><td><span class="lr-mod">2.1</span></td></tr>
+    <tr><td style="text-align:left;font-weight:600">膝關節 OA 病史</td><td>40%</td><td>81%</td><td><span class="lr-mod">2.1</span></td></tr>
+    <tr><td style="text-align:left;font-weight:600">爬樓梯疼痛</td><td>68%</td><td>68%</td><td><span class="lr-mod">2.1</span></td></tr>
+    <tr><td style="text-align:left;font-weight:600">上坡行走疼痛</td><td>57%</td><td>73%</td><td><span class="lr-mod">2.1</span></td></tr>
+    </tbody></table>
+    <div class="info" style="margin-top:16px"><strong>💡 解讀</strong><p style="font-size:13px;margin-top:6px">以上所有病史項目的 LR+ 都是 <strong>2.1</strong>，代表只能輕度增加 OA 的可能性。<br><br>95% CI 範圍為 1.1-3.8，診斷價值有限。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🔍 詢問重點</h4>
+    <div class="brown"><strong>📝 建議詢問的問題</strong>
+    <p style="font-size:13px;margin-top:8px">
+    1. <strong>家族史</strong>：「您的父母或兄弟姐妹有骨關節炎嗎？」<br><br>
+    2. <strong>膝關節 OA</strong>：「您有膝蓋關節炎的病史嗎？」<br><br>
+    3. <strong>活動誘發疼痛</strong>：「爬樓梯或上坡時會加重疼痛嗎？」
+    </p></div>
+    <div class="warn" style="margin-top:16px"><strong>⚠️ 限制</strong><p style="font-size:13px;margin-top:6px">• 病史的 LR+ 僅約 2，診斷效力有限<br>• 沒有任何病史項目的 LR- 足夠低到可以排除 OA<br>• 需要結合身體檢查來提高診斷準確度</p></div>`,
+    
+    3: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 關節活動度檢查</h4><p style="font-size:13px">被動髖關節內收 (Adduction) 和內旋 (Internal Rotation) 受限是診斷髖關節 OA 最有價值的活動度指標。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📏 檢查方法</h4>
+    <div class="info"><strong>💡 標準操作</strong><p style="font-size:13px;margin-top:6px">1. 患者仰臥<br>2. 使用量角器測量，或與對側肢體比較<br>3. 被動移動髖關節至各方向的終末範圍<br>4. 記錄活動度受限的方向</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 髖關節內收受限 (Decreased Adduction)</h4>
+    <div class="stat-box" style="background:#E0F2F1;margin-bottom:16px">
+        <div style="font-weight:700;color:var(--teal);margin-bottom:10px">被動髖關節內收受限</div>
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center">
+            <div><div class="label">敏感度</div><div class="value" style="color:var(--teal)">80%</div></div>
+            <div><div class="label">特異度</div><div class="value" style="color:var(--teal)">81%</div></div>
+            <div><div class="label">LR+</div><div class="value" style="color:var(--suc)">4.2</div></div>
+            <div><div class="label">LR-</div><div class="value" style="color:var(--blue)">0.25</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:8px">LR+ 95% CI: 3.0-6.0 | LR- 95% CI: 0.11-0.54</div>
+    </div>
+    <div class="good"><strong>✔ 最佳排除指標！</strong><p style="font-size:13px;margin-top:6px"><strong>LR- = 0.25</strong> 是本研究中最低的 LR-！<br>• 正常的被動髖關節內收可有效<strong>排除</strong> OA<br>• 前測機率 34% → 後測機率約 <strong>11%</strong></p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 髖關節內旋受限 (Decreased Internal Rotation)</h4>
+    <div class="stat-box" style="background:#EDE7F6;margin-bottom:16px">
+        <div style="font-weight:700;color:var(--pur);margin-bottom:10px">被動髖關節內旋受限</div>
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center">
+            <div><div class="label">敏感度</div><div class="value" style="color:var(--pur)">66%</div></div>
+            <div><div class="label">特異度</div><div class="value" style="color:var(--pur)">79%</div></div>
+            <div><div class="label">LR+</div><div class="value" style="color:var(--suc)">3.2</div></div>
+            <div><div class="label">LR-</div><div class="value" style="color:var(--warn)">0.43</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:8px">LR+ 95% CI: 1.7-6.0</div>
+    </div>
+    <div class="tip"><strong>🔍 臨床技巧</strong><p style="font-size:13px;margin-top:6px">• 內旋檢查：髖膝屈曲 90°，將小腿向外旋轉<br>• 內收檢查：髖伸直，將肢體向對側移動<br>• 與對側比較可提高準確度</p></div>`,
+    
+    4: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 誘發疼痛試驗</h4><p style="font-size:13px">特定動作誘發的疼痛反應具有最高的診斷價值，蹲下後方疼痛和被動活動時鼠蹊部疼痛是最佳預測指標。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🏆 最佳預測指標：蹲下後方疼痛</h4>
+    <div class="stat-box" style="background:#EFEBE9;margin-bottom:16px">
+        <div style="font-weight:700;color:var(--pri);margin-bottom:10px">Squat Causing Posterior Pain</div>
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center">
+            <div><div class="label">敏感度</div><div class="value" style="color:var(--pri)">24%</div></div>
+            <div><div class="label">特異度</div><div class="value" style="color:var(--pri)">96%</div></div>
+            <div><div class="label">LR+</div><div class="value" style="color:var(--suc)">6.1</div></div>
+            <div><div class="label">LR-</div><div class="value" style="color:var(--warn)">0.79</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:8px">LR+ 95% CI: 1.3-29（最高 LR+）</div>
+    </div>
+    <div class="info"><strong>💡 操作方法</strong><p style="font-size:13px;margin-top:6px">請患者做深蹲動作，詢問是否在髖關節<strong>後方</strong>產生疼痛。陽性反應強烈提示髖關節 OA。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🔥 被動外展/內收時鼠蹊部疼痛</h4>
+    <div class="stat-box" style="background:#EDE7F6;margin-bottom:16px">
+        <div style="font-weight:700;color:var(--pur);margin-bottom:10px">Groin Pain on Passive Abduction/Adduction</div>
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center">
+            <div><div class="label">敏感度</div><div class="value" style="color:var(--pur)">33%</div></div>
+            <div><div class="label">特異度</div><div class="value" style="color:var(--pur)">94%</div></div>
+            <div><div class="label">LR+</div><div class="value" style="color:var(--suc)">5.7</div></div>
+            <div><div class="label">LR-</div><div class="value" style="color:var(--warn)">0.71</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:8px">LR+ 95% CI: 1.6-20</div>
+    </div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">💪 外展肌無力 (Abductor Weakness)</h4>
+    <div class="stat-box" style="background:#FFF8E1;margin-bottom:16px">
+        <div style="font-weight:700;color:var(--acc);margin-bottom:10px">Hip Abductor Weakness</div>
+        <div class="grid-2" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;text-align:center">
+            <div><div class="label">敏感度</div><div class="value" style="color:var(--acc)">44%</div></div>
+            <div><div class="label">特異度</div><div class="value" style="color:var(--acc)">90%</div></div>
+            <div><div class="label">LR+</div><div class="value" style="color:var(--suc)">4.5</div></div>
+            <div><div class="label">LR-</div><div class="value" style="color:var(--warn)">0.62</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:8px">LR+ 95% CI: 2.4-8.4</div>
+    </div>
+    <div class="tip"><strong>🔍 外展肌力測試</strong><p style="font-size:13px;margin-top:6px">• 患者側臥，檢查者施加阻力<br>• 比較雙側肌力差異<br>• 注意 Trendelenburg 徵象</p></div>`,
+    
+    5: `<div class="key-point"><h4 style="font-size:14px;margin-bottom:8px">🔑 臨床綜合判斷</h4><p style="font-size:13px">結合多項檢查發現可以更有效地診斷或排除髖關節 OA，但沒有單一檢查足以獨立確診。</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📊 所有檢查指標排名</h4>
+    <table><thead><tr><th>檢查項目</th><th>LR+</th><th>LR-</th><th>價值</th></tr></thead>
+    <tbody>
+    <tr style="background:#EFEBE9"><td style="text-align:left;font-weight:600">蹲下後方疼痛</td><td><span class="lr-high">6.1</span></td><td>0.79</td><td>⭐ 最佳確診</td></tr>
+    <tr><td style="text-align:left;font-weight:600">被動活動鼠蹊痛</td><td><span class="lr-high">5.7</span></td><td>0.71</td><td>⭐ 確診</td></tr>
+    <tr><td style="text-align:left;font-weight:600">外展肌無力</td><td><span class="lr-high">4.5</span></td><td>0.62</td><td>確診</td></tr>
+    <tr style="background:#E3F2FD"><td style="text-align:left;font-weight:600">內收受限</td><td><span class="lr-mod">4.2</span></td><td><span class="lr-exclude">0.25</span></td><td>⭐ 最佳排除</td></tr>
+    <tr><td style="text-align:left;font-weight:600">內旋受限</td><td><span class="lr-mod">3.2</span></td><td>0.43</td><td>排除</td></tr>
+    <tr><td style="text-align:left;font-weight:600">病史項目</td><td><span class="lr-mod">2.1</span></td><td>~0.8</td><td>參考</td></tr>
+    </tbody></table>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">🎯 臨床決策流程</h4>
+    <div class="good"><strong>✔ 確診 OA 的最佳方法</strong><p style="font-size:13px;margin-top:6px">以下發現強烈提示髖關節 OA：<br>• 蹲下時後方疼痛 (LR+ 6.1)<br>• 被動外展/內收時鼠蹊部疼痛 (LR+ 5.7)<br>• 髖外展肌無力 (LR+ 4.5)</p></div>
+    <div class="info" style="margin-top:16px"><strong>💡 排除 OA 的最佳方法</strong><p style="font-size:13px;margin-top:6px"><strong>正常的被動髖關節內收</strong>是最有效的排除指標！<br>• LR- = 0.25<br>• 前測機率 34% → 後測機率 ~11%<br>• 內收正常時，OA 可能性大幅降低</p></div>
+    <h4 style="font-weight:700;margin-top:20px;margin-bottom:12px;color:var(--pri)">📝 實務建議</h4>
+    <div class="brown"><strong>📋 建議檢查順序</strong>
+    <p style="font-size:13px;margin-top:8px">
+    <strong>Step 1：排除</strong><br>
+    • 測試被動髖關節內收<br>
+    • 若正常 → OA 可能性低<br><br>
+    <strong>Step 2：確診</strong><br>
+    • 蹲下試驗（觀察後方疼痛）<br>
+    • 被動外展/內收（觀察鼠蹊痛）<br>
+    • 髖外展肌力測試<br><br>
+    <strong>Step 3：影像確認</strong><br>
+    • 臨床高度懷疑 → X 光檢查
+    </p></div>
+    <div class="warn" style="margin-top:16px"><strong>⚠️ 重要提醒</strong><p style="font-size:13px;margin-top:6px">• 沒有單一檢查足以獨立確診 OA<br>• 綜合多項發現可提高診斷準確度<br>• X 光仍是確診的參考標準<br>• 臨床症狀與 X 光嚴重度不一定相關</p></div>`
+};
+
+const quiz = [
+    {q:'根據研究，主訴髖部或鼠蹊部疼痛的基層醫療患者中，X 光證實 OA 的比例約為多少？',o:['約 15%','約 34%','約 50%','約 70%'],c:1,e:'在主訴髖部或鼠蹊部疼痛到基層醫療就診的患者中，約有 34% 的髖關節會在 X 光上顯示 OA 證據。'},
+    {q:'以下哪項檢查的 LR+ 最高，是預測髖關節 OA 的最佳指標？',o:['被動髖關節內收受限','外展肌無力','蹲下時後方疼痛','被動髖關節內旋受限'],c:2,e:'蹲下時後方疼痛的 LR+ = 6.1 (95% CI: 1.3-29)，是所有檢查中最高的。'},
+    {q:'被動外展/內收時鼠蹊部疼痛的 LR+ 約為多少？',o:['2.1','3.2','4.5','5.7'],c:3,e:'被動外展/內收時鼠蹊部疼痛的 LR+ = 5.7 (95% CI: 1.6-20)。'},
+    {q:'以下哪項檢查最適合用來「排除」髖關節 OA？',o:['蹲下試驗','外展肌力測試','被動髖關節內收','被動髖關節內旋'],c:2,e:'正常的被動髖關節內收的 LR- = 0.25，是最有效的排除指標。'},
+    {q:'正常的被動髖關節內收，其 LR- 約為多少？',o:['0.11','0.25','0.43','0.71'],c:1,e:'正常的被動髖關節內收的 LR- = 0.25 (95% CI: 0.11-0.54)。'},
+    {q:'關於病史詢問在髖關節 OA 診斷的價值，以下何者正確？',o:['OA 家族史的 LR+ 約為 5','膝關節 OA 病史可有效排除髖關節 OA','病史項目的 LR+ 都約為 2.1，診斷價值有限','爬樓梯疼痛是最準確的病史項目'],c:2,e:'OA 家族史、膝關節 OA 病史、爬樓梯疼痛等病史項目的 LR+ 都約為 2.1，只能輕度增加 OA 可能性。'},
+    {q:'髖外展肌無力的敏感度和特異度分別約為多少？',o:['24% / 96%','33% / 94%','44% / 90%','80% / 81%'],c:2,e:'髖外展肌無力的敏感度為 44%，特異度為 90%，LR+ = 4.5。'},
+    {q:'被動髖關節內收受限的敏感度約為多少？',o:['24%','44%','66%','80%'],c:3,e:'被動髖關節內收受限的敏感度為 80%，是所有檢查中最高的。'},
+    {q:'以下何者的 LR- 最低，排除效力最好？',o:['蹲下後方疼痛 (0.79)','被動活動鼠蹊痛 (0.71)','髖內旋受限 (0.43)','髖內收受限 (0.25)'],c:3,e:'髖內收受限的 LR- = 0.25 是最低的，正常的髖內收可有效排除 OA。'},
+    {q:'關於髖關節 OA 的臨床診斷，以下何者正確？',o:['單一檢查即可確診 OA','蹲下試驗陰性可排除 OA','綜合多項發現可提高診斷準確度','病史比身體檢查更重要'],c:2,e:'沒有單一檢查足以獨立確診 OA，綜合多項發現可提高診斷準確度。X 光仍是確診的參考標準。'}
+];
+
+const MODULE_ID = 'jama-hip-oa';
+
+const ProgressTracker = {
+    STORAGE_KEY: 'ebm-progress',
+    getProgress: () => {
+        try {
+            const d = localStorage.getItem(ProgressTracker.STORAGE_KEY);
+            return d ? JSON.parse(d) : { version: 1, modules: {}, badges: [], totalTimeSpent: 0 };
+        } catch { return { version: 1, modules: {}, badges: [], totalTimeSpent: 0 }; }
+    },
+    saveQuizResult: (moduleId, score, total, timeSpent) => {
+        const progress = ProgressTracker.getProgress();
+        const mod = progress.modules[moduleId] || {
+            bestScore: 0, totalAttempts: 0, allAttempts: [],
+            lessonsViewed: [], completed: false, firstCompleted: null
+        };
+        const attempt = { date: new Date().toISOString(), score, timeSpent };
+        mod.allAttempts.push(attempt);
+        mod.totalAttempts++;
+        if (score > mod.bestScore) mod.bestScore = score;
+        const passingScore = Math.ceil(total * 0.7);
+        if (score >= passingScore && !mod.completed) {
+            mod.completed = true;
+            mod.firstCompleted = attempt.date;
+        }
+        progress.modules[moduleId] = mod;
+        progress.totalTimeSpent += timeSpent;
+        progress.lastUpdated = new Date().toISOString();
+        ProgressTracker.checkBadges(progress, score, total, timeSpent);
+        localStorage.setItem(ProgressTracker.STORAGE_KEY, JSON.stringify(progress));
+        return progress;
+    },
+    checkBadges: (progress, score, total, timeSpent) => {
+        const badges = progress.badges || [];
+        const badgeIds = badges.map(b => b.id);
+        const now = new Date().toISOString();
+        if (!badgeIds.includes('first-quiz')) badges.push({ id: 'first-quiz', earnedAt: now });
+        if (score === total && !badgeIds.includes('perfect-score')) badges.push({ id: 'perfect-score', earnedAt: now });
+        if (timeSpent <= 120 && !badgeIds.includes('speed-demon')) badges.push({ id: 'speed-demon', earnedAt: now });
+        const completed = Object.values(progress.modules).filter(m => m.completed).length;
+        if (completed >= 5 && !badgeIds.includes('five-complete')) badges.push({ id: 'five-complete', earnedAt: now });
+        if (completed >= 10 && !badgeIds.includes('ten-complete')) badges.push({ id: 'ten-complete', earnedAt: now });
+        if (completed >= 18 && !badgeIds.includes('master')) badges.push({ id: 'master', earnedAt: now });
+        const mod = progress.modules[MODULE_ID];
+        if (mod && mod.totalAttempts >= 3 && !badgeIds.includes('persistent')) badges.push({ id: 'persistent', earnedAt: now });
+        progress.badges = badges;
+    }
+};
+
+let currentLesson = 1;
+let currentQ = 0;
+let score = 0;
+let answered = false;
+let quizStartTime = null;
+
+function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+function showHome() { showPage('home'); }
+
+function showLesson(id) {
+    currentLesson = id;
+    const l = lessons[id-1];
+    document.getElementById('lesson-title').textContent = l.title;
+    document.getElementById('lesson-header').style.background = `linear-gradient(135deg,${l.color},${l.color}88)`;
+    document.getElementById('lesson-header').innerHTML = `<div class="container"><div style="font-size:12px;opacity:0.9">Lesson ${l.id} • ${l.sub}</div><h1 style="font-size:22px;font-weight:700">${l.title}</h1></div>`;
+    document.getElementById('lesson-body').innerHTML = lessonContent[id];
+    document.getElementById('prev-btn').style.display = id > 1 ? 'block' : 'none';
+    document.getElementById('next-btn').textContent = id < 5 ? '下一課 →' : '開始測驗 📝';
+    document.getElementById('next-btn').onclick = id < 5 ? nextLesson : startQuiz;
+    showPage('lesson');
+}
+
+function prevLesson() { if (currentLesson > 1) showLesson(currentLesson - 1); }
+function nextLesson() { if (currentLesson < 5) showLesson(currentLesson + 1); }
+
+function startQuiz() {
+    currentQ = 0; score = 0; answered = false;
+    quizStartTime = Date.now();
+    renderQuestion();
+    showPage('quiz');
+}
+
+function renderQuestion() {
+    const q = quiz[currentQ];
+    document.getElementById('quiz-progress').textContent = `${currentQ+1}/${quiz.length}`;
+    document.getElementById('quiz-progress-bar').style.width = `${((currentQ+1)/quiz.length)*100}%`;
+    
+    let html = `<h3 style="font-size:15px;font-weight:600;line-height:1.7;margin-bottom:20px">${q.q}</h3>`;
+    q.o.forEach((opt, i) => {
+        html += `<button class="quiz-option" onclick="selectAnswer(${i})" id="opt${i}">
+            <span class="option-label" id="lbl${i}">${String.fromCharCode(65+i)}</span>
+            <span style="line-height:1.5">${opt}</span>
+        </button>`;
+    });
+    document.getElementById('quiz-content').innerHTML = html;
+    document.getElementById('quiz-feedback').innerHTML = '';
+    document.getElementById('quiz-next').style.display = 'none';
+    answered = false;
+}
+
+function selectAnswer(i) {
+    if (answered) return;
+    answered = true;
+    const q = quiz[currentQ];
+    
+    document.querySelectorAll('.quiz-option').forEach((btn, idx) => {
+        btn.classList.add('disabled');
+        if (idx === q.c) {
+            btn.classList.add('correct');
+            document.getElementById('lbl'+idx).classList.add('correct');
+            document.getElementById('lbl'+idx).textContent = '✔';
+        } else if (idx === i && i !== q.c) {
+            btn.classList.add('wrong');
+            document.getElementById('lbl'+idx).classList.add('wrong');
+            document.getElementById('lbl'+idx).textContent = '✗';
+        }
+    });
+    
+    if (i === q.c) score++;
+    
+    const feedbackClass = i === q.c ? 'good' : 'tip';
+    const feedbackTitle = i === q.c ? '✔ 正確！' : '✗ 答錯了';
+    const feedbackColor = i === q.c ? 'var(--suc)' : 'var(--acc)';
+    document.getElementById('quiz-feedback').innerHTML = `<div class="${feedbackClass}"><strong style="color:${feedbackColor}">${feedbackTitle}</strong><p style="font-size:13px;color:var(--txt2);margin-top:8px;line-height:1.7">${q.e}</p></div>`;
+    
+    document.getElementById('quiz-next').style.display = 'block';
+    document.getElementById('quiz-next').textContent = currentQ < quiz.length - 1 ? '下一題 →' : '查看結果';
+}
+
+function nextQuestion() {
+    if (currentQ < quiz.length - 1) {
+        currentQ++;
+        renderQuestion();
+    } else {
+        showResult();
+    }
+}
+
+function showResult() {
+    const pct = Math.round((score / quiz.length) * 100);
+    const color = pct >= 80 ? 'var(--suc)' : pct >= 60 ? 'var(--warn)' : 'var(--err)';
+    document.getElementById('result-circle').style.background = `conic-gradient(${color} ${pct*3.6}deg, #E5E5E5 0deg)`;
+    document.getElementById('result-pct').textContent = pct + '%';
+    document.getElementById('result-score').textContent = `${score}/${quiz.length}`;
+    document.getElementById('result-title').textContent = pct >= 80 ? '🎉 太棒了！' : pct >= 60 ? '👍 不錯！' : '💪 加油！';
+    document.getElementById('result-msg').textContent = pct >= 80 ? '你已經掌握髖關節 OA 診斷！' : pct >= 60 ? '再複習可以更進步！' : '建議重新閱讀課程';
+
+    // Save progress
+    if (quizStartTime) {
+        const timeSpent = Math.round((Date.now() - quizStartTime) / 1000);
+        ProgressTracker.saveQuizResult(MODULE_ID, score, quiz.length, timeSpent);
+    }
+
+    showPage('result');
+}
+</script>
+</body>
+</html>

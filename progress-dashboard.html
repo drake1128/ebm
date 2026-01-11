@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學習進度 | EBM 教學平台</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--pri:#0077B6;--pri2:#00B4D8;--acc:#FF6B35;--suc:#2EC4B6;--warn:#FFBE0B;--err:#EF476F;--bg:#FAFBFC;--txt:#1A1A2E;--txt2:#6B7280}
+        body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+        .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,119,182,0.08)}
+        .btn{padding:14px 24px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+        .btn-pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}
+        .btn-danger{background:linear-gradient(135deg,var(--err),#C62828);color:#fff}
+        .btn-outline{background:#fff;border:2px solid var(--pri);color:var(--pri)}
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect}=React;
+
+const ProgressTracker = {
+    STORAGE_KEY: 'ebm-progress',
+    getProgress: () => {
+        try {
+            const data = localStorage.getItem(ProgressTracker.STORAGE_KEY);
+            return data ? JSON.parse(data) : ProgressTracker.initProgress();
+        } catch { return ProgressTracker.initProgress(); }
+    },
+    initProgress: () => ({
+        version: 1,
+        lastUpdated: new Date().toISOString(),
+        modules: {},
+        badges: [],
+        totalTimeSpent: 0
+    }),
+    clearProgress: () => {
+        localStorage.removeItem(ProgressTracker.STORAGE_KEY);
+    },
+    exportProgress: () => {
+        const data = ProgressTracker.getProgress();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ebm-progress-${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+};
+
+const allModules = [
+    { id: 'critical-appraisal', name: '文獻評讀基礎', shortName: '評讀', category: 'core', href: 'critical-appraisal.html' },
+    { id: 'diagnostic-study', name: '診斷性研究評讀', shortName: '診斷', category: 'core', href: 'diagnostic-study.html' },
+    { id: 'prognosis-study', name: '預後研究評讀', shortName: '預後', category: 'core', href: 'prognosis-study.html' },
+    { id: 'rct-appraisal', name: '隨機對照試驗評讀', shortName: 'RCT', category: 'core', href: 'rct-appraisal.html' },
+    { id: 'systematic-review', name: '系統性回顧評讀', shortName: 'SR', category: 'core', href: 'systematic-review.html' },
+    { id: 'literature-search', name: '文獻搜尋訓練', shortName: '搜尋', category: 'core', href: 'literature-search.html' },
+    { id: 'jama-chest-pain-acs', name: '胸痛與急性冠心症', shortName: 'ACS', category: 'jama', href: 'jama-chest-pain-acs.html' },
+    { id: 'jama-syncope', name: '昏厥', shortName: '昏厥', category: 'jama', href: 'jama-syncope.html' },
+    { id: 'jama-hypertension', name: '高血壓', shortName: '高血壓', category: 'jama', href: 'jama-hypertension.html' },
+    { id: 'jama-pleural-effusion', name: '肋膜積液', shortName: '肋膜', category: 'jama', href: 'jama-pleural-effusion.html' },
+    { id: 'jama-osa', name: '阻塞性睡眠呼吸中止', shortName: 'OSA', category: 'jama', href: 'jama-osa.html' },
+    { id: 'jama-head-trauma', name: '頭部外傷', shortName: '頭外', category: 'jama', href: 'jama-head-trauma.html' },
+    { id: 'jama-fluid-responsiveness', name: '輸液反應性', shortName: '輸液', category: 'jama', href: 'jama-fluid-responsiveness.html' },
+    { id: 'jama-difficult-intubation', name: '困難插管', shortName: '插管', category: 'jama', href: 'jama-difficult-intubation.html' },
+    { id: 'jama-hip-oa', name: '髖關節骨關節炎', shortName: '髖OA', category: 'jama', href: 'jama-hip-oa.html' },
+    { id: 'jama-pediatric-htn', name: '兒童高血壓', shortName: '兒高血', category: 'jama', href: 'jama-pediatric-htn.html' },
+    { id: 'jama-ectopic-pregnancy', name: '子宮外孕', shortName: '外孕', category: 'jama', href: 'jama-ectopic-pregnancy.html' },
+    { id: 'jama-luts-boo', name: '下泌尿道症狀', shortName: 'LUTS', category: 'jama', href: 'jama-luts-boo.html' }
+];
+
+const badgeDefinitions = [
+    { id: 'first-quiz', name: '初試啼聲', desc: '完成第一次測驗', icon: '🎯' },
+    { id: 'perfect-score', name: '滿分達人', desc: '任一測驗獲得100分', icon: '💯' },
+    { id: 'five-complete', name: '小有成就', desc: '完成5個模組', icon: '⭐' },
+    { id: 'ten-complete', name: '學有專精', desc: '完成10個模組', icon: '🌟' },
+    { id: 'master', name: 'EBM大師', desc: '完成全部18個模組', icon: '👑' },
+    { id: 'speed-demon', name: '神速答題', desc: '2分鐘內完成測驗', icon: '⚡' },
+    { id: 'persistent', name: '堅持不懈', desc: '同一測驗重試3次以上', icon: '💪' }
+];
+
+const App=()=>{
+    const [progress, setProgress] = useState(ProgressTracker.getProgress());
+    const [showReset, setShowReset] = useState(false);
+
+    useEffect(() => {
+        const handleStorage = () => setProgress(ProgressTracker.getProgress());
+        window.addEventListener('storage', handleStorage);
+        return () => window.removeEventListener('storage', handleStorage);
+    }, []);
+
+    const completedCount = Object.values(progress.modules).filter(m => m.completed).length;
+    const totalAttempts = Object.values(progress.modules).reduce((sum, m) => sum + (m.totalAttempts || 0), 0);
+    const allScores = Object.values(progress.modules).filter(m => m.bestScore > 0);
+    const avgScore = allScores.length > 0 ? Math.round(allScores.reduce((sum, m) => sum + (m.bestScore / 10) * 100, 0) / allScores.length) : 0;
+
+    const formatTime = (seconds) => {
+        if (!seconds || seconds < 60) return `${seconds || 0} 秒`;
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        if (mins < 60) return `${mins} 分 ${secs} 秒`;
+        const hrs = Math.floor(mins / 60);
+        return `${hrs} 時 ${mins % 60} 分`;
+    };
+
+    const handleReset = () => {
+        ProgressTracker.clearProgress();
+        setProgress(ProgressTracker.initProgress());
+        setShowReset(false);
+    };
+
+    const recentAttempts = Object.entries(progress.modules)
+        .flatMap(([modId, mod]) =>
+            (mod.allAttempts || []).map(a => ({ ...a, moduleId: modId, moduleName: allModules.find(m => m.id === modId)?.name || modId }))
+        )
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 10);
+
+    const earnedBadges = progress.badges || [];
+    const earnedBadgeIds = earnedBadges.map(b => b.id);
+
+    return (
+        <div style={{maxWidth:'100%',minHeight:'100vh',background:'var(--bg)'}}>
+            <header style={{background:'#fff',borderBottom:'1px solid #eee',padding:'12px 16px',position:'sticky',top:0,zIndex:10}}>
+                <div style={{maxWidth:800,margin:'0 auto',display:'flex',alignItems:'center',gap:12}}>
+                    <button onClick={()=>window.location.href='index.html'} style={{background:'#E3F2FD',border:'none',borderRadius:10,width:40,height:40,cursor:'pointer',color:'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                    </button>
+                    <span style={{fontWeight:700,color:'var(--pri)'}}>學習進度總覽</span>
+                </div>
+            </header>
+
+            <div style={{background:'linear-gradient(135deg,#0077B6,#00B4D8)',padding:'32px 20px',color:'#fff'}}>
+                <div style={{maxWidth:800,margin:'0 auto'}}>
+                    <div style={{background:'rgba(255,255,255,0.2)',display:'inline-block',padding:'6px 14px',borderRadius:50,fontSize:12,fontWeight:600,marginBottom:16}}>📊 Progress Dashboard</div>
+                    <h1 style={{fontSize:26,fontWeight:700,marginBottom:12}}>學習進度總覽</h1>
+                    <p style={{opacity:0.9,fontSize:14}}>追蹤你的 EBM 學習歷程與成就</p>
+                </div>
+            </div>
+
+            <div style={{padding:'0 16px',marginTop:-20}}>
+                <div style={{maxWidth:800,margin:'0 auto'}}>
+                    {/* Summary Cards */}
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(150px, 1fr))',gap:12,marginBottom:24}}>
+                        <div className="card" style={{textAlign:'center'}}>
+                            <div style={{fontSize:36,fontWeight:700,color:'var(--pri)'}}>{completedCount}</div>
+                            <div style={{fontSize:13,color:'var(--txt2)'}}>完成模組 / 18</div>
+                            <div style={{height:6,background:'#E5E5E5',borderRadius:3,marginTop:8}}>
+                                <div style={{height:'100%',width:`${(completedCount/18)*100}%`,background:'linear-gradient(90deg,var(--pri),var(--suc))',borderRadius:3}}/>
+                            </div>
+                        </div>
+                        <div className="card" style={{textAlign:'center'}}>
+                            <div style={{fontSize:36,fontWeight:700,color:'var(--suc)'}}>{totalAttempts}</div>
+                            <div style={{fontSize:13,color:'var(--txt2)'}}>總測驗次數</div>
+                        </div>
+                        <div className="card" style={{textAlign:'center'}}>
+                            <div style={{fontSize:36,fontWeight:700,color:'var(--acc)'}}>{avgScore}%</div>
+                            <div style={{fontSize:13,color:'var(--txt2)'}}>平均最佳成績</div>
+                        </div>
+                        <div className="card" style={{textAlign:'center'}}>
+                            <div style={{fontSize:24,fontWeight:700,color:'#7209B7'}}>{formatTime(progress.totalTimeSpent)}</div>
+                            <div style={{fontSize:13,color:'var(--txt2)'}}>總學習時間</div>
+                        </div>
+                    </div>
+
+                    {/* Progress Chart */}
+                    <div className="card">
+                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:16}}>📈 各模組成績</h3>
+                        <div style={{overflowX:'auto',paddingBottom:8}}>
+                            <svg width={allModules.length * 44 + 20} height={180} style={{minWidth:'100%'}}>
+                                {/* Y-axis labels */}
+                                {[0, 25, 50, 75, 100].map((v, i) => (
+                                    <g key={v}>
+                                        <line x1={35} y1={140 - v * 1.2} x2={allModules.length * 44 + 15} y2={140 - v * 1.2} stroke="#E5E5E5" strokeWidth={1} />
+                                        <text x={30} y={144 - v * 1.2} fontSize={10} fill="#999" textAnchor="end">{v}</text>
+                                    </g>
+                                ))}
+                                {/* Bars */}
+                                {allModules.map((mod, i) => {
+                                    const modData = progress.modules[mod.id];
+                                    const score = modData?.bestScore || 0;
+                                    const pct = score * 10;
+                                    const barHeight = pct * 1.2;
+                                    const isCompleted = modData?.completed;
+                                    return (
+                                        <g key={mod.id} transform={`translate(${40 + i * 44}, 0)`}>
+                                            <rect y={140 - barHeight} width={30} height={barHeight} rx={4} fill={isCompleted ? 'var(--suc)' : score > 0 ? 'var(--warn)' : '#E5E5E5'} />
+                                            {score > 0 && <text x={15} y={135 - barHeight} fontSize={10} fill={isCompleted ? 'var(--suc)' : 'var(--warn)'} textAnchor="middle" fontWeight="600">{score * 10}</text>}
+                                            <text x={15} y={158} fontSize={9} fill="var(--txt2)" textAnchor="middle">{mod.shortName}</text>
+                                        </g>
+                                    );
+                                })}
+                            </svg>
+                        </div>
+                        <div style={{display:'flex',gap:16,marginTop:8,fontSize:12}}>
+                            <span><span style={{display:'inline-block',width:12,height:12,background:'var(--suc)',borderRadius:2,marginRight:4}}></span>已通過 (≥70%)</span>
+                            <span><span style={{display:'inline-block',width:12,height:12,background:'var(--warn)',borderRadius:2,marginRight:4}}></span>進行中</span>
+                            <span><span style={{display:'inline-block',width:12,height:12,background:'#E5E5E5',borderRadius:2,marginRight:4}}></span>尚未開始</span>
+                        </div>
+                    </div>
+
+                    {/* Badges */}
+                    <div className="card">
+                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:16}}>🏆 成就徽章</h3>
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(100px, 1fr))',gap:12}}>
+                            {badgeDefinitions.map(badge => {
+                                const earned = earnedBadgeIds.includes(badge.id);
+                                const earnedData = earnedBadges.find(b => b.id === badge.id);
+                                return (
+                                    <div key={badge.id} style={{textAlign:'center',padding:12,background:earned?'#F0FFF4':'#F5F5F5',borderRadius:12,opacity:earned?1:0.5}}>
+                                        <div style={{fontSize:32}}>{earned ? badge.icon : '🔒'}</div>
+                                        <div style={{fontSize:12,fontWeight:600,marginTop:4,color:earned?'var(--suc)':'#999'}}>{badge.name}</div>
+                                        <div style={{fontSize:10,color:'var(--txt2)',marginTop:2}}>{badge.desc}</div>
+                                        {earned && earnedData && (
+                                            <div style={{fontSize:9,color:'var(--suc)',marginTop:4}}>{new Date(earnedData.earnedAt).toLocaleDateString()}</div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Module Grid */}
+                    <div className="card">
+                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:16}}>📚 模組進度</h3>
+                        <div style={{marginBottom:12}}>
+                            <span style={{fontSize:13,fontWeight:600,color:'var(--txt2)'}}>基礎評讀課程</span>
+                        </div>
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))',gap:10,marginBottom:20}}>
+                            {allModules.filter(m=>m.category==='core').map(mod => {
+                                const modData = progress.modules[mod.id];
+                                const isCompleted = modData?.completed;
+                                const score = modData?.bestScore || 0;
+                                return (
+                                    <a key={mod.id} href={mod.href} style={{textDecoration:'none',padding:12,background:isCompleted?'#F0FFF4':'#FAFAFA',border:`2px solid ${isCompleted?'var(--suc)':'#E5E5E5'}`,borderRadius:10}}>
+                                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                                            <span style={{fontSize:12,fontWeight:600,color:isCompleted?'var(--suc)':'var(--txt)'}}>{mod.name}</span>
+                                            {isCompleted && <span>✅</span>}
+                                        </div>
+                                        {score > 0 && <div style={{fontSize:11,color:'var(--txt2)',marginTop:4}}>最佳：{score*10}%</div>}
+                                        {modData?.totalAttempts > 0 && <div style={{fontSize:10,color:'var(--txt2)'}}>測驗 {modData.totalAttempts} 次</div>}
+                                    </a>
+                                );
+                            })}
+                        </div>
+                        <div style={{marginBottom:12}}>
+                            <span style={{fontSize:13,fontWeight:600,color:'var(--txt2)'}}>JAMA 理學檢查系列</span>
+                        </div>
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))',gap:10}}>
+                            {allModules.filter(m=>m.category==='jama').map(mod => {
+                                const modData = progress.modules[mod.id];
+                                const isCompleted = modData?.completed;
+                                const score = modData?.bestScore || 0;
+                                return (
+                                    <a key={mod.id} href={mod.href} style={{textDecoration:'none',padding:12,background:isCompleted?'#F0FFF4':'#FAFAFA',border:`2px solid ${isCompleted?'var(--suc)':'#E5E5E5'}`,borderRadius:10}}>
+                                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                                            <span style={{fontSize:12,fontWeight:600,color:isCompleted?'var(--suc)':'var(--txt)'}}>{mod.name}</span>
+                                            {isCompleted && <span>✅</span>}
+                                        </div>
+                                        {score > 0 && <div style={{fontSize:11,color:'var(--txt2)',marginTop:4}}>最佳：{score*10}%</div>}
+                                        {modData?.totalAttempts > 0 && <div style={{fontSize:10,color:'var(--txt2)'}}>測驗 {modData.totalAttempts} 次</div>}
+                                    </a>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Recent Activity */}
+                    <div className="card">
+                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:16}}>📅 最近活動</h3>
+                        {recentAttempts.length === 0 ? (
+                            <p style={{color:'var(--txt2)',fontSize:14,textAlign:'center',padding:20}}>尚無測驗記錄，開始學習吧！</p>
+                        ) : (
+                            <div>
+                                {recentAttempts.map((attempt, i) => (
+                                    <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:i<recentAttempts.length-1?'1px solid #eee':'none'}}>
+                                        <div style={{width:36,height:36,borderRadius:8,background:attempt.score>=7?'#E8F5E9':'#FFF3E0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>
+                                            {attempt.score>=7?'✅':'📝'}
+                                        </div>
+                                        <div style={{flex:1}}>
+                                            <div style={{fontSize:13,fontWeight:600}}>{attempt.moduleName}</div>
+                                            <div style={{fontSize:11,color:'var(--txt2)'}}>{new Date(attempt.date).toLocaleString()}</div>
+                                        </div>
+                                        <div style={{textAlign:'right'}}>
+                                            <div style={{fontSize:14,fontWeight:700,color:attempt.score>=7?'var(--suc)':'var(--acc)'}}>{attempt.score*10}%</div>
+                                            <div style={{fontSize:10,color:'var(--txt2)'}}>{formatTime(attempt.timeSpent)}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="card" style={{marginBottom:32}}>
+                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:16}}>⚙️ 資料管理</h3>
+                        <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+                            <button className="btn btn-outline" onClick={ProgressTracker.exportProgress}>
+                                📥 匯出進度
+                            </button>
+                            <button className="btn btn-danger" onClick={()=>setShowReset(true)}>
+                                🗑️ 重置進度
+                            </button>
+                        </div>
+                        {showReset && (
+                            <div style={{marginTop:16,padding:16,background:'#FFEBEE',borderRadius:12}}>
+                                <p style={{fontSize:14,color:'var(--err)',marginBottom:12}}>⚠️ 確定要重置所有學習進度嗎？此操作無法復原！</p>
+                                <div style={{display:'flex',gap:12}}>
+                                    <button className="btn btn-danger" onClick={handleReset}>確定重置</button>
+                                    <button className="btn btn-outline" onClick={()=>setShowReset(false)}>取消</button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <footer style={{background:'#E3F2FD',padding:'24px 16px',textAlign:'center'}}>
+                <p style={{fontSize:13,color:'var(--txt2)'}}>新竹台大分院教學部</p>
+                <p style={{fontSize:12,color:'var(--txt2)'}}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+        </div>
+    );
+};
+
+ReactDOM.render(<App/>,document.getElementById('root'));
+</script>
+</body>
+</html>

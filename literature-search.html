@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文獻搜尋訓練 | EBM 教學平台</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--pri:#7209B7;--pri2:#4361EE;--acc:#FF6B35;--suc:#2EC4B6;--warn:#FFBE0B;--err:#EF476F;--blue:#0077B6;--bg:#FAFBFC;--txt:#1A1A2E;--txt2:#6B7280}
+        body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+        .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(114,9,183,0.08)}
+        .btn{padding:14px 24px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all 0.3s}
+        .btn:hover{transform:translateY(-2px)}
+        .btn-pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}
+        .btn-acc{background:linear-gradient(135deg,var(--acc),#F7931E);color:#fff}
+        .btn-suc{background:linear-gradient(135deg,var(--suc),#06D6A0);color:#fff}
+        .btn-blue{background:linear-gradient(135deg,var(--blue),#00B4D8);color:#fff}
+        .btn-outline{background:#fff;border:2px solid var(--pri);color:var(--pri)}
+        .btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+        table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+        th,td{padding:10px;text-align:left;border-bottom:1px solid #eee}
+        th{background:#EDE7F6;font-weight:600;color:var(--pri)}
+        .formula{background:linear-gradient(135deg,#EDE7F6,#E3F2FD);border:2px solid var(--pri2);border-radius:12px;padding:16px;margin:12px 0;text-align:center;font-size:15px;color:#311B92;font-weight:600;font-family:'Consolas','Monaco',monospace}
+        .tip{background:#FFF9F0;border-left:4px solid var(--acc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .good{background:#F0FFF4;border-left:4px solid var(--suc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .info{background:#F0F7FF;border-left:4px solid var(--blue);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .purple{background:#F3E5F5;border-left:4px solid var(--pri);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .warn{background:#FFFDE7;border-left:4px solid var(--warn);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .pico-input{width:100%;padding:14px 16px;border:2px solid #E5E5E5;border-radius:12px;font-size:15px;font-family:'Noto Sans TC',sans-serif;transition:all 0.3s;background:#fff}
+        .pico-input:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(114,9,183,0.1)}
+        .pico-input::placeholder{color:#9CA3AF}
+        .search-output{background:linear-gradient(135deg,#EDE7F6,#E3F2FD);border:2px solid var(--pri2);border-radius:12px;padding:16px;font-family:'Consolas','Monaco',monospace;font-size:13px;word-break:break-all;line-height:1.6;min-height:60px}
+        .template-card{background:#fff;border:2px solid #E5E5E5;border-radius:12px;padding:12px;cursor:pointer;transition:all 0.3s}
+        .template-card:hover{border-color:var(--pri);transform:translateY(-2px)}
+        .template-card.active{border-color:var(--pri);background:#F3E5F5}
+        .copy-feedback{position:fixed;top:20px;right:20px;background:var(--suc);color:#fff;padding:12px 20px;border-radius:10px;font-weight:600;z-index:1000;animation:fadeIn 0.3s}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useMemo,useEffect}=React;
+
+const MODULE_ID='literature-search';
+
+const ProgressTracker={
+    STORAGE_KEY:'ebm-progress',
+    getProgress:()=>{try{const d=localStorage.getItem(ProgressTracker.STORAGE_KEY);return d?JSON.parse(d):{version:1,modules:{},badges:[],totalTimeSpent:0}}catch{return{version:1,modules:{},badges:[],totalTimeSpent:0}}},
+    saveQuizResult:(moduleId,score,total,timeSpent)=>{
+        const progress=ProgressTracker.getProgress();
+        const mod=progress.modules[moduleId]||{bestScore:0,totalAttempts:0,allAttempts:[],lessonsViewed:[],completed:false,firstCompleted:null};
+        const attempt={date:new Date().toISOString(),score,timeSpent};
+        mod.allAttempts.push(attempt);mod.totalAttempts++;
+        if(score>mod.bestScore)mod.bestScore=score;
+        const passingScore=Math.ceil(total*0.7);
+        if(score>=passingScore&&!mod.completed){mod.completed=true;mod.firstCompleted=attempt.date}
+        progress.modules[moduleId]=mod;progress.totalTimeSpent+=timeSpent;progress.lastUpdated=new Date().toISOString();
+        ProgressTracker.checkBadges(progress,score,total,timeSpent);
+        localStorage.setItem(ProgressTracker.STORAGE_KEY,JSON.stringify(progress));return progress;
+    },
+    checkBadges:(progress,score,total,timeSpent)=>{
+        const badges=progress.badges||[];const ids=badges.map(b=>b.id);const now=new Date().toISOString();
+        if(!ids.includes('first-quiz'))badges.push({id:'first-quiz',earnedAt:now});
+        if(score===total&&!ids.includes('perfect-score'))badges.push({id:'perfect-score',earnedAt:now});
+        if(timeSpent<120&&!ids.includes('speed-demon'))badges.push({id:'speed-demon',earnedAt:now});
+        const completed=Object.values(progress.modules).filter(m=>m.completed).length;
+        if(completed>=5&&!ids.includes('five-complete'))badges.push({id:'five-complete',earnedAt:now});
+        if(completed>=10&&!ids.includes('ten-complete'))badges.push({id:'ten-complete',earnedAt:now});
+        if(completed>=18&&!ids.includes('master'))badges.push({id:'master',earnedAt:now});
+        const mod=progress.modules[MODULE_ID];
+        if(mod&&mod.totalAttempts>=3&&!ids.includes('persistent'))badges.push({id:'persistent',earnedAt:now});
+        progress.badges=badges;
+    }
+};
+
+const lessons=[
+    {id:1,title:'文獻搜尋導論',sub:'Why Systematic Searching Matters',color:'#7209B7'},
+    {id:2,title:'PICO 架構與問題建構',sub:'Building Answerable Questions',color:'#4361EE'},
+    {id:3,title:'PubMed 搜尋策略',sub:'Boolean Operators & MeSH',color:'#0077B6'},
+    {id:4,title:'Cochrane Library 導覽',sub:'Finding Systematic Reviews',color:'#2EC4B6'},
+    {id:5,title:'進階搜尋技巧',sub:'Advanced Search & Citation Management',color:'#FF6B35'}
+];
+
+const quiz=[
+    {q:'PICO中的「P」代表什麼？',o:['Problem 問題','Patient/Population 病人/族群','Prognosis 預後','Prevention 預防'],c:1,e:'P代表Patient/Population（病人/族群），描述您想研究的病人群體特徵，包括年齡、性別、疾病狀態等。'},
+    {q:'在PubMed搜尋中，使用「AND」運算子的效果為何？',o:['擴大搜尋結果','縮小搜尋結果','排除某些結果','搜尋同義詞'],c:1,e:'AND運算子要求所有關鍵詞都必須出現在文章中，因此會縮小搜尋結果。例如："diabetes AND metformin"只會找到同時包含這兩個詞的文章。'},
+    {q:'下列何者是MeSH詞彙的主要優點？',o:['搜尋速度較快','可以找到使用不同術語描述相同概念的文章','可以搜尋全文','不需要學習使用方法'],c:1,e:'MeSH (Medical Subject Headings) 是標準化的醫學主題詞彙，可以幫助找到使用不同術語描述相同概念的文章，提高搜尋的完整性。'},
+    {q:'對於「糖尿病病人使用Metformin相較於Sulfonylurea是否能降低心血管死亡」這個問題，「I」應該是什麼？',o:['糖尿病病人','Metformin','心血管死亡','Sulfonylurea'],c:1,e:'I代表Intervention（介入措施），在這個問題中，我們想評估的介入措施是Metformin。Sulfonylurea是比較對象（C），心血管死亡是結果（O）。'},
+    {q:'使用「OR」運算子最適合用於哪種情況？',o:['連接PICO的各個元素','搜尋同義詞或相關詞彙','排除不相關文章','限制發表年份'],c:1,e:'OR運算子適合用於搜尋同義詞或相關詞彙，可以擴大搜尋結果。例如："heart attack" OR "myocardial infarction" OR "MI"。'},
+    {q:'Cochrane Library主要收錄的內容為何？',o:['病例報告','系統性回顧與統合分析','教科書章節','專家意見'],c:1,e:'Cochrane Library主要收錄系統性回顧(Systematic Reviews)與統合分析(Meta-analyses)，是尋找高品質證據的重要資源。'},
+    {q:'下列哪個搜尋策略最能找到隨機對照試驗？',o:['diabetes AND treatment','diabetes[MeSH] AND randomized controlled trial[pt]','diabetes OR RCT','"diabetes" NOT "type 2"'],c:1,e:'使用[pt]（publication type）限定搜尋隨機對照試驗是最有效的方法。[MeSH]可以擴大疾病相關文章的搜尋範圍。'},
+    {q:'PICO問題中的「C」如果空白，代表什麼意思？',o:['問題格式錯誤','比較對象為安慰劑或無治療','搜尋會失敗','結果無法比較'],c:1,e:'當C（Comparison）空白時，通常代表比較對象為安慰劑、無治療或標準照護。這在許多臨床問題中是合理的。'},
+    {q:'在文獻搜尋時，為什麼要記錄搜尋策略？',o:['節省時間','確保搜尋可重複性與透明性','增加搜尋結果','符合期刊要求'],c:1,e:'記錄搜尋策略可以確保研究的可重複性與透明性，這是系統性回顧和實證醫學的核心原則之一。'},
+    {q:'下列關於PubMed截詞搜尋(Truncation)的敘述，何者正確？',o:['使用 # 符號','使用 * 符號可以搜尋相同字根的變化形式','只能用於MeSH詞彙','會減少搜尋結果'],c:1,e:'在PubMed中使用 * 符號可以進行截詞搜尋。例如：therap* 可以找到 therapy, therapies, therapeutic 等相同字根的變化形式，擴大搜尋範圍。'}
+];
+
+const picoTemplates=[
+    {id:'cardio-1',specialty:'心臟內科',icon:'❤️',color:'#E63946',title:'急性心肌梗塞抗血小板治療',p:'acute myocardial infarction, STEMI',i:'ticagrelor, prasugrel',c:'clopidogrel',o:'major adverse cardiovascular events, bleeding, mortality'},
+    {id:'cardio-2',specialty:'心臟內科',icon:'❤️',color:'#E63946',title:'心房顫動抗凝治療',p:'atrial fibrillation, AF',i:'NOAC, apixaban, rivaroxaban, dabigatran',c:'warfarin',o:'stroke, systemic embolism, major bleeding'},
+    {id:'onco-1',specialty:'腫瘤科',icon:'🎗️',color:'#9B59B6',title:'非小細胞肺癌免疫治療',p:'non-small cell lung cancer, NSCLC',i:'pembrolizumab, nivolumab, immunotherapy',c:'chemotherapy, platinum-based',o:'overall survival, progression-free survival'},
+    {id:'peds-1',specialty:'兒科',icon:'👶',color:'#27AE60',title:'兒童中耳炎抗生素治療',p:'acute otitis media, children, pediatric',i:'amoxicillin, antibiotic',c:'watchful waiting, placebo',o:'symptom resolution, treatment failure'},
+    {id:'infect-1',specialty:'感染科',icon:'🦠',color:'#F39C12',title:'社區型肺炎治療',p:'community-acquired pneumonia, CAP',i:'azithromycin, respiratory fluoroquinolone',c:'beta-lactam, amoxicillin-clavulanate',o:'clinical cure, mortality, hospital stay'},
+    {id:'neuro-1',specialty:'神經內科',icon:'🧠',color:'#3498DB',title:'急性缺血性中風血栓溶解',p:'acute ischemic stroke',i:'alteplase, tPA, thrombolysis',c:'standard care, placebo',o:'functional outcome, mRS, intracerebral hemorrhage'},
+    {id:'endo-1',specialty:'內分泌科',icon:'🩺',color:'#1ABC9C',title:'第二型糖尿病SGLT2抑制劑',p:'type 2 diabetes mellitus, T2DM',i:'SGLT2 inhibitor, empagliflozin, dapagliflozin',c:'placebo, standard care',o:'HbA1c, cardiovascular death, heart failure'},
+    {id:'rheum-1',specialty:'風濕免疫科',icon:'🦴',color:'#8E44AD',title:'類風濕性關節炎生物製劑',p:'rheumatoid arthritis, RA',i:'TNF inhibitor, adalimumab, etanercept',c:'methotrexate, DMARD',o:'ACR response, DAS28, radiographic progression'}
+];
+
+const App=()=>{
+    const[page,setPage]=useState('home');
+    const[lessonId,setLessonId]=useState(1);
+    const[qIdx,setQIdx]=useState(0);
+    const[score,setScore]=useState(0);
+    const[sel,setSel]=useState(null);
+    const[show,setShow]=useState(false);
+    const[done,setDone]=useState(false);
+    const[picoData,setPicoData]=useState({p:'',i:'',c:'',o:''});
+    const[copied,setCopied]=useState('');
+    const[activeTemplate,setActiveTemplate]=useState(null);
+    const[quizStartTime,setQuizStartTime]=useState(null);
+
+    useEffect(()=>{if(page==='quiz'&&!done&&!quizStartTime)setQuizStartTime(Date.now())},[page,done]);
+    useEffect(()=>{if(done&&quizStartTime){const t=Math.round((Date.now()-quizStartTime)/1000);ProgressTracker.saveQuizResult(MODULE_ID,score,quiz.length,t)}},[done]);
+
+    // Helper: split by comma and create OR group for synonyms
+    const buildTermGroup=(input,field)=>{
+        const terms=input.split(',').map(t=>t.trim()).filter(Boolean);
+        if(terms.length===0)return '';
+        if(terms.length===1){
+            // Single term: search in title/abstract
+            return `(${terms[0]}${field})`;
+        }
+        // Multiple terms: OR them together
+        return '('+terms.map(t=>`${t}${field}`).join(' OR ')+')';
+    };
+
+    const generatePubMedSearch=(pico)=>{
+        const parts=[];
+        // P and I are more important - search broadly
+        if(pico.p.trim()){
+            const terms=pico.p.split(',').map(t=>t.trim()).filter(Boolean);
+            if(terms.length===1){
+                parts.push(`(${terms[0]}[Title/Abstract] OR ${terms[0]}[MeSH Terms])`);
+            }else{
+                parts.push('('+terms.map(t=>`${t}[Title/Abstract]`).join(' OR ')+')');
+            }
+        }
+        if(pico.i.trim()){
+            const terms=pico.i.split(',').map(t=>t.trim()).filter(Boolean);
+            if(terms.length===1){
+                parts.push(`(${terms[0]}[Title/Abstract] OR ${terms[0]}[MeSH Terms])`);
+            }else{
+                parts.push('('+terms.map(t=>`${t}[Title/Abstract]`).join(' OR ')+')');
+            }
+        }
+        // C and O are optional and less restrictive
+        if(pico.c.trim()){
+            const terms=pico.c.split(',').map(t=>t.trim()).filter(Boolean);
+            parts.push('('+terms.map(t=>`${t}[Title/Abstract]`).join(' OR ')+')');
+        }
+        if(pico.o.trim()){
+            const terms=pico.o.split(',').map(t=>t.trim()).filter(Boolean);
+            parts.push('('+terms.map(t=>`${t}[Title/Abstract]`).join(' OR ')+')');
+        }
+        return parts.join(' AND ');
+    };
+
+    const generateCochraneSearch=(pico)=>{
+        const parts=[];
+        // Split by comma and OR the terms
+        if(pico.p.trim()){
+            const terms=pico.p.split(',').map(t=>t.trim()).filter(Boolean);
+            parts.push('('+terms.join(' OR ')+'):ti,ab,kw');
+        }
+        if(pico.i.trim()){
+            const terms=pico.i.split(',').map(t=>t.trim()).filter(Boolean);
+            parts.push('('+terms.join(' OR ')+'):ti,ab,kw');
+        }
+        if(pico.c.trim()){
+            const terms=pico.c.split(',').map(t=>t.trim()).filter(Boolean);
+            parts.push('('+terms.join(' OR ')+'):ti,ab,kw');
+        }
+        if(pico.o.trim()){
+            const terms=pico.o.split(',').map(t=>t.trim()).filter(Boolean);
+            parts.push('('+terms.join(' OR ')+'):ti,ab,kw');
+        }
+        return parts.join(' AND ');
+    };
+
+    const pubmedSearch=useMemo(()=>generatePubMedSearch(picoData),[picoData]);
+    const cochraneSearch=useMemo(()=>generateCochraneSearch(picoData),[picoData]);
+    const hasValidPico=picoData.p.trim()||picoData.i.trim();
+
+    const copyToClipboard=(text,type)=>{
+        navigator.clipboard.writeText(text);
+        setCopied(type);
+        setTimeout(()=>setCopied(''),2000);
+    };
+
+    const openPubMed=()=>{
+        if(pubmedSearch){
+            window.open(`https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(pubmedSearch)}`,'_blank');
+        }
+    };
+
+    const openCochrane=()=>{
+        if(cochraneSearch){
+            window.open(`https://www.cochranelibrary.com/search?q=${encodeURIComponent(cochraneSearch)}`,'_blank');
+        }
+    };
+
+    const selectTemplate=(template)=>{
+        setActiveTemplate(template.id);
+        // Fill input fields directly via DOM
+        const pInput=document.getElementById('pico-p');
+        const iInput=document.getElementById('pico-i');
+        const cInput=document.getElementById('pico-c');
+        const oInput=document.getElementById('pico-o');
+        if(pInput)pInput.value=template.p;
+        if(iInput)iInput.value=template.i;
+        if(cInput)cInput.value=template.c;
+        if(oInput)oInput.value=template.o;
+        // Also update state to generate search strings
+        setPicoData({p:template.p,i:template.i,c:template.c,o:template.o});
+    };
+
+    const clearPico=()=>{
+        setPicoData({p:'',i:'',c:'',o:''});
+        setActiveTemplate(null);
+    };
+
+    const Header=({title})=>(
+        <header style={{background:'#fff',borderBottom:'1px solid #eee',padding:'12px 16px',position:'sticky',top:0,zIndex:10}}>
+            <div style={{maxWidth:480,margin:'0 auto',display:'flex',alignItems:'center',gap:12}}>
+                <button onClick={()=>page==='home'?window.location.href='index.html':setPage('home')} style={{background:'#EDE7F6',border:'none',borderRadius:10,width:40,height:40,cursor:'pointer',color:'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style={{fontWeight:700,color:'#311B92'}}>{title}</span>
+            </div>
+        </header>
+    );
+
+    const Home=()=>(
+        <div>
+            <Header title="文獻搜尋訓練"/>
+            <div style={{background:'linear-gradient(135deg,#7209B7,#4361EE)',padding:'32px 20px',color:'#fff'}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div style={{background:'rgba(255,255,255,0.2)',display:'inline-block',padding:'6px 14px',borderRadius:50,fontSize:12,fontWeight:600,marginBottom:16}}>🔍 Literature Search Training</div>
+                    <h1 style={{fontSize:26,fontWeight:700,marginBottom:12}}>文獻搜尋訓練</h1>
+                    <p style={{opacity:0.9,fontSize:14}}>系統性學習文獻搜尋技巧，掌握PICO問題建構與資料庫查詢</p>
+                </div>
+            </div>
+            <div style={{padding:'0 16px',marginTop:-20}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div className="card">
+                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🎯 學習目標</h3>
+                        {['掌握PICO臨床問題架構並能獨立構建問題','學會使用PubMed布林運算子與MeSH詞彙','熟悉Cochrane Library搜尋系統性回顧','能產生可執行的文獻搜尋策略'].map((t,i)=>(
+                            <div key={i} style={{display:'flex',gap:10,marginBottom:8,fontSize:14}}>
+                                <span style={{background:'var(--suc)',color:'#fff',borderRadius:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,flexShrink:0}}>{i+1}</span>
+                                <span style={{color:'var(--txt2)'}}>{t}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>📖 課程內容</h3>
+                    {lessons.map(l=>(
+                        <div key={l.id} className="card" onClick={()=>{setLessonId(l.id);setPage('lesson')}} style={{cursor:'pointer'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:16}}>
+                                <div style={{width:48,height:48,borderRadius:12,background:`linear-gradient(135deg,${l.color},${l.color}88)`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}}>{l.id}</div>
+                                <div style={{flex:1}}>
+                                    <div style={{fontSize:11,color:l.color,fontWeight:600}}>Lesson {l.id}</div>
+                                    <div style={{fontSize:16,fontWeight:700}}>{l.title}</div>
+                                    <div style={{fontSize:13,color:'var(--txt2)'}}>{l.sub}</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" fill={l.color} width="20" height="20"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/></svg>
+                            </div>
+                        </div>
+                    ))}
+                    <button className="btn btn-acc" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}} style={{width:'100%',justifyContent:'center',marginTop:20,marginBottom:32}}>
+                        📝 開始測驗 (10題)
+                    </button>
+                </div>
+            </div>
+            <footer style={{background:'#EDE7F6',padding:'24px 16px',textAlign:'center'}}>
+                <p style={{fontSize:13,color:'var(--txt2)'}}>新竹台大分院教學部</p>
+                <p style={{fontSize:12,color:'var(--txt2)'}}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+        </div>
+    );
+
+    const L1=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:16}}>📚 為什麼需要系統性文獻搜尋？</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>在實證醫學的實踐中，系統性文獻搜尋是關鍵步驟。良好的搜尋策略可以：</p>
+                <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                    {['找到最佳可用證據回答臨床問題','避免遺漏重要研究','減少選擇偏差的影響','確保決策基於完整的證據基礎'].map((item,i)=>(
+                        <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:'#F3E5F5',borderRadius:10}}>
+                            <span style={{color:'var(--suc)',fontWeight:700}}>✓</span>
+                            <span style={{fontSize:14,color:'var(--txt)'}}>{item}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>🗃️ 主要醫學資料庫比較</h3>
+                <table>
+                    <thead><tr><th>資料庫</th><th>特色</th><th>適用情境</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{fontWeight:600,color:'var(--blue)'}}>PubMed</td><td>免費、最廣泛使用</td><td>一般文獻搜尋首選</td></tr>
+                        <tr><td style={{fontWeight:600,color:'var(--suc)'}}>Cochrane</td><td>系統性回顧專門庫</td><td>尋找高品質證據</td></tr>
+                        <tr><td style={{fontWeight:600,color:'var(--acc)'}}>Embase</td><td>藥物與歐洲文獻</td><td>藥物相關研究</td></tr>
+                        <tr><td style={{fontWeight:600,color:'var(--pri)'}}>CINAHL</td><td>護理與健康科學</td><td>護理相關主題</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="warn">
+                <strong style={{color:'#F57F17'}}>⚠️ 常見搜尋錯誤</strong><br/>
+                <ul style={{fontSize:14,color:'var(--txt2)',marginTop:8,paddingLeft:20}}>
+                    <li>只搜尋單一資料庫</li>
+                    <li>搜尋詞彙太狹窄或太廣泛</li>
+                    <li>未使用同義詞擴大搜尋</li>
+                    <li>未記錄搜尋策略</li>
+                </ul>
+            </div>
+            <div className="good">
+                <strong style={{color:'var(--suc)'}}>💡 EBM 五步驟中的「Acquire」</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                文獻搜尋對應EBM五步驟中的第二步「Acquire（獲取）」。好的搜尋策略能幫助您有效率地找到回答臨床問題的最佳證據。
+                </span>
+            </div>
+        </div>
+    );
+
+    const L2=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🎯 PICO 架構</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>PICO是提出可回答臨床問題的標準架構，幫助我們精確定義問題並搜尋文獻。</p>
+                <div className="formula">P + I + C + O = 好的臨床問題</div>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri2)',marginBottom:12}}>📋 PICO 各元素說明</h3>
+                <table>
+                    <tbody>
+                        <tr style={{background:'#FCE4EC'}}><td style={{fontWeight:700,color:'#C2185B',width:'35%'}}>P - Patient<br/><span style={{fontWeight:400,fontSize:12}}>病人/族群</span></td><td>我的病人是誰？<br/><span style={{fontSize:12,color:'var(--txt2)'}}>年齡、性別、疾病、嚴重度</span></td></tr>
+                        <tr style={{background:'#E1BEE7'}}><td style={{fontWeight:700,color:'#7B1FA2'}}>I - Intervention<br/><span style={{fontWeight:400,fontSize:12}}>介入措施</span></td><td>我想評估什麼治療/暴露？<br/><span style={{fontSize:12,color:'var(--txt2)'}}>藥物、手術、診斷工具</span></td></tr>
+                        <tr style={{background:'#D1C4E9'}}><td style={{fontWeight:700,color:'#512DA8'}}>C - Comparison<br/><span style={{fontWeight:400,fontSize:12}}>比較對象</span></td><td>與什麼比較？<br/><span style={{fontSize:12,color:'var(--txt2)'}}>安慰劑、標準治療、無治療</span></td></tr>
+                        <tr style={{background:'#C5CAE9'}}><td style={{fontWeight:700,color:'#303F9F'}}>O - Outcome<br/><span style={{fontWeight:400,fontSize:12}}>結果</span></td><td>我關心什麼結果？<br/><span style={{fontSize:12,color:'var(--txt2)'}}>死亡率、症狀改善、生活品質</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            {/* PICO Builder Tool - inlined to prevent focus loss */}
+            <div className="card" style={{border:'2px solid var(--pri)',background:'linear-gradient(135deg,#FAFBFC,#F3E5F5)'}}>
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:16,display:'flex',alignItems:'center',gap:8}}>
+                    <span style={{fontSize:24}}>🔧</span> PICO 問題建構器
+                </h3>
+
+                {/* Template Selector */}
+                <div style={{marginBottom:20}}>
+                    <div style={{fontSize:14,fontWeight:600,color:'var(--txt)',marginBottom:10}}>📋 快速範本（點擊自動填入）</div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:8}}>
+                        {picoTemplates.slice(0,4).map(t=>(
+                            <div key={t.id} className={`template-card ${activeTemplate===t.id?'active':''}`} onClick={()=>selectTemplate(t)}>
+                                <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+                                    <span>{t.icon}</span>
+                                    <span style={{fontSize:11,color:t.color,fontWeight:600}}>{t.specialty}</span>
+                                </div>
+                                <div style={{fontSize:13,fontWeight:600,color:'var(--txt)'}}>{t.title}</div>
+                            </div>
+                        ))}
+                    </div>
+                    <details style={{marginTop:8}}>
+                        <summary style={{cursor:'pointer',fontSize:13,color:'var(--pri)',fontWeight:600}}>顯示更多範本...</summary>
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:8,marginTop:8}}>
+                            {picoTemplates.slice(4).map(t=>(
+                                <div key={t.id} className={`template-card ${activeTemplate===t.id?'active':''}`} onClick={()=>selectTemplate(t)}>
+                                    <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+                                        <span>{t.icon}</span>
+                                        <span style={{fontSize:11,color:t.color,fontWeight:600}}>{t.specialty}</span>
+                                    </div>
+                                    <div style={{fontSize:13,fontWeight:600,color:'var(--txt)'}}>{t.title}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </details>
+                </div>
+
+                {/* PICO Input Fields - Uncontrolled inputs with Generate button */}
+                <div style={{display:'flex',flexDirection:'column',gap:16}}>
+                    <div>
+                        <label style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                            <span style={{background:'#E91E63',color:'#fff',padding:'4px 10px',borderRadius:8,fontSize:13,fontWeight:700}}>P</span>
+                            <span style={{fontSize:14,fontWeight:600,color:'var(--txt)'}}>Patient/Population</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="pico-p"
+                            className="pico-input"
+                            placeholder="病人族群（如：type 2 diabetes, elderly）"
+                            defaultValue={picoData.p}
+                        />
+                    </div>
+                    <div>
+                        <label style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                            <span style={{background:'#9C27B0',color:'#fff',padding:'4px 10px',borderRadius:8,fontSize:13,fontWeight:700}}>I</span>
+                            <span style={{fontSize:14,fontWeight:600,color:'var(--txt)'}}>Intervention</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="pico-i"
+                            className="pico-input"
+                            placeholder="介入措施（如：metformin, surgery）"
+                            defaultValue={picoData.i}
+                        />
+                    </div>
+                    <div>
+                        <label style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                            <span style={{background:'#673AB7',color:'#fff',padding:'4px 10px',borderRadius:8,fontSize:13,fontWeight:700}}>C</span>
+                            <span style={{fontSize:14,fontWeight:600,color:'var(--txt)'}}>Comparison</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="pico-c"
+                            className="pico-input"
+                            placeholder="比較對象（如：placebo, standard care）可空白"
+                            defaultValue={picoData.c}
+                        />
+                    </div>
+                    <div>
+                        <label style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                            <span style={{background:'#3F51B5',color:'#fff',padding:'4px 10px',borderRadius:8,fontSize:13,fontWeight:700}}>O</span>
+                            <span style={{fontSize:14,fontWeight:600,color:'var(--txt)'}}>Outcome</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="pico-o"
+                            className="pico-input"
+                            placeholder="結果指標（如：mortality, HbA1c）"
+                            defaultValue={picoData.o}
+                        />
+                    </div>
+                </div>
+
+                {/* Generate Button */}
+                <div style={{display:'flex',gap:8,marginTop:16}}>
+                    <button
+                        onClick={()=>{
+                            const p=document.getElementById('pico-p').value;
+                            const i=document.getElementById('pico-i').value;
+                            const c=document.getElementById('pico-c').value;
+                            const o=document.getElementById('pico-o').value;
+                            setPicoData({p,i,c,o});
+                        }}
+                        className="btn btn-pri"
+                        style={{flex:1,justifyContent:'center'}}
+                    >
+                        🔍 產生搜尋字串
+                    </button>
+                    <button
+                        onClick={()=>{
+                            document.getElementById('pico-p').value='';
+                            document.getElementById('pico-i').value='';
+                            document.getElementById('pico-c').value='';
+                            document.getElementById('pico-o').value='';
+                            clearPico();
+                        }}
+                        style={{padding:'12px 16px',background:'#fff',border:'1px solid #ddd',borderRadius:12,fontSize:14,cursor:'pointer',color:'var(--txt2)'}}
+                    >
+                        清除
+                    </button>
+                </div>
+
+                {/* Results Section - Only shown after Generate button is clicked */}
+                {hasValidPico && (
+                    <div style={{marginTop:20}}>
+                        <div style={{fontSize:14,fontWeight:600,color:'var(--txt)',marginBottom:8}}>📝 臨床問題預覽</div>
+                        <div style={{background:'#fff',border:'2px solid var(--suc)',borderRadius:12,padding:16}}>
+                            <p style={{fontSize:14,color:'var(--txt)',lineHeight:1.8}}>
+                                對於 <strong style={{color:'#E91E63'}}>{picoData.p||'[病人族群]'}</strong>，
+                                使用 <strong style={{color:'#9C27B0'}}>{picoData.i||'[介入措施]'}</strong>
+                                {picoData.c && <> 相較於 <strong style={{color:'#673AB7'}}>{picoData.c}</strong></>}
+                                ，能否改善 <strong style={{color:'#3F51B5'}}>{picoData.o||'[結果指標]'}</strong>？
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Search Outputs */}
+                {hasValidPico && (
+                    <div style={{marginTop:20}}>
+                        {/* PubMed Search */}
+                        <div style={{marginBottom:16}}>
+                            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,flexWrap:'wrap',gap:8}}>
+                                <span style={{fontSize:14,fontWeight:600,color:'var(--blue)'}}>🔍 PubMed 搜尋字串</span>
+                                <div style={{display:'flex',gap:8}}>
+                                    <button onClick={()=>copyToClipboard(pubmedSearch,'pubmed')} className="btn" style={{padding:'6px 12px',fontSize:12,background:copied==='pubmed'?'var(--suc)':'#fff',color:copied==='pubmed'?'#fff':'var(--txt)',border:'1px solid #ddd'}}>
+                                        {copied==='pubmed'?'✓ 已複製':'複製'}
+                                    </button>
+                                    <button onClick={openPubMed} className="btn btn-blue" style={{padding:'6px 12px',fontSize:12}}>
+                                        在 PubMed 搜尋 ↗
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="search-output">{pubmedSearch}</div>
+                        </div>
+
+                        {/* Cochrane Search */}
+                        <div>
+                            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,flexWrap:'wrap',gap:8}}>
+                                <span style={{fontSize:14,fontWeight:600,color:'var(--suc)'}}>📚 Cochrane 搜尋字串</span>
+                                <div style={{display:'flex',gap:8}}>
+                                    <button onClick={()=>copyToClipboard(cochraneSearch,'cochrane')} className="btn" style={{padding:'6px 12px',fontSize:12,background:copied==='cochrane'?'var(--suc)':'#fff',color:copied==='cochrane'?'#fff':'var(--txt)',border:'1px solid #ddd'}}>
+                                        {copied==='cochrane'?'✓ 已複製':'複製'}
+                                    </button>
+                                    <button onClick={openCochrane} className="btn btn-suc" style={{padding:'6px 12px',fontSize:12}}>
+                                        在 Cochrane 搜尋 ↗
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="search-output" style={{background:'linear-gradient(135deg,#E0F2F1,#E3F2FD)',borderColor:'var(--suc)'}}>{cochraneSearch}</div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className="tip">
+                <strong style={{color:'var(--acc)'}}>📝 PICO 範例</strong><br/>
+                <p style={{fontSize:14,color:'var(--txt2)',marginTop:8,lineHeight:1.8}}>
+                <strong>問題：</strong>對於急性心肌梗塞的病人，使用新型P2Y12抑制劑相較於Clopidogrel，是否能降低心血管事件？<br/><br/>
+                <strong>P：</strong>急性心肌梗塞病人<br/>
+                <strong>I：</strong>新型P2Y12抑制劑（Ticagrelor或Prasugrel）<br/>
+                <strong>C：</strong>Clopidogrel<br/>
+                <strong>O：</strong>主要心血管不良事件（MACE）
+                </p>
+            </div>
+        </div>
+    );
+
+    const L3=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:16}}>🔍 PubMed 布林運算子</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>布林運算子是組合搜尋詞彙的關鍵工具。理解它們的功能可以大幅提升搜尋效率。</p>
+                <table>
+                    <thead><tr><th>運算子</th><th>功能</th><th>範例</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{fontWeight:700,color:'var(--suc)'}}>AND</td><td>縮小範圍<br/><span style={{fontSize:11,color:'var(--txt2)'}}>兩者都要有</span></td><td><code>diabetes AND metformin</code></td></tr>
+                        <tr><td style={{fontWeight:700,color:'var(--pri)'}}>OR</td><td>擴大範圍<br/><span style={{fontSize:11,color:'var(--txt2)'}}>任一即可</span></td><td><code>heart attack OR MI</code></td></tr>
+                        <tr><td style={{fontWeight:700,color:'var(--err)'}}>NOT</td><td>排除詞彙<br/><span style={{fontSize:11,color:'var(--txt2)'}}>不要包含</span></td><td><code>cancer NOT lung</code></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:12}}>📖 MeSH 詞彙</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>MeSH（Medical Subject Headings）是美國國家醫學圖書館建立的標準化醫學詞彙系統。</p>
+                <div className="info">
+                    <strong style={{color:'var(--blue)'}}>MeSH 優點</strong>
+                    <ul style={{fontSize:14,color:'var(--txt2)',marginTop:8,paddingLeft:20}}>
+                        <li>統一不同術語（如 heart attack = myocardial infarction）</li>
+                        <li>自動包含下層概念（explosion 功能）</li>
+                        <li>提高搜尋的完整性與精確度</li>
+                    </ul>
+                </div>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:16,fontWeight:700,color:'var(--suc)',marginBottom:12}}>🏷️ 常用欄位標籤</h3>
+                <table>
+                    <tbody>
+                        <tr><td style={{fontWeight:600}}>[Title/Abstract]</td><td>搜尋標題與摘要</td></tr>
+                        <tr><td style={{fontWeight:600}}>[MeSH Terms]</td><td>搜尋MeSH詞彙</td></tr>
+                        <tr><td style={{fontWeight:600}}>[pt]</td><td>文章類型（如RCT）</td></tr>
+                        <tr><td style={{fontWeight:600}}>[tiab]</td><td>同Title/Abstract簡寫</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="formula">
+                (diabetes[MeSH] OR "diabetes mellitus"[tiab])<br/>
+                AND<br/>
+                (metformin[MeSH] OR metformin[tiab])<br/>
+                AND<br/>
+                randomized controlled trial[pt]
+            </div>
+            <div className="good">
+                <strong style={{color:'var(--suc)'}}>💡 截詞搜尋 (Truncation)</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                使用 * 符號可以搜尋相同字根的變化形式：<br/>
+                <code>therap*</code> → therapy, therapies, therapeutic, therapist...
+                </span>
+            </div>
+        </div>
+    );
+
+    const L4=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--suc)',marginBottom:16}}>📚 Cochrane Library 簡介</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>Cochrane Library是系統性回顧的權威資料庫，提供高品質的實證醫學證據。</p>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12}}>
+                    {[
+                        {title:'Cochrane Reviews',desc:'系統性回顧',color:'var(--suc)'},
+                        {title:'Cochrane Protocols',desc:'進行中的回顧計畫',color:'var(--blue)'},
+                        {title:'CENTRAL',desc:'臨床試驗登錄',color:'var(--pri)'},
+                        {title:'Clinical Answers',desc:'臨床問答摘要',color:'var(--acc)'}
+                    ].map((item,i)=>(
+                        <div key={i} style={{background:'#fff',border:`2px solid ${item.color}`,borderRadius:12,padding:12,textAlign:'center'}}>
+                            <div style={{fontWeight:700,color:item.color,marginBottom:4}}>{item.title}</div>
+                            <div style={{fontSize:12,color:'var(--txt2)'}}>{item.desc}</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🔍 Cochrane 搜尋語法</h3>
+                <table>
+                    <tbody>
+                        <tr><td style={{fontWeight:600}}>:ti</td><td>搜尋標題 (title)</td></tr>
+                        <tr><td style={{fontWeight:600}}>:ab</td><td>搜尋摘要 (abstract)</td></tr>
+                        <tr><td style={{fontWeight:600}}>:kw</td><td>搜尋關鍵字 (keyword)</td></tr>
+                        <tr><td style={{fontWeight:600}}>:ti,ab,kw</td><td>同時搜尋標題、摘要、關鍵字</td></tr>
+                    </tbody>
+                </table>
+                <div className="formula" style={{marginTop:16}}>
+                    (diabetes):ti,ab,kw AND (SGLT2):ti,ab,kw
+                </div>
+            </div>
+            <div className="info">
+                <strong style={{color:'var(--blue)'}}>📖 如何閱讀Cochrane回顧</strong><br/>
+                <ol style={{fontSize:14,color:'var(--txt2)',marginTop:8,paddingLeft:20}}>
+                    <li><strong>Plain Language Summary</strong> - 一般讀者摘要</li>
+                    <li><strong>Abstract</strong> - 結構化摘要</li>
+                    <li><strong>Summary of Findings Table</strong> - 關鍵發現表格</li>
+                    <li><strong>Forest Plot</strong> - 統合分析圖表</li>
+                </ol>
+            </div>
+            <div className="tip">
+                <strong style={{color:'var(--acc)'}}>💡 小技巧</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                Cochrane Library 提供 PICO 搜尋功能，可以直接輸入 P、I、C、O 各元素進行搜尋，對於初學者非常友善。
+                </span>
+            </div>
+        </div>
+    );
+
+    const L5=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--acc)',marginBottom:16}}>🚀 進階搜尋技巧</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>掌握進階技巧可以讓您的文獻搜尋更有效率、更完整。</p>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:16,fontWeight:700,color:'var(--blue)',marginBottom:12}}>🏷️ 研究類型篩選器</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>PubMed提供預設的篩選器，可以快速找到特定類型的研究：</p>
+                <table>
+                    <tbody>
+                        <tr><td style={{fontWeight:600,color:'var(--suc)'}}>Clinical Trial</td><td>臨床試驗</td></tr>
+                        <tr><td style={{fontWeight:600,color:'var(--pri)'}}>Randomized Controlled Trial</td><td>隨機對照試驗</td></tr>
+                        <tr><td style={{fontWeight:600,color:'var(--blue)'}}>Systematic Review</td><td>系統性回顧</td></tr>
+                        <tr><td style={{fontWeight:600,color:'var(--acc)'}}>Meta-Analysis</td><td>統合分析</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:12}}>📝 記錄搜尋策略</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>系統性文獻搜尋必須記錄完整的搜尋策略，以確保可重複性：</p>
+                <div className="purple">
+                    <strong>搜尋記錄應包含：</strong>
+                    <ul style={{fontSize:14,color:'var(--txt2)',marginTop:8,paddingLeft:20}}>
+                        <li>搜尋日期</li>
+                        <li>使用的資料庫</li>
+                        <li>完整搜尋字串</li>
+                        <li>搜尋結果數量</li>
+                        <li>使用的篩選條件</li>
+                    </ul>
+                </div>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:16,fontWeight:700,color:'var(--suc)',marginBottom:12}}>📊 PRISMA 流程圖</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>PRISMA流程圖用於呈現系統性回顧的文獻篩選過程：</p>
+                <div style={{background:'#F0FFF4',borderRadius:12,padding:16,textAlign:'center'}}>
+                    <div style={{background:'var(--suc)',color:'#fff',padding:'8px 16px',borderRadius:8,marginBottom:8,display:'inline-block'}}>資料庫搜尋結果 (n=xxx)</div>
+                    <div style={{fontSize:20,marginBottom:8}}>↓</div>
+                    <div style={{background:'var(--blue)',color:'#fff',padding:'8px 16px',borderRadius:8,marginBottom:8,display:'inline-block'}}>去除重複後 (n=xxx)</div>
+                    <div style={{fontSize:20,marginBottom:8}}>↓</div>
+                    <div style={{background:'var(--pri)',color:'#fff',padding:'8px 16px',borderRadius:8,marginBottom:8,display:'inline-block'}}>標題摘要篩選後 (n=xxx)</div>
+                    <div style={{fontSize:20,marginBottom:8}}>↓</div>
+                    <div style={{background:'var(--acc)',color:'#fff',padding:'8px 16px',borderRadius:8,display:'inline-block'}}>全文評估後納入 (n=xxx)</div>
+                </div>
+            </div>
+            <div className="good">
+                <strong style={{color:'var(--suc)'}}>💡 引用管理工具</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                使用引用管理軟體（如 EndNote、Zotero、Mendeley）可以幫助您：<br/>
+                • 自動匯入文獻資料<br/>
+                • 去除重複文獻<br/>
+                • 管理全文PDF<br/>
+                • 自動產生參考文獻格式
+                </span>
+            </div>
+        </div>
+    );
+
+    const Lesson=()=>{
+        const lesson=lessons.find(l=>l.id===lessonId);
+        return(
+            <div>
+                <Header title={lesson.title}/>
+                <div style={{background:`linear-gradient(135deg,${lesson.color},${lesson.color}88)`,padding:'24px 20px',color:'#fff'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{fontSize:12,opacity:0.9,marginBottom:4}}>Lesson {lessonId} / 5</div>
+                        <h1 style={{fontSize:22,fontWeight:700}}>{lesson.title}</h1>
+                        <p style={{fontSize:14,opacity:0.9}}>{lesson.sub}</p>
+                    </div>
+                </div>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        {/* Lesson Navigation */}
+                        <div style={{display:'flex',gap:6,marginBottom:20,overflowX:'auto',paddingBottom:8}}>
+                            {lessons.map(l=>(
+                                <button key={l.id} onClick={()=>setLessonId(l.id)} style={{
+                                    padding:'8px 16px',borderRadius:20,border:'none',
+                                    background:lessonId===l.id?l.color:'#E5E5E5',
+                                    color:lessonId===l.id?'#fff':'var(--txt2)',
+                                    fontWeight:600,fontSize:13,cursor:'pointer',whiteSpace:'nowrap'
+                                }}>
+                                    L{l.id}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Render lesson content directly instead of as component to prevent focus loss */}
+                        {lessonId===1 && L1()}
+                        {lessonId===2 && L2()}
+                        {lessonId===3 && L3()}
+                        {lessonId===4 && L4()}
+                        {lessonId===5 && L5()}
+
+                        {/* Navigation Buttons */}
+                        <div style={{display:'flex',justifyContent:'space-between',marginTop:24,marginBottom:32}}>
+                            <button
+                                className="btn btn-outline"
+                                onClick={()=>lessonId>1?setLessonId(lessonId-1):setPage('home')}
+                                style={{flex:1,marginRight:8,justifyContent:'center'}}
+                            >
+                                ← {lessonId>1?'上一課':'返回首頁'}
+                            </button>
+                            <button
+                                className="btn btn-pri"
+                                onClick={()=>lessonId<5?setLessonId(lessonId+1):setPage('home')}
+                                style={{flex:1,marginLeft:8,justifyContent:'center'}}
+                            >
+                                {lessonId<5?'下一課 →':'完成課程 ✓'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const Quiz=()=>{
+        const current=quiz[qIdx];
+        if(done){
+            const pct=Math.round(score/quiz.length*100);
+            return(
+                <div>
+                    <Header title="測驗結果"/>
+                    <div style={{padding:'40px 16px',textAlign:'center'}}>
+                        <div style={{maxWidth:480,margin:'0 auto'}}>
+                            <div style={{fontSize:80,marginBottom:16}}>{pct>=80?'🎉':pct>=60?'👍':'📚'}</div>
+                            <h2 style={{fontSize:24,fontWeight:700,marginBottom:8}}>測驗完成！</h2>
+                            <p style={{fontSize:18,color:'var(--txt2)',marginBottom:24}}>您答對了 <strong style={{color:'var(--pri)'}}>{score}</strong> / {quiz.length} 題</p>
+                            <div style={{background:pct>=80?'var(--suc)':pct>=60?'var(--warn)':'var(--err)',color:'#fff',padding:'20px',borderRadius:16,marginBottom:24}}>
+                                <div style={{fontSize:48,fontWeight:700}}>{pct}%</div>
+                                <div style={{fontSize:14}}>{pct>=80?'太棒了！您已掌握文獻搜尋技巧':pct>=60?'不錯！建議複習部分內容':'建議重新閱讀課程內容'}</div>
+                            </div>
+                            <button className="btn btn-pri" onClick={()=>setPage('home')} style={{width:'100%',justifyContent:'center'}}>返回首頁</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        return(
+            <div>
+                <Header title={`題目 ${qIdx+1}/${quiz.length}`}/>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{background:'linear-gradient(135deg,var(--pri),var(--pri2))',borderRadius:16,padding:'20px',color:'#fff',marginBottom:20}}>
+                            <div style={{fontSize:12,opacity:0.9,marginBottom:8}}>Question {qIdx+1} of {quiz.length}</div>
+                            <h3 style={{fontSize:18,fontWeight:600,lineHeight:1.6}}>{current.q}</h3>
+                        </div>
+                        <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                            {current.o.map((opt,i)=>(
+                                <button key={i} onClick={()=>{if(sel===null){setSel(i);if(i===current.c)setScore(score+1);setShow(true)}}}
+                                    style={{
+                                        padding:'16px',borderRadius:12,border:'2px solid',textAlign:'left',
+                                        background:sel===null?'#fff':i===current.c?'#F0FFF4':sel===i?'#FFF0F0':'#fff',
+                                        borderColor:sel===null?'#E5E5E5':i===current.c?'var(--suc)':sel===i?'var(--err)':'#E5E5E5',
+                                        cursor:sel===null?'pointer':'default',fontSize:15
+                                    }}>
+                                    <span style={{fontWeight:600,marginRight:10,color:sel===null?'var(--pri)':i===current.c?'var(--suc)':sel===i?'var(--err)':'var(--txt2)'}}>
+                                        {String.fromCharCode(65+i)}.
+                                    </span>
+                                    {opt}
+                                </button>
+                            ))}
+                        </div>
+                        {show && (
+                            <div className={sel===current.c?'good':'tip'} style={{marginTop:20}}>
+                                <strong style={{color:sel===current.c?'var(--suc)':'var(--err)'}}>{sel===current.c?'✓ 正確！':'✗ 錯誤'}</strong>
+                                <p style={{fontSize:14,color:'var(--txt2)',marginTop:8}}>{current.e}</p>
+                            </div>
+                        )}
+                        {show && (
+                            <button className="btn btn-pri" onClick={()=>{
+                                if(qIdx<quiz.length-1){setQIdx(qIdx+1);setSel(null);setShow(false)}
+                                else setDone(true)
+                            }} style={{width:'100%',justifyContent:'center',marginTop:20}}>
+                                {qIdx<quiz.length-1?'下一題 →':'查看結果'}
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return page==='home'?<Home/>:page==='lesson'?<Lesson/>:<Quiz/>;
+};
+
+ReactDOM.render(<App/>,document.getElementById('root'));
+</script>
+</body>
+</html>

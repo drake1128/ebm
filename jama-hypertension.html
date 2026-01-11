@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高血壓診斷評估 | JAMA Rational Clinical Examination</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --pri:#E63946;
+            --pri2:#F4A261;
+            --acc:#2A9D8F;
+            --suc:#06D6A0;
+            --warn:#FFD166;
+            --err:#EF476F;
+            --pur:#6A4C93;
+            --blue:#118AB2;
+            --bg:#FAFBFC;
+            --txt:#1A1A2E;
+            --txt2:#6B7280
+        }
+        body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+        .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(230,57,70,0.08)}
+        .btn{padding:14px 24px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all 0.3s}
+        .btn-pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}
+        .btn-pri:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(230,57,70,0.3)}
+        .btn-acc{background:linear-gradient(135deg,var(--acc),var(--suc));color:#fff}
+        table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+        th,td{padding:10px;text-align:center;border-bottom:1px solid #eee}
+        th{background:#FFF0F0;font-weight:600;color:var(--pri)}
+        .formula{background:linear-gradient(135deg,#FFF0F0,#FFE8E8);border:2px solid var(--pri);border-radius:12px;padding:16px;margin:12px 0;text-align:center;font-family:serif;font-size:17px;color:#8B0000}
+        .tip{background:#FFF9F0;border-left:4px solid var(--pri2);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .good{background:#F0FFF8;border-left:4px solid var(--suc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .info{background:#F0F8FF;border-left:4px solid var(--blue);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .warn{background:#FFFBF0;border-left:4px solid var(--warn);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .purple{background:#F8F0FF;border-left:4px solid var(--pur);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .key-point{background:linear-gradient(135deg,#E63946 0%,#F4A261 100%);color:#fff;border-radius:12px;padding:16px;margin:16px 0}
+        .badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;margin-right:6px}
+        .progress-bar{height:8px;background:#E5E5E5;border-radius:4px;overflow:hidden;margin-bottom:20px}
+        .progress-fill{height:100%;border-radius:4px;transition:width 0.3s}
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState, useEffect} = React;
+
+const MODULE_ID='jama-hypertension';
+
+const ProgressTracker={
+    STORAGE_KEY:'ebm-progress',
+    getProgress:()=>{try{const d=localStorage.getItem(ProgressTracker.STORAGE_KEY);return d?JSON.parse(d):{version:1,modules:{},badges:[],totalTimeSpent:0}}catch{return{version:1,modules:{},badges:[],totalTimeSpent:0}}},
+    saveQuizResult:(moduleId,score,total,timeSpent)=>{
+        const progress=ProgressTracker.getProgress();
+        const mod=progress.modules[moduleId]||{bestScore:0,totalAttempts:0,allAttempts:[],lessonsViewed:[],completed:false,firstCompleted:null};
+        const attempt={date:new Date().toISOString(),score,timeSpent};
+        mod.allAttempts.push(attempt);mod.totalAttempts++;
+        if(score>mod.bestScore)mod.bestScore=score;
+        const passingScore=Math.ceil(total*0.7);
+        if(score>=passingScore&&!mod.completed){mod.completed=true;mod.firstCompleted=attempt.date}
+        progress.modules[moduleId]=mod;progress.totalTimeSpent+=timeSpent;progress.lastUpdated=new Date().toISOString();
+        ProgressTracker.checkBadges(progress,score,total,timeSpent);
+        localStorage.setItem(ProgressTracker.STORAGE_KEY,JSON.stringify(progress));return progress;
+    },
+    checkBadges:(progress,score,total,timeSpent)=>{
+        const badges=progress.badges||[];const ids=badges.map(b=>b.id);const now=new Date().toISOString();
+        if(!ids.includes('first-quiz'))badges.push({id:'first-quiz',earnedAt:now});
+        if(score===total&&!ids.includes('perfect-score'))badges.push({id:'perfect-score',earnedAt:now});
+        if(timeSpent<120&&!ids.includes('speed-demon'))badges.push({id:'speed-demon',earnedAt:now});
+        const completed=Object.values(progress.modules).filter(m=>m.completed).length;
+        if(completed>=5&&!ids.includes('five-complete'))badges.push({id:'five-complete',earnedAt:now});
+        if(completed>=10&&!ids.includes('ten-complete'))badges.push({id:'ten-complete',earnedAt:now});
+        if(completed>=18&&!ids.includes('master'))badges.push({id:'master',earnedAt:now});
+        const mod=progress.modules[MODULE_ID];
+        if(mod&&mod.totalAttempts>=3&&!ids.includes('persistent'))badges.push({id:'persistent',earnedAt:now});
+        progress.badges=badges;
+    }
+};
+
+const lessons = [
+    {id:1, title:'高血壓診斷概論', sub:'Why Out-of-Office BP?', color:'#E63946'},
+    {id:2, title:'血壓測量方法比較', sub:'Office vs HBPM vs ABPM', color:'#F4A261'},
+    {id:3, title:'診斷準確度分析', sub:'Sensitivity & Specificity', color:'#2A9D8F'},
+    {id:4, title:'似然比與臨床應用', sub:'Likelihood Ratios', color:'#6A4C93'},
+    {id:5, title:'臨床決策流程', sub:'Clinical Algorithm', color:'#118AB2'}
+];
+
+const quiz = [
+    {
+        q:'根據JAMA系統性回顧，診斷高血壓的參考標準 (reference standard) 是什麼？',
+        o:['傳統診間血壓測量','居家血壓監測 (HBPM)','24小時動態血壓監測 (ABPM)','自動化診間血壓測量'],
+        c:2,
+        e:'24小時動態血壓監測 (ABPM) 被認為是評估血壓的參考標準。ABPM定義高血壓為：24小時平均BP ≥130/80 mmHg 或清醒時平均BP ≥135/85 mmHg。'
+    },
+    {
+        q:'傳統診間血壓測量 (單次就診1-5次測量，BP ≥140/90 mmHg) 診斷高血壓的敏感度約為多少？',
+        o:['約 75%','約 51%','約 88%','約 33%'],
+        c:1,
+        e:'傳統診間血壓測量的敏感度僅約 51% (95% CI: 36%-67%)，這意味著約一半的真正高血壓患者可能被漏診。'
+    },
+    {
+        q:'居家血壓監測 (HBPM, BP ≥135/85 mmHg) 診斷高血壓的敏感度和特異度各約為多少？',
+        o:['敏感度 51%，特異度 88%','敏感度 88%，特異度 51%','敏感度 75%，特異度 76%','敏感度 87%，特異度 24%'],
+        c:2,
+        e:'HBPM的敏感度約75% (95% CI: 65%-86%)，特異度約76% (95% CI: 65%-86%)，比傳統診間測量有更平衡的敏感度和特異度。'
+    },
+    {
+        q:'傳統診間血壓測量的正似然比 (LR+) 約為多少？',
+        o:['1.5','3.1','4.2','10.5'],
+        c:2,
+        e:'傳統診間血壓測量的 LR+ 約 4.2 (95% CI: 2.5-6.0)。LR+ 在 2-5 之間屬於弱到中等的診斷價值，無法有效確診高血壓。'
+    },
+    {
+        q:'居家血壓監測 (HBPM) 的負似然比 (LR-) 約為多少？',
+        o:['0.56','0.33','0.10','0.75'],
+        c:1,
+        e:'HBPM 的 LR- 約 0.33 (95% CI: 0.20-0.47)。LR- 在 0.2-0.5 之間屬於弱到中等的排除價值，比傳統診間測量 (LR- 0.56) 更能排除高血壓。'
+    },
+    {
+        q:'什麼是「白袍高血壓 (White Coat Hypertension)」？',
+        o:['診間血壓正常，但居家或動態血壓升高','診間血壓升高，但居家或動態血壓正常','所有測量方法血壓都升高','血壓變異度很大'],
+        c:1,
+        e:'白袍高血壓是指診間血壓升高 (≥140/90)，但在診間外測量 (HBPM或ABPM) 血壓正常的情況。這類患者不需要立即治療，但需要追蹤。'
+    },
+    {
+        q:'什麼是「隱匿性高血壓 (Masked Hypertension)」？',
+        o:['診間血壓正常，但居家或動態血壓升高','診間血壓升高，但居家或動態血壓正常','血壓只在夜間升高','血壓只在清晨升高'],
+        c:0,
+        e:'隱匿性高血壓是指診間血壓正常 (<140/90)，但在診間外測量血壓升高的情況。這是最危險的類型，因為患者可能被誤認為正常而未接受治療。'
+    },
+    {
+        q:'根據研究，傳統診間測量的高特異度 (88%) 臨床意義為何？',
+        o:['可以有效排除高血壓','可以有效確診高血壓','敏感度也會很高','不需要其他檢查確認'],
+        c:1,
+        e:'高特異度意味著假陽性少，因此診間血壓升高時較能確診高血壓 (SpPIn原則)。但因敏感度低 (51%)，血壓正常不能排除高血壓。'
+    },
+    {
+        q:'何時應該進行24小時動態血壓監測 (ABPM)？',
+        o:['所有懷疑高血壓的患者','只有診間血壓升高的患者','當診間和居家血壓不一致或接近閾值時','只有年輕患者'],
+        c:2,
+        e:'當診間和居家血壓測量結果不一致，或血壓值接近診斷閾值時，應進行ABPM以確立診斷。這可以區分白袍高血壓和隱匿性高血壓。'
+    },
+    {
+        q:'關於高血壓診斷，以下何者為JAMA研究的主要結論？',
+        o:['診間血壓測量足以診斷高血壓','應該用居家血壓完全取代診間血壓','診斷高血壓前應獲取診間外血壓測量','只有ABPM才能診斷高血壓'],
+        c:2,
+        e:'JAMA研究結論：診斷成人高血壓前，應獲取診間外血壓測量 (HBPM或ABPM) 以補充診間測量。單獨使用診間血壓可能導致過度診斷或漏診。'
+    }
+];
+
+const App = () => {
+    const [page, setPage] = useState('home');
+    const [lessonId, setLessonId] = useState(1);
+    const [qIdx, setQIdx] = useState(0);
+    const [score, setScore] = useState(0);
+    const [sel, setSel] = useState(null);
+    const [show, setShow] = useState(false);
+    const [done, setDone] = useState(false);
+    const [quizStartTime, setQuizStartTime] = useState(null);
+
+    useEffect(() => { if (page === 'quiz' && !done && !quizStartTime) setQuizStartTime(Date.now()) }, [page, done]);
+    useEffect(() => { if (done && quizStartTime) { const t = Math.round((Date.now() - quizStartTime) / 1000); ProgressTracker.saveQuizResult(MODULE_ID, score, quiz.length, t) } }, [done]);
+
+    const Header = ({title}) => (
+        <header style={{background:'#fff',borderBottom:'1px solid #eee',padding:'12px 16px',position:'sticky',top:0,zIndex:10}}>
+            <div style={{maxWidth:480,margin:'0 auto',display:'flex',alignItems:'center',gap:12}}>
+                <button onClick={()=>page==='home'?window.location.href='index.html':setPage('home')} style={{background:'#FFF0F0',border:'none',borderRadius:10,width:40,height:40,cursor:'pointer',color:'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style={{fontWeight:700,color:'#8B0000'}}>{title}</span>
+            </div>
+        </header>
+    );
+
+    const Home = () => (
+        <div>
+            <Header title="高血壓診斷評估"/>
+            <div style={{background:'linear-gradient(135deg,#E63946,#F4A261)',padding:'32px 20px',color:'#fff'}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div style={{background:'rgba(255,255,255,0.2)',display:'inline-block',padding:'6px 14px',borderRadius:50,fontSize:12,fontWeight:600,marginBottom:16}}>
+                        🩺 JAMA Rational Clinical Examination
+                    </div>
+                    <h1 style={{fontSize:24,fontWeight:700,marginBottom:8}}>Does This Adult Patient Have Hypertension?</h1>
+                    <h2 style={{fontSize:18,fontWeight:500,marginBottom:12,opacity:0.95}}>成人高血壓診斷評估</h2>
+                    <p style={{opacity:0.9,fontSize:14,marginBottom:12}}>Viera AJ, et al. JAMA 2021;326(4):339-347</p>
+                    <a 
+                        href="https://jamanetwork.com/journals/jama/fullarticle/2782296" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{
+                            display:'inline-flex',
+                            alignItems:'center',
+                            gap:6,
+                            background:'rgba(255,255,255,0.25)',
+                            color:'#fff',
+                            padding:'8px 16px',
+                            borderRadius:25,
+                            fontSize:13,
+                            fontWeight:600,
+                            textDecoration:'none',
+                            backdropFilter:'blur(10px)',
+                            transition:'all 0.3s'
+                        }}
+                    >
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                        閱讀原文 Read Full Article
+                    </a>
+                </div>
+            </div>
+            <div style={{padding:'0 16px',marginTop:-20}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div className="key-point">
+                        <h3 style={{fontSize:16,fontWeight:700,marginBottom:12}}>🔑 核心結論 Key Finding</h3>
+                        <p style={{fontSize:14,lineHeight:1.8}}>
+                            診斷成人高血壓前，應獲取<strong>診間外血壓測量</strong>以補充診間血壓。
+                            診間血壓的敏感度和特異度有限，尤其在前測機率低時。
+                        </p>
+                    </div>
+                    
+                    <div className="card">
+                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🎯 學習目標</h3>
+                        {[
+                            '了解不同血壓測量方法的診斷準確度',
+                            '掌握診間血壓、居家血壓、動態血壓的比較',
+                            '理解似然比在高血壓診斷的應用',
+                            '建立高血壓診斷的臨床決策流程',
+                            '認識白袍高血壓與隱匿性高血壓'
+                        ].map((t,i)=>(
+                            <div key={i} style={{display:'flex',gap:10,marginBottom:8,fontSize:14}}>
+                                <span style={{background:'var(--pri)',color:'#fff',borderRadius:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,flexShrink:0}}>{i+1}</span>
+                                <span style={{color:'var(--txt2)'}}>{t}</span>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>📚 課程內容</h3>
+                    {lessons.map(l=>(
+                        <div key={l.id} className="card" onClick={()=>{setLessonId(l.id);setPage('lesson')}} style={{cursor:'pointer',transition:'transform 0.2s'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:16}}>
+                                <div style={{width:48,height:48,borderRadius:12,background:`linear-gradient(135deg,${l.color},${l.color}88)`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,fontSize:18}}>{l.id}</div>
+                                <div style={{flex:1}}>
+                                    <div style={{fontSize:11,color:l.color,fontWeight:600}}>Lesson {l.id}</div>
+                                    <div style={{fontSize:16,fontWeight:700}}>{l.title}</div>
+                                    <div style={{fontSize:13,color:'var(--txt2)'}}>{l.sub}</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" fill={l.color} width="20" height="20"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/></svg>
+                            </div>
+                        </div>
+                    ))}
+                    
+                    <button className="btn btn-acc" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}} style={{width:'100%',justifyContent:'center',marginTop:20,marginBottom:32}}>
+                        📝 開始測驗 (10題)
+                    </button>
+                </div>
+            </div>
+            <footer style={{background:'#FFF0F0',padding:'24px 16px',textAlign:'center'}}>
+                <p style={{fontSize:13,color:'var(--txt2)'}}>新竹台大分院教學部</p>
+                <p style={{fontSize:12,color:'var(--txt2)'}}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+        </div>
+    );
+
+    // Lesson 1: 高血壓診斷概論
+    const L1 = () => (
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🩺 為什麼需要診間外血壓？</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>
+                    傳統診間血壓測量長期以來是診斷高血壓的標準方法，但研究顯示它<strong>並非最準確</strong>的診斷工具。
+                </p>
+                <div className="info">
+                    <strong style={{color:'var(--blue)'}}>📊 研究背景</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    • 收錄12篇橫斷面研究 (n=6,877)<br/>
+                    • 比較診間血壓與24小時ABPM<br/>
+                    • 高血壓盛行率約49-54%
+                    </span>
+                </div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--acc)',marginBottom:12}}>📋 血壓測量方法</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>方法</th>
+                            <th>閾值</th>
+                            <th>特點</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{fontWeight:600}}>診間血壓<br/><span style={{fontSize:11,color:'var(--txt2)'}}>Office BP</span></td>
+                            <td>≥140/90</td>
+                            <td style={{textAlign:'left',fontSize:12}}>單次就診1-5次測量</td>
+                        </tr>
+                        <tr>
+                            <td style={{fontWeight:600}}>居家血壓<br/><span style={{fontSize:11,color:'var(--txt2)'}}>HBPM</span></td>
+                            <td>≥135/85</td>
+                            <td style={{textAlign:'left',fontSize:12}}>數天內多次測量平均</td>
+                        </tr>
+                        <tr>
+                            <td style={{fontWeight:600}}>動態血壓<br/><span style={{fontSize:11,color:'var(--txt2)'}}>ABPM</span></td>
+                            <td>≥130/80<br/><span style={{fontSize:10}}>(24hr平均)</span></td>
+                            <td style={{textAlign:'left',fontSize:12}}>24小時連續監測<br/><strong style={{color:'var(--pri)'}}>參考標準</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>🔍 四種血壓表型</h3>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                    <div style={{background:'#F0FFF8',padding:12,borderRadius:10,textAlign:'center'}}>
+                        <div style={{fontWeight:700,color:'var(--suc)',marginBottom:4}}>正常血壓</div>
+                        <div style={{fontSize:12,color:'var(--txt2)'}}>診間 ✓ 正常<br/>診間外 ✓ 正常</div>
+                    </div>
+                    <div style={{background:'#FFF0F0',padding:12,borderRadius:10,textAlign:'center'}}>
+                        <div style={{fontWeight:700,color:'var(--pri)',marginBottom:4}}>持續性高血壓</div>
+                        <div style={{fontSize:12,color:'var(--txt2)'}}>診間 ✗ 升高<br/>診間外 ✗ 升高</div>
+                    </div>
+                    <div style={{background:'#FFFBF0',padding:12,borderRadius:10,textAlign:'center'}}>
+                        <div style={{fontWeight:700,color:'var(--warn)',marginBottom:4}}>白袍高血壓</div>
+                        <div style={{fontSize:12,color:'var(--txt2)'}}>診間 ✗ 升高<br/>診間外 ✓ 正常</div>
+                    </div>
+                    <div style={{background:'#F8F0FF',padding:12,borderRadius:10,textAlign:'center'}}>
+                        <div style={{fontWeight:700,color:'var(--pur)',marginBottom:4}}>隱匿性高血壓</div>
+                        <div style={{fontSize:12,color:'var(--txt2)'}}>診間 ✓ 正常<br/>診間外 ✗ 升高</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="warn">
+                <strong style={{color:'#B8860B'}}>⚠️ 臨床重要性</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                <strong>隱匿性高血壓</strong>最危險：患者被誤認為正常，未接受治療，但有相同的心血管風險！
+                </span>
+            </div>
+        </div>
+    );
+
+    // Lesson 2: 血壓測量方法比較
+    const L2 = () => (
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri2)',marginBottom:12}}>📊 診斷準確度總覽</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>測量方法</th>
+                            <th>敏感度</th>
+                            <th>特異度</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{background:'#FFF5F5'}}>
+                            <td style={{fontWeight:600,textAlign:'left'}}>傳統診間血壓<br/><span style={{fontSize:10,color:'var(--txt2)'}}>BP ≥140/90</span></td>
+                            <td style={{color:'var(--err)',fontWeight:600}}>51%</td>
+                            <td style={{color:'var(--suc)',fontWeight:600}}>88%</td>
+                        </tr>
+                        <tr style={{background:'#F0FFF8'}}>
+                            <td style={{fontWeight:600,textAlign:'left'}}>居家血壓 HBPM<br/><span style={{fontSize:10,color:'var(--txt2)'}}>BP ≥135/85</span></td>
+                            <td style={{color:'var(--acc)',fontWeight:600}}>75%</td>
+                            <td style={{color:'var(--acc)',fontWeight:600}}>76%</td>
+                        </tr>
+                        <tr style={{background:'#F8F0FF'}}>
+                            <td style={{fontWeight:600,textAlign:'left'}}>無人值守自動診間<br/><span style={{fontSize:10,color:'var(--txt2)'}}>BP ≥135/85</span></td>
+                            <td style={{color:'var(--err)',fontWeight:600}}>48-51%</td>
+                            <td style={{color:'var(--suc)',fontWeight:600}}>80-91%</td>
+                        </tr>
+                        <tr style={{background:'#FFFBF0'}}>
+                            <td style={{fontWeight:600,textAlign:'left'}}>有人值守自動診間<br/><span style={{fontSize:10,color:'var(--txt2)'}}>BP ≥140/90</span></td>
+                            <td style={{color:'var(--suc)',fontWeight:600}}>87.6%</td>
+                            <td style={{color:'var(--err)',fontWeight:600}}>24.1%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--acc)',marginBottom:12}}>🏠 居家血壓監測 HBPM</h3>
+                <div className="good">
+                    <strong style={{color:'var(--suc)'}}>✓ 優點</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    • 較平衡的敏感度(75%)和特異度(76%)<br/>
+                    • 可在熟悉環境中測量，減少白袍效應<br/>
+                    • 成本較低，容易執行<br/>
+                    • 可以追蹤血壓變化趨勢
+                    </span>
+                </div>
+                <div className="tip">
+                    <strong style={{color:'var(--pri2)'}}>📋 建議測量方式</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    • 早晚各測量2次，連續數天<br/>
+                    • 取平均值判讀<br/>
+                    • 閾值：≥135/85 mmHg
+                    </span>
+                </div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>⏰ 24小時動態血壓 ABPM</h3>
+                <div className="info">
+                    <strong style={{color:'var(--blue)'}}>🏆 參考標準 Reference Standard</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    ABPM 被認為是血壓評估的黃金標準，因為：<br/>
+                    • 排除白袍效應<br/>
+                    • 偵測隱匿性高血壓<br/>
+                    • 評估夜間血壓<br/>
+                    • 與心血管預後相關性最強
+                    </span>
+                </div>
+                <table>
+                    <thead><tr><th>ABPM 定義</th><th>高血壓閾值</th></tr></thead>
+                    <tbody>
+                        <tr><td>24小時平均</td><td style={{fontWeight:600,color:'var(--pri)'}}>≥130/80 mmHg</td></tr>
+                        <tr><td>清醒時平均</td><td style={{fontWeight:600,color:'var(--pri)'}}>≥135/85 mmHg</td></tr>
+                        <tr><td>睡眠時平均</td><td style={{fontWeight:600,color:'var(--pri)'}}>≥120/70 mmHg</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+
+    // Lesson 3: 診斷準確度分析
+    const L3 = () => (
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--acc)',marginBottom:12}}>📈 似然比 Likelihood Ratios</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>測量方法</th>
+                            <th>LR+</th>
+                            <th>LR-</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{fontWeight:600,textAlign:'left'}}>傳統診間血壓</td>
+                            <td><span style={{background:'#FFFBF0',padding:'4px 8px',borderRadius:6,fontWeight:600}}>4.2</span></td>
+                            <td><span style={{background:'#FFF5F5',padding:'4px 8px',borderRadius:6,fontWeight:600}}>0.56</span></td>
+                        </tr>
+                        <tr>
+                            <td style={{fontWeight:600,textAlign:'left'}}>居家血壓 HBPM</td>
+                            <td><span style={{background:'#FFFBF0',padding:'4px 8px',borderRadius:6,fontWeight:600}}>3.1</span></td>
+                            <td><span style={{background:'#F0FFF8',padding:'4px 8px',borderRadius:6,fontWeight:600}}>0.33</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🎯 似然比解讀</h3>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                    <div>
+                        <h4 style={{fontSize:14,fontWeight:600,color:'var(--suc)',marginBottom:8}}>正似然比 LR+</h4>
+                        <table style={{fontSize:11}}>
+                            <tbody>
+                                <tr><td>&gt;10</td><td style={{color:'var(--suc)'}}>強力確診</td></tr>
+                                <tr><td>5-10</td><td style={{color:'var(--acc)'}}>中度確診</td></tr>
+                                <tr><td>2-5</td><td style={{color:'var(--warn)'}}>弱</td></tr>
+                                <tr><td>1-2</td><td style={{color:'var(--txt2)'}}>無意義</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <h4 style={{fontSize:14,fontWeight:600,color:'var(--err)',marginBottom:8}}>負似然比 LR-</h4>
+                        <table style={{fontSize:11}}>
+                            <tbody>
+                                <tr><td>&lt;0.1</td><td style={{color:'var(--suc)'}}>強力排除</td></tr>
+                                <tr><td>0.1-0.2</td><td style={{color:'var(--acc)'}}>中度排除</td></tr>
+                                <tr><td>0.2-0.5</td><td style={{color:'var(--warn)'}}>弱</td></tr>
+                                <tr><td>0.5-1</td><td style={{color:'var(--txt2)'}}>無意義</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="purple">
+                <strong style={{color:'var(--pur)'}}>📊 臨床意義解讀</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                <strong>傳統診間血壓 (LR+ 4.2, LR- 0.56)：</strong><br/>
+                • LR+ 4.2 屬於弱到中等 → 陽性不能確診<br/>
+                • LR- 0.56 接近無意義 → 陰性不能排除<br/><br/>
+                <strong>居家血壓 (LR+ 3.1, LR- 0.33)：</strong><br/>
+                • LR- 0.33 略優於診間 → 較能排除高血壓
+                </span>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>🧮 機率計算範例</h3>
+                <div style={{background:'#F0F8FF',padding:16,borderRadius:12}}>
+                    <p style={{fontSize:14,marginBottom:12}}><strong>情境：</strong>50歲男性，無症狀，診間血壓 148/94 mmHg</p>
+                    <p style={{fontSize:14,marginBottom:8}}>• 前測機率（估計）：30%</p>
+                    <p style={{fontSize:14,marginBottom:8}}>• 診間血壓陽性，LR+ = 4.2</p>
+                    <div className="formula" style={{background:'#E8F4FD'}}>
+                        <div style={{marginBottom:8}}>前測勝算 = 0.30/0.70 = 0.43</div>
+                        <div style={{marginBottom:8}}>後測勝算 = 0.43 × 4.2 = 1.80</div>
+                        <div style={{color:'var(--pri)',fontWeight:700}}>後測機率 = 1.80/2.80 = 64%</div>
+                    </div>
+                    <p style={{fontSize:13,color:'var(--txt2)'}}>
+                        結論：機率從30%上升到64%，但仍有約1/3機會不是高血壓，需要進一步確認。
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+
+    // Lesson 4: 似然比與臨床應用
+    const L4 = () => (
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>🔬 組合測試策略</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>
+                    當診間血壓和居家血壓都測量時，可以獲得更準確的診斷。
+                </p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>診間 BP</th>
+                            <th>居家 BP</th>
+                            <th>診斷傾向</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style={{background:'#FFF5F5'}}>
+                            <td>≥140/90 ✗</td>
+                            <td>≥135/85 ✗</td>
+                            <td style={{fontWeight:600,color:'var(--pri)'}}>很可能高血壓</td>
+                        </tr>
+                        <tr style={{background:'#F0FFF8'}}>
+                            <td>&lt;140/90 ✓</td>
+                            <td>&lt;135/85 ✓</td>
+                            <td style={{fontWeight:600,color:'var(--suc)'}}>很可能正常</td>
+                        </tr>
+                        <tr style={{background:'#FFFBF0'}}>
+                            <td>≥140/90 ✗</td>
+                            <td>&lt;135/85 ✓</td>
+                            <td style={{fontWeight:600,color:'var(--warn)'}}>白袍高血壓？<br/><span style={{fontSize:11}}>需ABPM確認</span></td>
+                        </tr>
+                        <tr style={{background:'#F8F0FF'}}>
+                            <td>&lt;140/90 ✓</td>
+                            <td>≥135/85 ✗</td>
+                            <td style={{fontWeight:600,color:'var(--pur)'}}>隱匿性高血壓？<br/><span style={{fontSize:11}}>需ABPM確認</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>⚠️ 白袍高血壓的處理</h3>
+                <div className="warn">
+                    <strong style={{color:'#B8860B'}}>定義</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    診間血壓 ≥140/90 mmHg，但<br/>
+                    居家或動態血壓正常
+                    </span>
+                </div>
+                <div className="tip">
+                    <strong style={{color:'var(--pri2)'}}>📋 處理建議</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    • 不需立即藥物治療<br/>
+                    • 定期追蹤（6-12個月）<br/>
+                    • 約15-30%會發展為持續性高血壓<br/>
+                    • 生活型態調整
+                    </span>
+                </div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pur)',marginBottom:12}}>🔴 隱匿性高血壓的處理</h3>
+                <div className="purple">
+                    <strong style={{color:'var(--pur)'}}>定義</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    診間血壓 &lt;140/90 mmHg，但<br/>
+                    居家或動態血壓升高
+                    </span>
+                </div>
+                <div style={{background:'#FFE8E8',borderLeft:'4px solid var(--err)',borderRadius:'0 12px 12px 0',padding:14,margin:'12px 0'}}>
+                    <strong style={{color:'var(--err)'}}>⚠️ 臨床重要性</strong><br/>
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    • 心血管風險與持續性高血壓相當<br/>
+                    • 容易被漏診<br/>
+                    • 需要積極治療<br/>
+                    • 建議進行ABPM確認
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+
+    // Lesson 5: 臨床決策流程
+    const L5 = () => (
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--blue)',marginBottom:12}}>📋 診斷流程建議</h3>
+                <div style={{position:'relative',padding:'20px 0'}}>
+                    {[
+                        {step:1, title:'初次診間測量', desc:'發現血壓升高 (≥140/90)', color:'var(--pri)'},
+                        {step:2, title:'重複診間測量', desc:'同次或不同次就診確認', color:'var(--pri2)'},
+                        {step:3, title:'居家血壓監測', desc:'數天內測量平均值', color:'var(--acc)'},
+                        {step:4, title:'評估一致性', desc:'比較診間與居家結果', color:'var(--pur)'},
+                        {step:5, title:'必要時ABPM', desc:'結果不一致或接近閾值', color:'var(--blue)'}
+                    ].map((item,i)=>(
+                        <div key={i} style={{display:'flex',gap:12,marginBottom:16}}>
+                            <div style={{width:36,height:36,borderRadius:'50%',background:item.color,color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,flexShrink:0}}>{item.step}</div>
+                            <div>
+                                <div style={{fontWeight:600,marginBottom:2}}>{item.title}</div>
+                                <div style={{fontSize:13,color:'var(--txt2)'}}>{item.desc}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:12}}>🎯 何時需要 ABPM？</h3>
+                <div className="info">
+                    <span style={{fontSize:14,color:'var(--txt2)'}}>
+                    <strong>以下情況建議進行24小時動態血壓監測：</strong><br/><br/>
+                    ✓ 診間血壓與居家血壓不一致<br/>
+                    ✓ 血壓值接近診斷閾值<br/>
+                    ✓ 懷疑白袍高血壓<br/>
+                    ✓ 懷疑隱匿性高血壓<br/>
+                    ✓ 評估治療抵抗性高血壓<br/>
+                    ✓ 懷疑夜間高血壓
+                    </span>
+                </div>
+            </div>
+            
+            <div className="key-point">
+                <h3 style={{fontSize:16,fontWeight:700,marginBottom:12}}>📌 JAMA 研究結論摘要</h3>
+                <div style={{fontSize:14,lineHeight:1.8}}>
+                    <p><strong>1. 診間血壓的限制</strong></p>
+                    <p style={{marginBottom:12}}>單獨使用診間血壓可能無法準確確診或排除高血壓</p>
+                    
+                    <p><strong>2. 居家血壓的價值</strong></p>
+                    <p style={{marginBottom:12}}>HBPM有助於確認診斷，且LR-優於診間測量</p>
+                    
+                    <p><strong>3. ABPM的角色</strong></p>
+                    <p>當診間與居家結果不一致或接近閾值時，應考慮ABPM確立診斷</p>
+                </div>
+            </div>
+            
+            <div className="good">
+                <strong style={{color:'var(--suc)'}}>💡 臨床實務建議</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                診斷高血壓不應只依賴單次診間測量，應結合多種測量方法，特別是診間外血壓測量，以做出更準確的診斷決策。
+                </span>
+            </div>
+        </div>
+    );
+
+    const Lesson = () => {
+        const l = lessons.find(x=>x.id===lessonId);
+        return(
+            <div>
+                <Header title={l.title}/>
+                <div style={{background:`linear-gradient(135deg,${l.color},${l.color}88)`,padding:'20px',color:'#fff'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{fontSize:12,opacity:0.9}}>Lesson {l.id} • {l.sub}</div>
+                        <h1 style={{fontSize:24,fontWeight:700}}>{l.title}</h1>
+                    </div>
+                </div>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        {lessonId===1 && <L1/>}
+                        {lessonId===2 && <L2/>}
+                        {lessonId===3 && <L3/>}
+                        {lessonId===4 && <L4/>}
+                        {lessonId===5 && <L5/>}
+                        <div style={{display:'flex',gap:12,marginTop:24}}>
+                            {lessonId>1 && (
+                                <button className="btn" style={{flex:1,background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setLessonId(lessonId-1)}>
+                                    ← 上一課
+                                </button>
+                            )}
+                            {lessonId<5 ? (
+                                <button className="btn btn-pri" style={{flex:1}} onClick={()=>setLessonId(lessonId+1)}>
+                                    下一課 →
+                                </button>
+                            ) : (
+                                <button className="btn btn-acc" style={{flex:1}} onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false);setPage('quiz')}}>
+                                    開始測驗 📝
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const Quiz = () => {
+        const pick = (i) => {
+            if(show) return;
+            setSel(i);
+            setShow(true);
+            if(i===quiz[qIdx].c) setScore(score+1);
+        };
+        
+        const next = () => {
+            if(qIdx < quiz.length-1) {
+                setQIdx(qIdx+1);
+                setSel(null);
+                setShow(false);
+            } else {
+                setDone(true);
+            }
+        };
+
+        if(done) {
+            const pct = Math.round((score/quiz.length)*100);
+            return(
+                <div>
+                    <Header title="測驗結果"/>
+                    <div style={{padding:'40px 16px',textAlign:'center'}}>
+                        <div style={{width:140,height:140,borderRadius:'50%',background:`conic-gradient(${pct>=80?'var(--suc)':pct>=60?'var(--warn)':'var(--err)'} ${pct*3.6}deg,#E5E5E5 0deg)`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 24px'}}>
+                            <div style={{width:120,height:120,borderRadius:'50%',background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                                <div style={{fontSize:36,fontWeight:700}}>{pct}%</div>
+                                <div style={{fontSize:14,color:'var(--txt2)'}}>{score}/{quiz.length}</div>
+                            </div>
+                        </div>
+                        <h2 style={{fontSize:24,fontWeight:700,marginBottom:8}}>
+                            {pct>=80?'🎉 太棒了！':pct>=60?'👍 不錯！':'💪 加油！'}
+                        </h2>
+                        <p style={{color:'var(--txt2)',marginBottom:32}}>
+                            {pct>=80?'你對高血壓診斷有很好的理解！':pct>=60?'再複習可以更進步！':'建議重新閱讀課程內容'}
+                        </p>
+                        <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+                            <button className="btn btn-pri" onClick={()=>{setQIdx(0);setScore(0);setSel(null);setShow(false);setDone(false)}}>重新測驗</button>
+                            <button className="btn" style={{background:'#fff',border:'2px solid var(--pri)',color:'var(--pri)'}} onClick={()=>setPage('home')}>返回課程</button>
+                        </div>
+                    </div>
+                    <footer style={{background:'#FFF0F0',padding:'24px 16px',textAlign:'center',marginTop:40}}>
+                        <p style={{fontSize:12,color:'var(--txt2)'}}>新竹台大分院教學部 | 謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        const q = quiz[qIdx];
+        return(
+            <div>
+                <Header title="自我測驗"/>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:14}}>
+                            <span style={{color:'var(--txt2)'}}>進度</span>
+                            <span style={{fontWeight:600,color:'var(--pri)'}}>{qIdx+1}/{quiz.length}</span>
+                        </div>
+                        <div className="progress-bar">
+                            <div className="progress-fill" style={{width:`${((qIdx+1)/quiz.length)*100}%`,background:'linear-gradient(90deg,var(--pri),var(--pri2))'}}/>
+                        </div>
+                        <div className="card">
+                            <h3 style={{fontSize:16,fontWeight:600,lineHeight:1.6,marginBottom:20}}>{q.q}</h3>
+                            {q.o.map((opt,i)=>{
+                                let bg='#fff', bd='#E5E5E5';
+                                if(show){
+                                    if(i===q.c){bg='#F0FFF8';bd='var(--suc)'}
+                                    else if(i===sel){bg='#FFF5F5';bd='var(--err)'}
+                                }else if(i===sel){bg='#FFF0F0';bd='var(--pri)'}
+                                return(
+                                    <button key={i} onClick={()=>pick(i)} disabled={show} style={{width:'100%',padding:'12px 14px',marginBottom:10,background:bg,border:`2px solid ${bd}`,borderRadius:12,textAlign:'left',fontSize:14,cursor:show?'default':'pointer',display:'flex',alignItems:'center',gap:12}}>
+                                        <span style={{width:26,height:26,borderRadius:8,background:show&&i===q.c?'var(--suc)':show&&i===sel?'var(--err)':'#FFF0F0',color:show&&(i===q.c||i===sel)?'#fff':'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13,flexShrink:0}}>
+                                            {show&&i===q.c?'✓':show&&i===sel&&i!==q.c?'✗':String.fromCharCode(65+i)}
+                                        </span>
+                                        <span style={{lineHeight:1.5}}>{opt}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {show && (
+                            <div className={sel===q.c?'good':'tip'}>
+                                <strong style={{color:sel===q.c?'var(--suc)':'var(--pri2)'}}>{sel===q.c?'✓ 正確！':'✗ 答錯了'}</strong>
+                                <p style={{fontSize:14,color:'var(--txt2)',marginTop:8,lineHeight:1.7}}>{q.e}</p>
+                            </div>
+                        )}
+                        {show && (
+                            <button className="btn btn-pri" style={{width:'100%',justifyContent:'center',marginTop:16}} onClick={next}>
+                                {qIdx<quiz.length-1?'下一題 →':'查看結果'}
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div style={{maxWidth:'100%',minHeight:'100vh',background:'var(--bg)'}}>
+            {page==='home' ? <Home/> : page==='lesson' ? <Lesson/> : <Quiz/>}
+        </div>
+    );
+};
+
+ReactDOM.render(<App/>, document.getElementById('root'));
+</script>
+</body>
+</html>
