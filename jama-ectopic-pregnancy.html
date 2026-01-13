@@ -217,7 +217,7 @@ const quiz = [
         q: '正常子宮內懷孕早期，β-hCG每48小時應增加多少？',
         o: ['至少35%', '至少53%', '至少75%', '至少100%'],
         c: 1,
-        e: '正常子宮內懷孕時，β-hCG通常每48小時增加至少53%。若上升幅度小於此標準，需考慮異常懷孕（子宮外孕或流產）的可能。'
+        e: '正常子宮內懷孕時，β-hCG通常每48小時增加至少53%（更保守標準為35%）。但重要的是：約21%的子宮外孕病例β-hCG上升模式與正常懷孕相似，因此正常上升不能排除子宮外孕！71%的子宮外孕呈現53%上升到35%下降之間的變化模式。'
     },
     {
         q: '關於子宮外孕的臨床處置，何者正確？',
@@ -891,7 +891,8 @@ const App = () => {
             <div className="card">
                 <h3 style={{ fontSize: 18, fontWeight: 700, color: '#6A1B9A', marginBottom: 14 }}>📈 連續β-hCG追蹤</h3>
                 <div className="formula">
-                    正常子宮內懷孕：β-hCG每48小時增加≥53%
+                    正常子宮內懷孕：β-hCG每48小時增加≥53%<br/>
+                    <span style={{ fontSize: 14 }}>（更保守的標準：≥35%/48hr）</span>
                 </div>
                 <table>
                     <thead>
@@ -906,23 +907,25 @@ const App = () => {
                             <td style={{ color: 'var(--suc)', fontWeight: 600 }}>可能正常子宮內懷孕</td>
                         </tr>
                         <tr style={{ background: '#FFF3E0' }}>
-                            <td>48小時增加&lt;53%</td>
-                            <td style={{ color: 'var(--warn)', fontWeight: 600 }}>異常懷孕（子宮外孕或流產）</td>
+                            <td>48小時增加53%至下降35%之間</td>
+                            <td style={{ color: 'var(--warn)', fontWeight: 600 }}>異常懷孕*（71%子宮外孕）</td>
                         </tr>
                         <tr style={{ background: '#FCE4EC' }}>
-                            <td>下降但緩慢</td>
-                            <td style={{ color: 'var(--pri)', fontWeight: 600 }}>可能子宮外孕</td>
-                        </tr>
-                        <tr style={{ background: '#E8F5E9' }}>
-                            <td>快速下降（&gt;50%/48hr）</td>
-                            <td style={{ fontWeight: 600 }}>可能流產中</td>
+                            <td>下降21-35%/48hr</td>
+                            <td style={{ color: 'var(--pri)', fontWeight: 600 }}>可能流產中</td>
                         </tr>
                     </tbody>
                 </table>
+                <div className="danger" style={{ marginTop: 14 }}>
+                    <strong>⚠️ 重要提醒</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        約<strong>21%的子宮外孕</strong>病例β-hCG上升模式與正常懷孕相似（≥53%/48hr），因此β-hCG正常上升<strong>不能排除子宮外孕</strong>！
+                    </p>
+                </div>
                 <div className="tip">
                     <strong>💡 臨床應用</strong>
                     <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
-                        β-hCG上升緩慢（小於53%/48hr）的敏感度約75%、特異度約95%用於診斷異常懷孕，但無法區分子宮外孕與流產。
+                        β-hCG上升緩慢（小於35%/48hr）提供較好的敏感度(0.92)和特異度(0.94)用於診斷異常懷孕。71%的子宮外孕會呈現「53%上升到35%下降」之間的變化模式。
                     </p>
                 </div>
             </div>
@@ -1095,6 +1098,9 @@ const App = () => {
                             懷孕早期有症狀女性<br/>(腹痛/出血 + 驗孕陽性)
                         </div>
                     </div>
+                    <div className="tip" style={{ textAlign: 'left', margin: '12px 0', fontSize: 13 }}>
+                        <strong>⚠️ IVF病人：</strong>需考慮異位妊娠(Heterotopic pregnancy)的可能，即使看到子宮內妊娠囊仍需檢查附件
+                    </div>
                     <div style={{ fontSize: 24, marginBottom: 16 }}>↓</div>
                     <div style={{ marginBottom: 16 }}>
                         <div style={{
@@ -1149,6 +1155,12 @@ const App = () => {
                             </div>
                         </div>
                     </div>
+                </div>
+                <div className="info" style={{ marginTop: 14 }}>
+                    <strong>💡 β-hCG &lt; 1500 mIU/mL 時</strong>
+                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                        若β-hCG低於鑑別閾值(1500 mIU/mL)，TVS可能看不到妊娠囊(sac)，此時屬於PUL (Pregnancy of Unknown Location)，需追蹤β-hCG變化。
+                    </p>
                 </div>
             </div>
         </div>
@@ -1347,7 +1359,9 @@ const App = () => {
                         '子宮頸移動痛LR+ = 4.9，腹膜刺激徵象LR+ = 4.2-4.5',
                         'TVS看到附件腫塊LR+ = 111，但敏感度僅26%',
                         'β-hCG鑑別閾值為1500-3000 mIU/mL',
-                        '正常懷孕β-hCG每48小時增加≥53%'
+                        '正常懷孕β-hCG每48小時增加≥53%（保守標準≥35%）',
+                        '71%子宮外孕呈現「53%上升到35%下降」之間的變化',
+                        '21%子宮外孕β-hCG上升與正常懷孕相似，正常上升不能排除！'
                     ].map((item, i) => (
                         <div key={i} style={{
                             background: 'linear-gradient(135deg, #E8F5E9, #C8E6C9)',
