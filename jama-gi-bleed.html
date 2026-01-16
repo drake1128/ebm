@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>嚴重上消化道出血評估 - JAMA 理性臨床診察</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Playfair+Display:wght@400;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const MODULE_ID = 'jama-gi-bleed';
+
+const ProgressTracker = {
+    getProgress: () => {
+        try {
+            const saved = localStorage.getItem(`progress_${MODULE_ID}`);
+            return saved ? JSON.parse(saved) : { lessonsCompleted: [], quizScores: [], lastVisit: null };
+        } catch { return { lessonsCompleted: [], quizScores: [], lastVisit: null }; }
+    },
+    saveProgress: (progress) => {
+        try {
+            localStorage.setItem(`progress_${MODULE_ID}`, JSON.stringify({...progress, lastVisit: new Date().toISOString()}));
+        } catch {}
+    },
+    completeLesson: (lessonId) => {
+        const progress = ProgressTracker.getProgress();
+        if (!progress.lessonsCompleted.includes(lessonId)) {
+            progress.lessonsCompleted.push(lessonId);
+            ProgressTracker.saveProgress(progress);
+        }
+    },
+    saveQuizScore: (score, total) => {
+        const progress = ProgressTracker.getProgress();
+        progress.quizScores.push({ score, total, date: new Date().toISOString() });
+        ProgressTracker.saveProgress(progress);
+    }
+};
+
+const lessons = [
+    {
+        id: 1,
+        title: '消化道出血概論',
+        sub: 'GI Bleeding Overview',
+        color: '#C62828',
+        sections: [
+            {
+                title: '臨床重要性',
+                content: `
+                    <p>消化道出血 (GI bleeding) 是急診常見的主訴之一，急診醫師必須同時判斷<strong>出血位置</strong>與<strong>嚴重程度</strong>，以優化診斷與治療策略。</p>
+                    <div class="tip">美國每年約有 <strong>390,000</strong> 例以消化道出血為主診斷住院，另有 <strong>600,000</strong> 例以消化道出血為次診斷住院。</div>
+                    <h4>解剖學定義</h4>
+                    <ul>
+                        <li><strong>上消化道出血 (UGIB)</strong>：Treitz 韌帶近端（食道、胃、十二指腸）</li>
+                        <li><strong>下消化道出血 (LGIB)</strong>：Treitz 韌帶遠端（空腸、迴腸、結腸、直腸）</li>
+                    </ul>
+                    <div class="info">Treitz 韌帶位於十二指腸空腸交界處，是區分上下消化道出血的解剖學標誌。</div>
+                `
+            },
+            {
+                title: '預後與死亡率',
+                content: `
+                    <h4>住院死亡率</h4>
+                    <table>
+                        <tr><th>出血類型</th><th>死亡率</th></tr>
+                        <tr><td>上消化道出血 (UGIB)</td><td>4.5% - 8.2%</td></tr>
+                        <tr><td>下消化道出血 (LGIB)</td><td>3.0% - 8.8%</td></tr>
+                    </table>
+                    <h4>嚴重出血需要的緊急處置</h4>
+                    <ul>
+                        <li>內視鏡治療</li>
+                        <li>輸血</li>
+                        <li>放射介入治療</li>
+                        <li>手術</li>
+                    </ul>
+                    <div class="good">許多輕微出血的患者可以安排門診內視鏡檢查，避免不必要的住院與緊急處置。</div>
+                `
+            },
+            {
+                title: '研究基礎',
+                content: `
+                    <h4>文獻回顧統計</h4>
+                    <ul>
+                        <li>搜尋 MEDLINE (1966-2011年9月)</li>
+                        <li>初步篩選 2,628 篇文獻</li>
+                        <li>最終納入 25 篇研究</li>
+                        <li>8 篇研究評估 UGIB vs LGIB 鑑別</li>
+                        <li>18 篇研究評估 UGIB 嚴重度</li>
+                    </ul>
+                    <h4>盛行率統計</h4>
+                    <div class="formula">
+                        <strong>GI 出血患者中 UGIB 的盛行率：63%</strong> (95% CI: 51%-73%)
+                    </div>
+                    <div class="formula">
+                        <strong>UGIB 患者中需要緊急處置的比例：36%</strong> (95% CI: 29%-44%)
+                    </div>
+                `
+            }
+        ]
+    },
+    {
+        id: 2,
+        title: '病史與症狀評估',
+        sub: 'History and Symptoms',
+        color: '#D84315',
+        sections: [
+            {
+                title: '黑便 (Melena)',
+                content: `
+                    <p>黑便是判斷上消化道出血最重要的病史之一。</p>
+                    <div class="tip"><strong>黑便的特徵：</strong>黑色、柏油狀、具有特殊惡臭，有經驗的醫師通常可以立即辨識。</div>
+                    <h4>黑便的形成機轉</h4>
+                    <ul>
+                        <li>血液在消化道停留時間較長，經酵素分解形成黑色物質</li>
+                        <li>實驗顯示：<strong>僅需 50 mL</strong> 的血液進入胃部即可造成黑便</li>
+                        <li>主要取決於血液進入與排便之間的時間長短</li>
+                    </ul>
+                    <div class="warning"><strong>注意：</strong>鐵劑或鉍劑（如 Pepto-Bismol）也會造成深色大便，需與真正的黑便區分。</div>
+                    <h4>病史詢問黑便的診斷價值</h4>
+                    <table>
+                        <tr><th>發現</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td>患者報告黑便病史</td><td>5.1-5.9</td><td>0.06-0.27</td></tr>
+                    </table>
+                `
+            },
+            {
+                title: '快速出血與鮮血便',
+                content: `
+                    <p>雖然黑便通常代表上消化道出血，但大量快速的上消化道出血也可能表現為鮮血便。</p>
+                    <div class="danger"><strong>重要：</strong>1 公升的血液進入胃部，可能在 4 小時內造成鮮紅血便！</div>
+                    <p>因此，鮮血便或血塊的出現代表：</p>
+                    <ul>
+                        <li>非常快速的大量出血，或</li>
+                        <li>遠端（下消化道）的出血來源</li>
+                    </ul>
+                    <h4>血塊的診斷價值</h4>
+                    <table>
+                        <tr><th>發現</th><th>LR+</th><th>LR-</th><th>臨床意義</th></tr>
+                        <tr><td>糞便中有血塊</td><td>0.05</td><td>1.2</td><td><strong>強烈排除</strong> UGIB</td></tr>
+                    </table>
+                    <div class="good">糞便中有血塊的 LR+ 僅 0.05，幾乎可以排除上消化道出血。</div>
+                `
+            },
+            {
+                title: '其他病史因素',
+                content: `
+                    <h4>提示 UGIB 的病史</h4>
+                    <table>
+                        <tr><th>病史因素</th><th>敏感度</th><th>特異度</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td>過去 UGIB 病史</td><td>22%</td><td>96%</td><td>6.2</td><td>0.81</td></tr>
+                        <tr><td>年齡 &lt;50 歲</td><td>27%</td><td>92%</td><td>3.5</td><td>0.80</td></tr>
+                        <tr><td>肝硬化</td><td>5%</td><td>99%</td><td>3.1</td><td>0.97</td></tr>
+                        <tr><td>Warfarin 使用</td><td>12%</td><td>95%</td><td>2.3</td><td>0.93</td></tr>
+                        <tr><td>上腹痛</td><td>17%</td><td>93%</td><td>2.3</td><td>0.90</td></tr>
+                    </table>
+                    <div class="info"><strong>過去有 LGIB 病史</strong>則使 UGIB 可能性降低 (LR+ 0.17)</div>
+                    <h4>無鑑別價值的因素</h4>
+                    <p>NSAIDs、Aspirin、酒精使用的 LR 接近 1，無法區分 UGIB 與 LGIB。</p>
+                `
+            }
+        ]
+    },
+    {
+        id: 3,
+        title: '理學檢查與鼻胃管灌洗',
+        sub: 'Physical Exam and NG Lavage',
+        color: '#E65100',
+        sections: [
+            {
+                title: '糞便檢查',
+                content: `
+                    <p>糞便外觀是判斷出血位置最重要的理學檢查發現。</p>
+                    <div class="formula">
+                        <strong>理學檢查發現黑便的診斷價值</strong><br>
+                        LR+ = 25 (95% CI: 4-174)<br>
+                        LR- = 0.52
+                    </div>
+                    <div class="tip">醫師親自觀察到的黑便（無論是排出的大便或肛門指診取得）是判斷 UGIB 最有價值的發現！</div>
+                    <h4>糞便外觀的完整診斷價值</h4>
+                    <table>
+                        <tr><th>發現</th><th>敏感度</th><th>特異度</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td>理學檢查黑便</td><td>49%</td><td>98%</td><td><strong>25</strong></td><td>0.52</td></tr>
+                        <tr><td>糞便中有血塊</td><td>15%</td><td>99.2%</td><td>0.05</td><td>1.2</td></tr>
+                    </table>
+                `
+            },
+            {
+                title: '鼻胃管灌洗 (Nasogastric Lavage)',
+                content: `
+                    <p>鼻胃管灌洗可以直接採樣胃內容物，但其常規使用仍有爭議。</p>
+                    <h4>使用現況</h4>
+                    <ul>
+                        <li>洛杉磯研究：60% 的 UGIB 患者接受 NG lavage</li>
+                        <li>加拿大研究：28% 的患者接受此檢查</li>
+                    </ul>
+                    <h4>操作方法</h4>
+                    <ol>
+                        <li>正確插入鼻胃管</li>
+                        <li>注入 100-200 mL 室溫生理食鹽水或清水</li>
+                        <li>抽吸並觀察回抽液顏色</li>
+                    </ol>
+                    <h4>回抽液的判讀</h4>
+                    <table>
+                        <tr><th>回抽液外觀</th><th>意義</th></tr>
+                        <tr><td>鮮紅血液</td><td>新鮮出血</td></tr>
+                        <tr><td>咖啡渣樣</td><td>部分消化的血液</td></tr>
+                        <tr><td>黃綠色（膽汁）</td><td>可能來自幽門以遠（但視覺判斷不一定準確）</td></tr>
+                    </table>
+                    <div class="warning">有些臨床醫師認為靜脈曲張是 NG lavage 的相對禁忌，但目前<strong>沒有證據</strong>顯示 NG lavage 會加重出血。</div>
+                `
+            },
+            {
+                title: 'NG Lavage 的診斷價值',
+                content: `
+                    <h4>區分 UGIB vs LGIB</h4>
+                    <table>
+                        <tr><th>NG Lavage 結果</th><th>敏感度</th><th>特異度</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td>有血液或咖啡渣</td><td>44%</td><td>95%</td><td><strong>9.6</strong></td><td>0.58</td></tr>
+                        <tr><td>無血液或咖啡渣</td><td>-</td><td>-</td><td>-</td><td>0.58</td></tr>
+                    </table>
+                    <div class="info">NG lavage 陰性的 LR- 為 0.58，<strong>不足以排除</strong> UGIB。陰性結果的患者仍可能需要上消化道內視鏡檢查。</div>
+                    <h4>評估 UGIB 嚴重度</h4>
+                    <table>
+                        <tr><th>NG Lavage 結果</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td>鮮紅血液</td><td><strong>3.1</strong></td><td>0.32</td></tr>
+                        <tr><td>鮮紅血液或咖啡渣</td><td>2.0</td><td>0.40</td></tr>
+                        <tr><td>無鮮紅血液</td><td>-</td><td><strong>0.32</strong></td></tr>
+                    </table>
+                    <div class="danger"><strong>限制：</strong>NG lavage 是急診最不舒服的床邊檢查之一，患者不適程度與骨折復位或膿瘍引流相當。</div>
+                `
+            }
+        ]
+    },
+    {
+        id: 4,
+        title: '實驗室檢查與嚴重度評估',
+        sub: 'Lab Findings and Severity Assessment',
+        color: '#F57C00',
+        sections: [
+            {
+                title: 'BUN/Creatinine 比值',
+                content: `
+                    <p>血清尿素氮/肌酐比值是區分 UGIB 與 LGIB 的重要實驗室指標。</p>
+                    <div class="tip"><strong>原理：</strong>上消化道出血時，血液被消化吸收，蛋白質分解產物被吸收導致 BUN 升高，而 Creatinine 不變。</div>
+                    <h4>BUN/Cr 比值 > 30 的診斷價值</h4>
+                    <div class="formula">
+                        <strong>區分 UGIB vs LGIB</strong><br>
+                        敏感度：51% | 特異度：93%<br>
+                        LR+ = 7.5 (95% CI: 2.8-12.0)<br>
+                        LR- = 0.53
+                    </div>
+                    <h4>血球容積比 (Hematocrit) 的價值</h4>
+                    <table>
+                        <tr><th>Hematocrit</th><th>LR+（對 UGIB）</th></tr>
+                        <tr><td>≤20%</td><td>2.6</td></tr>
+                        <tr><td>21-29%</td><td>1.9</td></tr>
+                        <tr><td>30-39%</td><td>0.46</td></tr>
+                        <tr><td>≥40%</td><td>0.26</td></tr>
+                    </table>
+                    <div class="info">嚴重貧血（Hematocrit ≤20%）增加 UGIB 的可能性；無貧血（≥40%）則降低 UGIB 的可能性。</div>
+                `
+            },
+            {
+                title: '嚴重 UGIB 的臨床指標',
+                content: `
+                    <p>一旦確認為 UGIB，需要進一步評估出血嚴重度以決定是否需要緊急處置。</p>
+                    <h4>提示嚴重 UGIB 的因素（LR+ ≥ 2.0）</h4>
+                    <table>
+                        <tr><th>因素</th><th>敏感度</th><th>特異度</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td>心跳 >100/min</td><td>71%</td><td>86%</td><td><strong>4.9</strong></td><td>0.34</td></tr>
+                        <tr><td>Hemoglobin <8 g/dL</td><td>65-68%</td><td>86-89%</td><td><strong>4.5-6.2</strong></td><td>0.36-0.41</td></tr>
+                        <tr><td>惡性腫瘤或肝硬化病史</td><td>22%</td><td>94%</td><td><strong>3.7</strong></td><td>0.83</td></tr>
+                        <tr><td>BUN >90 mg/dL</td><td>63%</td><td>83%</td><td><strong>3.6</strong></td><td>0.45</td></tr>
+                        <tr><td>WBC >12×10⁹/L</td><td>61%</td><td>82%</td><td><strong>3.4</strong></td><td>0.48</td></tr>
+                        <tr><td>NG lavage 鮮紅血液</td><td>77%</td><td>76%</td><td><strong>3.1</strong></td><td>0.32</td></tr>
+                        <tr><td>昏厥 (Syncope)</td><td>8%</td><td>98%</td><td><strong>3.0</strong></td><td>0.95</td></tr>
+                        <tr><td>休克</td><td>78%</td><td>71%</td><td><strong>2.8</strong></td><td>0.32</td></tr>
+                    </table>
+                    <div class="danger"><strong>心跳過速 (>100/min)</strong> 是評估嚴重出血最有用的單一生命徵象！</div>
+                `
+            },
+            {
+                title: '排除嚴重出血的指標',
+                content: `
+                    <h4>降低嚴重 UGIB 可能性的因素（LR- ≤ 0.5）</h4>
+                    <table>
+                        <tr><th>因素</th><th>LR-</th><th>臨床意義</th></tr>
+                        <tr><td>無心跳過速</td><td>0.34</td><td>最有用的排除指標</td></tr>
+                        <tr><td>NG lavage 無鮮紅血液</td><td>0.32</td><td>降低嚴重出血可能</td></tr>
+                        <tr><td>休克（無）</td><td>0.32</td><td>血流動力學穩定</td></tr>
+                        <tr><td>Hemoglobin ≥8 g/dL</td><td>0.36-0.41</td><td>無嚴重貧血</td></tr>
+                        <tr><td>BUN ≤90 mg/dL</td><td>0.45</td><td>-</td></tr>
+                        <tr><td>WBC ≤12×10⁹/L</td><td>0.48</td><td>-</td></tr>
+                    </table>
+                    <div class="good"><strong>無心跳過速</strong>（LR- 0.34）是排除嚴重 UGIB 最有用的單一指標。</div>
+                `
+            }
+        ]
+    },
+    {
+        id: 5,
+        title: 'Blatchford Score 與臨床應用',
+        sub: 'Blatchford Score and Clinical Application',
+        color: '#FF8F00',
+        sections: [
+            {
+                title: 'Blatchford Score 計算',
+                content: `
+                    <p>Blatchford Score 是驗證最廣泛、準確度最高的臨床預測工具，用於判斷 UGIB 患者是否需要緊急處置。</p>
+                    <div class="good"><strong>重要優點：</strong>Blatchford Score 不需要鼻胃管灌洗！</div>
+                    <h4>Blatchford Score 評分項目</h4>
+                    <table>
+                        <tr><th>變項</th><th>數值</th><th>分數</th></tr>
+                        <tr><td rowspan="5">BUN (mg/dL)</td><td>&lt;18.2</td><td>0</td></tr>
+                        <tr><td>18.2-22.4</td><td>2</td></tr>
+                        <tr><td>22.4-28.0</td><td>3</td></tr>
+                        <tr><td>28.0-70.0</td><td>4</td></tr>
+                        <tr><td>≥70.0</td><td>6</td></tr>
+                        <tr><td rowspan="4">Hemoglobin 男性 (g/dL)</td><td>&gt;13.0</td><td>0</td></tr>
+                        <tr><td>12.0-13.0</td><td>1</td></tr>
+                        <tr><td>10.0-12.0</td><td>3</td></tr>
+                        <tr><td>&lt;10.0</td><td>6</td></tr>
+                        <tr><td rowspan="3">Hemoglobin 女性 (g/dL)</td><td>&gt;12.0</td><td>0</td></tr>
+                        <tr><td>10.0-12.0</td><td>1</td></tr>
+                        <tr><td>&lt;10.0</td><td>6</td></tr>
+                        <tr><td rowspan="4">收縮壓 (mmHg)</td><td>&gt;109</td><td>0</td></tr>
+                        <tr><td>100-109</td><td>1</td></tr>
+                        <tr><td>90-99</td><td>2</td></tr>
+                        <tr><td>&lt;90</td><td>3</td></tr>
+                        <tr><td>心跳 &gt;100/min</td><td>-</td><td>1</td></tr>
+                        <tr><td>黑便表現</td><td>-</td><td>1</td></tr>
+                        <tr><td>昏厥表現</td><td>-</td><td>2</td></tr>
+                        <tr><td>肝臟疾病</td><td>-</td><td>2</td></tr>
+                        <tr><td>心臟衰竭</td><td>-</td><td>2</td></tr>
+                    </table>
+                `
+            },
+            {
+                title: 'Blatchford Score 的臨床應用',
+                content: `
+                    <h4>Blatchford Score 的診斷價值</h4>
+                    <table>
+                        <tr><th>Score 門檻</th><th>敏感度</th><th>特異度</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td>Score = 0</td><td>99.6%</td><td>15%</td><td>1.2</td><td><strong>0.02</strong></td></tr>
+                        <tr><td>Score ≤ 2</td><td>98%</td><td>27%</td><td>1.4</td><td>0.08</td></tr>
+                    </table>
+                    <div class="formula">
+                        <strong>Blatchford Score = 0</strong><br>
+                        LR- = 0.02 (95% CI: 0-0.05)<br>
+                        <em>幾乎可以排除需要緊急處置的嚴重出血！</em>
+                    </div>
+                    <div class="tip"><strong>臨床意義：</strong>最多 22% 的 UGIB 患者 Blatchford Score = 0，這些患者可以安全地安排門診追蹤，不需緊急內視鏡或住院。</div>
+                    <h4>與其他評分系統比較</h4>
+                    <table>
+                        <tr><th>評分系統</th><th>門檻</th><th>敏感度</th><th>LR-</th></tr>
+                        <tr><td>Blatchford Score</td><td>= 0</td><td>99.6%</td><td><strong>0.02</strong></td></tr>
+                        <tr><td>Pre-endoscopic Rockall</td><td>= 0</td><td>91%</td><td>0.41</td></tr>
+                        <tr><td>Modified Blatchford</td><td>≤ 1</td><td>95%</td><td>0.45</td></tr>
+                    </table>
+                `
+            },
+            {
+                title: '臨床案例應用',
+                content: `
+                    <h4>案例一：高風險患者</h4>
+                    <div class="danger">
+                        <strong>62 歲男性</strong>，因昏厥後數週疲倦至急診。過去有消化性潰瘍 UGIB 病史。<br>
+                        <strong>生命徵象：</strong>血壓 90/60 mmHg，心跳 105/min<br>
+                        <strong>肛門指診：</strong>黑色惡臭大便<br>
+                        <strong>檢驗：</strong>Hgb 6.5 g/dL，Cr 1.0 mg/dL，BUN 55 mg/dL
+                    </div>
+                    <p><strong>分析：</strong></p>
+                    <ul>
+                        <li>過去 UGIB 病史：LR+ 6.2</li>
+                        <li>黑便：LR+ 5.1-5.9（病史）/ 25（理學檢查）</li>
+                        <li>低 Hemoglobin：LR+ 2.6</li>
+                        <li>BUN/Cr 比值 = 55：LR+ 7.5</li>
+                        <li>心跳過速：LR+ 4.9（嚴重出血指標）</li>
+                    </ul>
+                    <div class="formula">此患者 UGIB 機率 >82%，且有多項嚴重出血指標，<strong>需要緊急上消化道內視鏡</strong>，不需要 NG lavage 來決定。</div>
+
+                    <h4>案例二：低風險患者</h4>
+                    <div class="good">
+                        <strong>45 歲女性</strong>，24 小時腹瀉、噁心，2 次咖啡渣樣嘔吐。僅服用降血壓藥物。<br>
+                        <strong>生命徵象：</strong>血壓 145/100 mmHg，心跳 70/min<br>
+                        <strong>肛門指診：</strong>棕色水樣便<br>
+                        <strong>檢驗：</strong>Hgb 13.7 g/dL，Cr 1.1 mg/dL，BUN 12 mg/dL<br>
+                        <strong>NG lavage：</strong>清澈液體
+                    </div>
+                    <p><strong>分析：</strong></p>
+                    <ul>
+                        <li>無心跳過速：LR- 0.34</li>
+                        <li>正常 Hemoglobin：LR- 0.36-0.41</li>
+                        <li>NG lavage 清澈：LR- 0.40</li>
+                        <li><strong>Blatchford Score = 0</strong>：LR- 0.02</li>
+                    </ul>
+                    <div class="formula">此患者嚴重 GIB 機率 &lt;1%，可安全安排<strong>門診追蹤</strong>，不需緊急內視鏡或住院。</div>
+                `
+            }
+        ]
+    }
+];
+
+const quiz = [
+    {
+        q: '一位 58 歲男性因解黑便就診，過去有消化性潰瘍病史。肛門指診發現黑色柏油狀大便。下列哪項發現最能確認上消化道出血？',
+        o: ['病史詢問有解黑便 (LR+ 5.1-5.9)', '理學檢查發現黑便 (LR+ 25)', '過去 UGIB 病史 (LR+ 6.2)', 'BUN/Cr 比值 > 30 (LR+ 7.5)'],
+        c: 1,
+        e: '理學檢查發現黑便的 LR+ 為 25，是所有單一發現中最高的，遠高於病史詢問黑便（LR+ 5.1-5.9）、過去 UGIB 病史（LR+ 6.2）或 BUN/Cr 比值升高（LR+ 7.5）。'
+    },
+    {
+        q: '下列哪項發現最能排除上消化道出血？',
+        o: ['NG lavage 無血液（LR- 0.58）', '糞便中有血塊（LR+ 0.05）', '無心跳過速（LR- 0.34）', '正常 Hemoglobin（LR- 0.36-0.41）'],
+        c: 1,
+        e: '糞便中有血塊的 LR+ 僅 0.05（相當於 LR- 的倒數約 20），強烈排除上消化道出血。這是因為血塊代表出血位置較近端或出血量大且快速，較可能來自下消化道。NG lavage 無血液的 LR- 為 0.58，排除價值不足。'
+    },
+    {
+        q: '關於 BUN/Creatinine 比值在消化道出血的應用，下列敘述何者正確？',
+        o: ['BUN/Cr > 30 的 LR+ 為 2.5，診斷價值中等', 'BUN/Cr > 30 主要用於評估出血嚴重度', 'BUN/Cr > 30 的 LR+ 為 7.5，提示上消化道出血', 'BUN/Cr 比值對區分 UGIB 與 LGIB 無臨床價值'],
+        c: 2,
+        e: 'BUN/Cr 比值 > 30 的 LR+ 為 7.5（95% CI: 2.8-12.0），是區分上消化道與下消化道出血的重要指標。原理是上消化道出血時，血液被消化吸收，蛋白質分解產物導致 BUN 升高。'
+    },
+    {
+        q: '評估 UGIB 嚴重度時，下列哪項是最有用的單一生命徵象指標？',
+        o: ['低血壓（LR+ 1.2-4.8）', '心跳 > 100/min（LR+ 4.9）', '休克（LR+ 2.8）', '昏厥（LR+ 3.0）'],
+        c: 1,
+        e: '心跳過速（>100/min）的 LR+ 為 4.9，是評估嚴重 UGIB 最有用的單一生命徵象指標。此外，無心跳過速的 LR- 為 0.34，是排除嚴重出血最有用的單一指標。'
+    },
+    {
+        q: '關於鼻胃管灌洗（NG lavage）在消化道出血的角色，下列敘述何者正確？',
+        o: ['NG lavage 陰性可以排除 UGIB，不需進一步檢查', 'NG lavage 有血液或咖啡渣的 LR+ 為 9.6，提示 UGIB', '靜脈曲張是 NG lavage 的絕對禁忌症', 'NG lavage 鮮紅血液的 LR+ 為 9.6，代表嚴重出血'],
+        c: 1,
+        e: 'NG lavage 有血液或咖啡渣的 LR+ 為 9.6，可以有效提示 UGIB。但 NG lavage 陰性的 LR- 僅 0.58，不足以排除 UGIB。目前沒有證據顯示 NG lavage 會加重靜脈曲張出血。鮮紅血液用於評估嚴重度時 LR+ 為 3.1。'
+    },
+    {
+        q: '一位患者 Blatchford Score = 0，下列敘述何者正確？',
+        o: ['此患者需要緊急上消化道內視鏡', '此患者嚴重出血機率約 30%', '此患者可安全安排門診追蹤（LR- 0.02）', 'Blatchford Score = 0 在臨床上很罕見（<5%）'],
+        c: 2,
+        e: 'Blatchford Score = 0 的 LR- 為 0.02，幾乎可以排除需要緊急處置的嚴重出血。最多 22% 的 UGIB 患者 Blatchford Score = 0，這些患者可以安全地安排門診追蹤，不需緊急內視鏡或住院。'
+    },
+    {
+        q: 'Blatchford Score 的評分項目包含下列哪些？',
+        o: ['BUN、Hemoglobin、收縮壓、心跳、黑便、昏厥、肝病、心衰竭', 'BUN、Creatinine、Hemoglobin、收縮壓、年齡', 'Hemoglobin、收縮壓、心跳、NG lavage 結果、年齡', 'BUN、Hemoglobin、舒張壓、心跳、嘔血'],
+        c: 0,
+        e: 'Blatchford Score 包含：BUN、Hemoglobin（依性別有不同標準）、收縮壓、心跳 >100/min、黑便表現、昏厥表現、肝臟疾病、心臟衰竭。重要的是，Blatchford Score 不需要 NG lavage 結果。'
+    },
+    {
+        q: '下列哪項實驗室數據最能提示嚴重上消化道出血？',
+        o: ['Hemoglobin 10 g/dL', 'BUN 50 mg/dL', 'Hemoglobin < 8 g/dL（LR+ 4.5-6.2）', 'WBC 10×10⁹/L'],
+        c: 2,
+        e: 'Hemoglobin < 8 g/dL 的 LR+ 為 4.5-6.2，是提示嚴重 UGIB 最有用的實驗室指標之一。BUN > 90 mg/dL（非 50）的 LR+ 為 3.6，WBC > 12×10⁹/L（非 10）的 LR+ 為 3.4。'
+    },
+    {
+        q: '關於黑便的形成，下列敘述何者正確？',
+        o: ['需要至少 500 mL 的血液才能形成黑便', '黑便的形成主要取決於胃酸的存在', '1 公升胃內出血可能在 4 小時內造成鮮紅血便', '血液放入小腸或盲腸不會形成黑便'],
+        c: 2,
+        e: '實驗顯示僅需 50 mL（非 500 mL）的血液進入胃部即可造成黑便。黑便形成主要取決於血液進入與排便之間的時間長短。1 公升的血液進入胃部，可能在 4 小時內造成鮮紅血便，代表非常快速的大量出血。血液放入小腸或盲腸仍可形成黑便。'
+    },
+    {
+        q: '比較 Blatchford Score 與 Pre-endoscopic Rockall Score，下列敘述何者正確？',
+        o: ['Pre-endoscopic Rockall Score = 0 的 LR- (0.41) 優於 Blatchford Score = 0 的 LR- (0.02)', 'Blatchford Score = 0 的 LR- 為 0.02，排除嚴重出血的能力優於 Pre-endoscopic Rockall', 'Pre-endoscopic Rockall Score 驗證最廣泛，準確度最高', '兩者的排除嚴重出血能力相當'],
+        c: 1,
+        e: 'Blatchford Score = 0 的 LR- 為 0.02，優於 Pre-endoscopic Rockall Score = 0 的 LR- (0.41)。Blatchford Score 是驗證最廣泛、準確度最高的工具，且不需要 NG lavage，是識別不需緊急處置患者的最佳工具。'
+    }
+];
+
+// Same React components as template
+function App() {
+    const [activeLesson, setActiveLesson] = React.useState(1);
+    const [showQuiz, setShowQuiz] = React.useState(false);
+    const [currentQ, setCurrentQ] = React.useState(0);
+    const [score, setScore] = React.useState(0);
+    const [answered, setAnswered] = React.useState(null);
+    const [showResult, setShowResult] = React.useState(false);
+    const [showExplanation, setShowExplanation] = React.useState(false);
+    const [progress, setProgress] = React.useState(ProgressTracker.getProgress());
+    const [sectionIdx, setSectionIdx] = React.useState(0);
+
+    const lesson = lessons.find(l => l.id === activeLesson);
+
+    const handleAnswer = (idx) => {
+        if (answered !== null) return;
+        setAnswered(idx);
+        setShowExplanation(true);
+        if (idx === quiz[currentQ].c) setScore(s => s + 1);
+    };
+
+    const nextQuestion = () => {
+        setShowExplanation(false);
+        if (currentQ < quiz.length - 1) {
+            setCurrentQ(c => c + 1);
+            setAnswered(null);
+        } else {
+            ProgressTracker.saveQuizScore(score + (answered === quiz[currentQ].c ? 0 : 0), quiz.length);
+            setShowResult(true);
+        }
+    };
+
+    const resetQuiz = () => {
+        setCurrentQ(0);
+        setScore(0);
+        setAnswered(null);
+        setShowResult(false);
+        setShowExplanation(false);
+    };
+
+    const changeLesson = (id) => {
+        ProgressTracker.completeLesson(activeLesson);
+        setProgress(ProgressTracker.getProgress());
+        setActiveLesson(id);
+        setSectionIdx(0);
+        setShowQuiz(false);
+    };
+
+    const startQuiz = () => {
+        ProgressTracker.completeLesson(activeLesson);
+        setProgress(ProgressTracker.getProgress());
+        setShowQuiz(true);
+        resetQuiz();
+    };
+
+    const completionRate = Math.round((progress.lessonsCompleted.length / lessons.length) * 100);
+
+    return (
+        <div style={{fontFamily: "'Noto Sans TC', 'Source Sans Pro', sans-serif", background: 'linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%)', minHeight: '100vh'}}>
+            {/* Header */}
+            <header style={{background: 'linear-gradient(135deg, #C62828 0%, #D84315 50%, #E65100 100%)', color: 'white', padding: '1rem 2rem', boxShadow: '0 2px 10px rgba(0,0,0,0.15)'}}>
+                <div style={{maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem'}}>
+                    <a href="jama-rational-exam.html" style={{color: 'white', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8, opacity: 0.9, transition: 'opacity 0.2s'}}
+                       onMouseOver={e => e.currentTarget.style.opacity = '1'} onMouseOut={e => e.currentTarget.style.opacity = '0.9'}>
+                        <span style={{fontSize: '1.5rem'}}>←</span>
+                        <span>返回模組列表</span>
+                    </a>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                        <div style={{background: 'rgba(255,255,255,0.2)', borderRadius: 20, padding: '0.3rem 1rem', fontSize: '0.9rem'}}>
+                            完成度: {completionRate}%
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            {/* Hero */}
+            <section style={{background: 'linear-gradient(135deg, #C62828 0%, #D84315 50%, #E65100 100%)', color: 'white', padding: '3rem 2rem 4rem', textAlign: 'center'}}>
+                <div style={{maxWidth: 900, margin: '0 auto'}}>
+                    <div style={{display: 'inline-block', background: 'rgba(255,255,255,0.2)', borderRadius: 20, padding: '0.3rem 1rem', fontSize: '0.85rem', marginBottom: '1rem'}}>
+                        JAMA Rational Clinical Examination
+                    </div>
+                    <h1 style={{fontFamily: "'Playfair Display', 'Crimson Pro', serif", fontSize: 'clamp(1.8rem, 5vw, 2.8rem)', fontWeight: 700, margin: '0.5rem 0', lineHeight: 1.2}}>
+                        Does This Patient Have a Severe Upper Gastrointestinal Bleed?
+                    </h1>
+                    <p style={{fontSize: 'clamp(1rem, 2.5vw, 1.3rem)', opacity: 0.95, marginBottom: '0.5rem'}}>嚴重上消化道出血評估</p>
+                    <p style={{fontSize: '0.95rem', opacity: 0.85}}>Srygley FD, et al. JAMA 2012;307(10):1072-1079</p>
+                    <a href="https://jamanetwork.com/journals/jama/fullarticle/1105858" target="_blank" rel="noopener noreferrer"
+                       style={{display: 'inline-block', marginTop: '1rem', color: 'white', background: 'rgba(255,255,255,0.2)', padding: '0.5rem 1.2rem', borderRadius: 20, textDecoration: 'none', fontSize: '0.9rem', transition: 'background 0.2s'}}
+                       onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+                       onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
+                        閱讀原文 Read Full Article →
+                    </a>
+                </div>
+            </section>
+
+            {/* Learning Objectives */}
+            <section style={{maxWidth: 1000, margin: '-2rem auto 2rem', padding: '0 1rem'}}>
+                <div style={{background: 'white', borderRadius: 16, padding: '1.5rem 2rem', boxShadow: '0 4px 20px rgba(0,0,0,0.1)'}}>
+                    <h3 style={{margin: '0 0 1rem', color: '#C62828'}}>📚 學習目標</h3>
+                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '0.8rem'}}>
+                        {['辨別上消化道與下消化道出血的臨床特徵', '掌握黑便、鼻胃管灌洗與 BUN/Cr 比值的診斷價值', '評估上消化道出血的嚴重程度', '應用 Blatchford Score 進行風險分層'].map((obj, i) => (
+                            <div key={i} style={{display: 'flex', alignItems: 'flex-start', gap: '0.5rem'}}>
+                                <span style={{color: '#D84315', fontWeight: 'bold'}}>✓</span>
+                                <span style={{fontSize: '0.95rem'}}>{obj}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Lesson Tabs */}
+            <nav style={{maxWidth: 1200, margin: '0 auto 2rem', padding: '0 1rem'}}>
+                <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center'}}>
+                    {lessons.map(l => (
+                        <button key={l.id} onClick={() => changeLesson(l.id)}
+                            style={{
+                                padding: '0.7rem 1.2rem', border: 'none', borderRadius: 25,
+                                background: activeLesson === l.id ? `linear-gradient(135deg, ${l.color}, ${l.color}dd)` : 'white',
+                                color: activeLesson === l.id ? 'white' : '#333',
+                                cursor: 'pointer', fontWeight: 500, fontSize: '0.9rem',
+                                boxShadow: activeLesson === l.id ? `0 4px 15px ${l.color}40` : '0 2px 8px rgba(0,0,0,0.1)',
+                                transition: 'all 0.3s ease', display: 'flex', alignItems: 'center', gap: '0.5rem'
+                            }}>
+                            {progress.lessonsCompleted.includes(l.id) && <span>✓</span>}
+                            <span>{l.title}</span>
+                        </button>
+                    ))}
+                    <button onClick={startQuiz}
+                        style={{
+                            padding: '0.7rem 1.2rem', border: 'none', borderRadius: 25,
+                            background: showQuiz ? 'linear-gradient(135deg, #2E7D32, #388E3C)' : 'white',
+                            color: showQuiz ? 'white' : '#2E7D32',
+                            cursor: 'pointer', fontWeight: 500, fontSize: '0.9rem',
+                            boxShadow: showQuiz ? '0 4px 15px rgba(46,125,50,0.4)' : '0 2px 8px rgba(0,0,0,0.1)',
+                            transition: 'all 0.3s ease'
+                        }}>
+                        📝 測驗
+                    </button>
+                </div>
+            </nav>
+
+            {/* Main Content */}
+            <main style={{maxWidth: 1000, margin: '0 auto', padding: '0 1rem 3rem'}}>
+                {!showQuiz ? (
+                    <div style={{background: 'white', borderRadius: 16, padding: '2rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)'}}>
+                        <div style={{borderBottom: `3px solid ${lesson.color}`, paddingBottom: '1rem', marginBottom: '1.5rem'}}>
+                            <h2 style={{margin: 0, color: lesson.color, fontSize: '1.6rem'}}>{lesson.title}</h2>
+                            <p style={{margin: '0.3rem 0 0', color: '#666', fontSize: '0.95rem'}}>{lesson.sub}</p>
+                        </div>
+
+                        {/* Section Tabs */}
+                        <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem'}}>
+                            {lesson.sections.map((sec, idx) => (
+                                <button key={idx} onClick={() => setSectionIdx(idx)}
+                                    style={{
+                                        padding: '0.5rem 1rem', border: `2px solid ${sectionIdx === idx ? lesson.color : '#ddd'}`,
+                                        borderRadius: 20, background: sectionIdx === idx ? `${lesson.color}10` : 'white',
+                                        color: sectionIdx === idx ? lesson.color : '#666', cursor: 'pointer',
+                                        fontWeight: sectionIdx === idx ? 600 : 400, fontSize: '0.85rem', transition: 'all 0.2s'
+                                    }}>
+                                    {sec.title}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Section Content */}
+                        <div className="content-area" dangerouslySetInnerHTML={{__html: lesson.sections[sectionIdx].content}} />
+
+                        {/* Navigation */}
+                        <div style={{display: 'flex', justifyContent: 'space-between', marginTop: '2rem', paddingTop: '1rem', borderTop: '1px solid #eee'}}>
+                            <button onClick={() => sectionIdx > 0 ? setSectionIdx(sectionIdx - 1) : activeLesson > 1 && changeLesson(activeLesson - 1)}
+                                disabled={sectionIdx === 0 && activeLesson === 1}
+                                style={{
+                                    padding: '0.7rem 1.5rem', border: 'none', borderRadius: 8,
+                                    background: (sectionIdx === 0 && activeLesson === 1) ? '#ccc' : '#f0f0f0',
+                                    cursor: (sectionIdx === 0 && activeLesson === 1) ? 'not-allowed' : 'pointer',
+                                    fontWeight: 500, transition: 'background 0.2s'
+                                }}>
+                                ← 上一頁
+                            </button>
+                            <button onClick={() => sectionIdx < lesson.sections.length - 1 ? setSectionIdx(sectionIdx + 1) : activeLesson < lessons.length ? changeLesson(activeLesson + 1) : startQuiz()}
+                                style={{
+                                    padding: '0.7rem 1.5rem', border: 'none', borderRadius: 8,
+                                    background: `linear-gradient(135deg, ${lesson.color}, ${lesson.color}dd)`,
+                                    color: 'white', cursor: 'pointer', fontWeight: 500, transition: 'transform 0.2s'
+                                }}>
+                                {sectionIdx < lesson.sections.length - 1 ? '下一頁 →' : activeLesson < lessons.length ? '下一課 →' : '開始測驗 →'}
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div style={{background: 'white', borderRadius: 16, padding: '2rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)'}}>
+                        {!showResult ? (
+                            <>
+                                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem'}}>
+                                    <h2 style={{margin: 0, color: '#2E7D32'}}>📝 課後測驗</h2>
+                                    <span style={{background: '#E8F5E9', color: '#2E7D32', padding: '0.3rem 1rem', borderRadius: 20, fontWeight: 600}}>
+                                        {currentQ + 1} / {quiz.length}
+                                    </span>
+                                </div>
+                                <div style={{background: '#E8F5E9', height: 8, borderRadius: 4, marginBottom: '2rem'}}>
+                                    <div style={{background: 'linear-gradient(90deg, #2E7D32, #4CAF50)', height: '100%', borderRadius: 4, width: `${((currentQ + 1) / quiz.length) * 100}%`, transition: 'width 0.3s'}} />
+                                </div>
+                                <h3 style={{fontSize: '1.2rem', lineHeight: 1.6, marginBottom: '1.5rem'}}>{quiz[currentQ].q}</h3>
+                                <div style={{display: 'flex', flexDirection: 'column', gap: '0.8rem'}}>
+                                    {quiz[currentQ].o.map((opt, idx) => (
+                                        <button key={idx} onClick={() => handleAnswer(idx)}
+                                            style={{
+                                                padding: '1rem 1.2rem', border: '2px solid',
+                                                borderColor: answered === null ? '#ddd' : idx === quiz[currentQ].c ? '#4CAF50' : answered === idx ? '#f44336' : '#ddd',
+                                                borderRadius: 12, background: answered === null ? 'white' : idx === quiz[currentQ].c ? '#E8F5E9' : answered === idx ? '#FFEBEE' : 'white',
+                                                cursor: answered === null ? 'pointer' : 'default', textAlign: 'left', fontSize: '1rem',
+                                                transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.8rem'
+                                            }}>
+                                            <span style={{
+                                                width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                background: answered === null ? '#f5f5f5' : idx === quiz[currentQ].c ? '#4CAF50' : answered === idx ? '#f44336' : '#f5f5f5',
+                                                color: (answered !== null && (idx === quiz[currentQ].c || answered === idx)) ? 'white' : '#666', fontWeight: 600, fontSize: '0.9rem'
+                                            }}>
+                                                {answered !== null && idx === quiz[currentQ].c ? '✓' : answered !== null && answered === idx ? '✗' : String.fromCharCode(65 + idx)}
+                                            </span>
+                                            <span>{opt}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                {showExplanation && (
+                                    <div style={{marginTop: '1.5rem', padding: '1.2rem', background: answered === quiz[currentQ].c ? '#E8F5E9' : '#FFF3E0', borderRadius: 12, borderLeft: `4px solid ${answered === quiz[currentQ].c ? '#4CAF50' : '#FF9800'}`}}>
+                                        <h4 style={{margin: '0 0 0.5rem', color: answered === quiz[currentQ].c ? '#2E7D32' : '#E65100'}}>
+                                            {answered === quiz[currentQ].c ? '✓ 正確！' : '✗ 不正確'}
+                                        </h4>
+                                        <p style={{margin: 0, lineHeight: 1.7}}>{quiz[currentQ].e}</p>
+                                    </div>
+                                )}
+                                {answered !== null && (
+                                    <button onClick={nextQuestion}
+                                        style={{
+                                            marginTop: '1.5rem', padding: '0.8rem 2rem', border: 'none', borderRadius: 8,
+                                            background: 'linear-gradient(135deg, #2E7D32, #388E3C)', color: 'white',
+                                            cursor: 'pointer', fontWeight: 600, fontSize: '1rem'
+                                        }}>
+                                        {currentQ < quiz.length - 1 ? '下一題 →' : '查看結果'}
+                                    </button>
+                                )}
+                            </>
+                        ) : (
+                            <div style={{textAlign: 'center', padding: '2rem 0'}}>
+                                <div style={{fontSize: '4rem', marginBottom: '1rem'}}>{score >= 8 ? '🎉' : score >= 6 ? '👍' : '💪'}</div>
+                                <h2 style={{margin: '0 0 0.5rem', color: '#2E7D32'}}>測驗完成！</h2>
+                                <p style={{fontSize: '1.5rem', fontWeight: 600, color: score >= 8 ? '#2E7D32' : score >= 6 ? '#FF9800' : '#f44336'}}>
+                                    {score} / {quiz.length} 分
+                                </p>
+                                <p style={{color: '#666', marginBottom: '2rem'}}>
+                                    {score >= 8 ? '太棒了！你已經掌握了上消化道出血評估的重點！' : score >= 6 ? '不錯！但還有進步空間，建議複習相關章節。' : '建議重新閱讀課程內容後再次測驗。'}
+                                </p>
+                                <div style={{display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap'}}>
+                                    <button onClick={resetQuiz}
+                                        style={{padding: '0.8rem 2rem', border: '2px solid #2E7D32', borderRadius: 8, background: 'white', color: '#2E7D32', cursor: 'pointer', fontWeight: 600}}>
+                                        重新測驗
+                                    </button>
+                                    <button onClick={() => { setShowQuiz(false); setActiveLesson(1); setSectionIdx(0); }}
+                                        style={{padding: '0.8rem 2rem', border: 'none', borderRadius: 8, background: 'linear-gradient(135deg, #2E7D32, #388E3C)', color: 'white', cursor: 'pointer', fontWeight: 600}}>
+                                        返回課程
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </main>
+
+            {/* Footer */}
+            <footer style={{background: '#37474F', color: 'white', padding: '2rem', textAlign: 'center'}}>
+                <p style={{margin: '0 0 0.5rem', opacity: 0.9}}>新竹台大分院教學部</p>
+                <p style={{margin: 0, fontSize: '0.9rem', opacity: 0.7}}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+
+            <style>{`
+                .content-area h4 { color: #C62828; margin: 1.5rem 0 0.8rem; font-size: 1.1rem; }
+                .content-area p { line-height: 1.8; margin: 0.8rem 0; }
+                .content-area ul, .content-area ol { line-height: 1.8; padding-left: 1.5rem; }
+                .content-area li { margin: 0.4rem 0; }
+                .content-area table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.95rem; }
+                .content-area th, .content-area td { border: 1px solid #ddd; padding: 0.7rem; text-align: left; }
+                .content-area th { background: linear-gradient(135deg, #C62828, #D84315); color: white; font-weight: 500; }
+                .content-area tr:nth-child(even) { background: #FFF3E0; }
+                .content-area tr:hover { background: #FFE0B2; }
+                .content-area .tip { background: linear-gradient(135deg, #E3F2FD, #BBDEFB); border-left: 4px solid #1976D2; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .good { background: linear-gradient(135deg, #E8F5E9, #C8E6C9); border-left: 4px solid #388E3C; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .info { background: linear-gradient(135deg, #E0F2F1, #B2DFDB); border-left: 4px solid #00796B; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .warning { background: linear-gradient(135deg, #FFF3E0, #FFE0B2); border-left: 4px solid #F57C00; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .danger { background: linear-gradient(135deg, #FFEBEE, #FFCDD2); border-left: 4px solid #C62828; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .formula { background: linear-gradient(135deg, #FFF8E1, #FFECB3); border: 2px solid #FFA000; padding: 1rem; border-radius: 8px; margin: 1rem 0; font-family: 'Crimson Pro', serif; }
+            `}</style>
+        </div>
+    );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
