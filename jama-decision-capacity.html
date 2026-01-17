@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>醫療決策能力評估 | JAMA Rational Clinical Examination</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Playfair+Display:wght@400;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Sans TC', 'Source Sans Pro', sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            line-height: 1.8;
+            color: #2d3436;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .back-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 30px;
+            padding: 16px 24px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            backdrop-filter: blur(10px);
+        }
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #00897B;
+            font-weight: 600;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%);
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+        .back-btn:hover { transform: translateX(-5px); box-shadow: 0 4px 15px rgba(0,137,123,0.3); }
+        .breadcrumb { color: #636e72; font-size: 0.95rem; }
+        .hero {
+            background: linear-gradient(135deg, #00897B 0%, #00695C 50%, #004D40 100%);
+            border-radius: 24px;
+            padding: 50px 40px;
+            margin-bottom: 40px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,137,123,0.4);
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .hero h1 { font-family: 'Playfair Display', serif; font-size: 2.2rem; margin-bottom: 10px; position: relative; }
+        .hero-subtitle { font-size: 1.5rem; opacity: 0.95; margin-bottom: 20px; font-weight: 300; }
+        .hero-citation { font-family: 'Crimson Pro', serif; font-size: 1.05rem; opacity: 0.9; }
+        .hero-link { color: #B2DFDB; text-decoration: none; transition: color 0.3s; }
+        .hero-link:hover { color: white; }
+        .objectives {
+            background: linear-gradient(135deg, #ffffff 0%, #E0F2F1 100%);
+            border-radius: 20px;
+            padding: 35px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px rgba(0,137,123,0.15);
+            border: 1px solid rgba(0,137,123,0.1);
+        }
+        .objectives h2 { color: #00695C; font-size: 1.3rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .objectives ul { list-style: none; display: grid; gap: 12px; }
+        .objectives li {
+            padding: 12px 16px;
+            background: white;
+            border-radius: 10px;
+            border-left: 4px solid #00897B;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .lesson-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            overflow-x: auto;
+            padding: 5px;
+        }
+        .lesson-tab {
+            padding: 14px 28px;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .lesson-tab.active {
+            background: linear-gradient(135deg, #00897B 0%, #00695C 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(0,137,123,0.4);
+        }
+        .lesson-tab:not(.active) {
+            background: white;
+            color: #00695C;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .lesson-tab:not(.active):hover { background: #E0F2F1; }
+        .content-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .content-card h2 { color: #00695C; font-size: 1.6rem; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #B2DFDB; }
+        .content-card h3 { color: #00897B; font-size: 1.2rem; margin: 25px 0 15px; }
+        .content-card h4 { color: #00695C; font-size: 1.05rem; margin: 20px 0 10px; }
+        .content-card p { color: #555; margin-bottom: 15px; text-align: justify; }
+        .content-card ul { margin: 15px 0 15px 25px; }
+        .content-card li { color: #555; margin-bottom: 10px; }
+        .highlight-box {
+            background: linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 5px solid #00897B;
+        }
+        .highlight-box h4 { color: #00695C; margin-bottom: 12px; }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+        .data-table th, .data-table td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .data-table th {
+            background: linear-gradient(135deg, #00897B 0%, #00695C 100%);
+            color: white;
+            font-weight: 600;
+        }
+        .data-table tr:hover { background: #E0F2F1; }
+        .formula {
+            background: linear-gradient(135deg, #263238 0%, #37474F 100%);
+            color: #E0F2F1;
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            font-family: 'Source Sans Pro', monospace;
+            font-size: 0.95rem;
+        }
+        .formula strong { color: #80CBC4; }
+        .tip, .good, .danger, .info, .warning {
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        .tip { background: #E3F2FD; border-left: 5px solid #1976D2; }
+        .good { background: #E8F5E9; border-left: 5px solid #2E7D32; }
+        .danger { background: #FFEBEE; border-left: 5px solid #C62828; }
+        .info { background: #E0F2F1; border-left: 5px solid #00897B; }
+        .warning { background: #FFF3E0; border-left: 5px solid #E65100; }
+        .quiz-section {
+            background: linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%);
+            border-radius: 24px;
+            padding: 40px;
+            margin: 40px 0;
+        }
+        .quiz-section h2 { color: #00695C; margin-bottom: 30px; font-size: 1.6rem; }
+        .quiz-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+        .quiz-card h4 { color: #00695C; font-size: 1.1rem; margin-bottom: 20px; line-height: 1.6; }
+        .quiz-options { display: grid; gap: 12px; }
+        .quiz-option {
+            padding: 16px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+        .quiz-option:hover { border-color: #00897B; background: #E0F2F1; }
+        .quiz-option.selected { border-color: #00897B; background: #E0F2F1; }
+        .quiz-option.correct { border-color: #2E7D32; background: #E8F5E9; }
+        .quiz-option.wrong { border-color: #C62828; background: #FFEBEE; }
+        .quiz-explanation {
+            margin-top: 20px;
+            padding: 20px;
+            background: #E8F5E9;
+            border-radius: 12px;
+            border-left: 5px solid #2E7D32;
+        }
+        .quiz-btn {
+            background: linear-gradient(135deg, #00897B 0%, #00695C 100%);
+            color: white;
+            border: none;
+            padding: 14px 35px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .quiz-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,137,123,0.4); }
+        .score-display {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #00897B 0%, #00695C 100%);
+            border-radius: 16px;
+            color: white;
+            margin-top: 30px;
+        }
+        .score-display h3 { font-size: 2.5rem; margin-bottom: 10px; }
+        .progress-bar {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00897B, #4DB6AC);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #636e72;
+            font-size: 0.9rem;
+        }
+        footer a { color: #00897B; text-decoration: none; }
+        .case-box {
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 5px solid #FF8F00;
+        }
+        .case-box h4 { color: #E65100; margin-bottom: 15px; }
+        .four-abilities {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .ability-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-top: 4px solid #00897B;
+        }
+        .ability-card h5 { color: #00695C; font-size: 1.1rem; margin-bottom: 8px; }
+        .ability-card p { color: #666; font-size: 0.85rem; }
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            .hero { padding: 30px 20px; }
+            .hero h1 { font-size: 1.6rem; }
+            .content-card { padding: 25px; }
+            .lesson-nav { flex-wrap: nowrap; }
+            .four-abilities { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const MODULE_ID = 'jama-decision-capacity';
+
+        const ProgressTracker = {
+            getProgress: () => {
+                const saved = localStorage.getItem(`progress_${MODULE_ID}`);
+                return saved ? JSON.parse(saved) : { lessonComplete: [], quizScore: null, lastVisit: null };
+            },
+            saveProgress: (progress) => {
+                progress.lastVisit = new Date().toISOString();
+                localStorage.setItem(`progress_${MODULE_ID}`, JSON.stringify(progress));
+            },
+            markLessonComplete: (lessonId) => {
+                const progress = ProgressTracker.getProgress();
+                if (!progress.lessonComplete.includes(lessonId)) {
+                    progress.lessonComplete.push(lessonId);
+                    ProgressTracker.saveProgress(progress);
+                }
+            },
+            saveQuizScore: (score, total) => {
+                const progress = ProgressTracker.getProgress();
+                progress.quizScore = { score, total, date: new Date().toISOString() };
+                ProgressTracker.saveProgress(progress);
+            }
+        };
+
+        const lessons = [
+            { id: 1, title: '概述與定義', sub: 'Overview & Definition', color: '#00897B' },
+            { id: 2, title: '四大決策能力', sub: 'Four Abilities', color: '#00796B' },
+            { id: 3, title: '臨床評估工具', sub: 'Assessment Tools', color: '#00695C' },
+            { id: 4, title: '特殊族群與盛行率', sub: 'Prevalence & Populations', color: '#00897B' },
+            { id: 5, title: '臨床應用案例', sub: 'Clinical Application', color: '#004D40' }
+        ];
+
+        const quiz = [
+            {
+                q: '根據 Sessums 等人的統合分析，內科住院病患中缺乏醫療決策能力的盛行率約為多少？',
+                o: ['10%', '26%', '42%', '54%'],
+                c: 1,
+                e: '研究顯示內科住院病患中約有 26% 缺乏醫療決策能力。相較之下，健康老年人只有 2.8%，而阿茲海默症患者則高達 54%。'
+            },
+            {
+                q: '醫師在床邊評估中，能夠正確辨識出缺乏決策能力患者的比例約為多少？',
+                o: ['25%', '42%', '67%', '85%'],
+                c: 1,
+                e: '研究顯示醫師的床邊評估只能辨識出約 42% 的決策能力缺損個案，這表明需要更系統性的評估工具。'
+            },
+            {
+                q: '下列何者是評估醫療決策能力的「四大能力」之一？',
+                o: ['記憶力', '理解能力 (Understanding)', '計算能力', '空間感'],
+                c: 1,
+                e: '醫療決策能力包含四大能力：理解 (Understanding)、感知 (Appreciation)、推理 (Reasoning)、表達選擇 (Expressing a choice)。'
+            },
+            {
+                q: '在評估醫療決策能力的工具中，哪一項具有最佳的診斷效能？',
+                o: ['MMSE', 'CAM', 'ACE (Aid to Capacity Evaluation)', 'MoCA'],
+                c: 2,
+                e: 'ACE (Aid to Capacity Evaluation) 是目前證據支持最強的決策能力評估工具，LR+ 為 8.5，LR- 為 0.21。'
+            },
+            {
+                q: '當 MMSE 分數 < 20 分時，對於決策能力缺損的陽性概似比 (LR+) 為何？',
+                o: ['1.6', '3.2', '6.3', '9.5'],
+                c: 2,
+                e: 'MMSE < 20 分時，LR+ = 6.3，表示此分數以下的患者較可能缺乏決策能力。MMSE 20-24 分時對診斷無幫助，MMSE > 24 分則 LR- = 0.14。'
+            },
+            {
+                q: '根據研究，下列哪種情況的決策能力缺損盛行率最高？',
+                o: ['65歲以上健康老人', '內科住院病患', '中度失智症患者', '輕度認知障礙患者'],
+                c: 2,
+                e: '中度至重度失智症（如阿茲海默症）患者的決策能力缺損盛行率最高，約 54%，遠高於健康老人 (2.8%) 或一般內科住院患者 (26%)。'
+            },
+            {
+                q: '「感知能力 (Appreciation)」在醫療決策能力評估中指的是什麼？',
+                o: ['能夠記住醫療資訊', '能夠理解疾病和治療如何影響自己', '能夠清楚說出自己的選擇', '能夠比較不同治療選項的優缺點'],
+                c: 1,
+                e: '感知能力是指患者能夠認識到所提供的醫療資訊與自身情況相關，並理解疾病和治療決定如何影響自己。'
+            },
+            {
+                q: 'ACE (Aid to Capacity Evaluation) 評估工具的陽性概似比 (LR+) 約為多少？',
+                o: ['3.5', '5.2', '8.5', '12.0'],
+                c: 2,
+                e: 'ACE 的 LR+ 為 8.5（95% CI: 2.9-25），LR- 為 0.21（95% CI: 0.05-0.90），是目前最具診斷價值的決策能力評估工具。'
+            },
+            {
+                q: '下列何者不是醫療決策能力評估的核心要素？',
+                o: ['表達選擇的能力', '記住過去病史的能力', '理解相關資訊的能力', '推理並權衡選項的能力'],
+                c: 1,
+                e: '醫療決策能力的四大核心要素是：理解、感知、推理、表達選擇。記住過去病史的能力雖然與認知功能相關，但不是決策能力評估的核心要素。'
+            },
+            {
+                q: '當評估一位疑似缺乏決策能力的患者時，下列何種做法最為適當？',
+                o: ['直接請家屬代為決定', '使用標準化評估工具如 ACE 進行系統性評估', '以 MMSE 分數作為唯一判斷依據', '觀察患者是否能進行日常對話'],
+                c: 1,
+                e: '應使用標準化評估工具（如 ACE）進行系統性評估，評估患者在理解、感知、推理、表達選擇四個面向的能力。僅靠 MMSE 或日常對話觀察並不足以判斷決策能力。'
+            }
+        ];
+
+        const lessonContents = {
+            1: `
+                <h2>📋 醫療決策能力概述</h2>
+                <p>醫療決策能力（Medical Decision-Making Capacity）是指患者能夠理解、評估並做出知情醫療決定的能力。這是臨床醫師經常需要評估的重要課題，因為它直接影響患者是否能夠提供有效的知情同意。</p>
+
+                <div class="highlight-box">
+                    <h4>🎯 核心概念</h4>
+                    <p><strong>決策能力 (Capacity)</strong> 是一個<strong>臨床判斷</strong>，由醫師在床邊評估；而<strong>行為能力 (Competency)</strong> 則是<strong>法律判斷</strong>，由法院裁定。</p>
+                </div>
+
+                <h3>為什麼決策能力評估如此重要？</h3>
+                <ul>
+                    <li>確保患者能夠提供有效的知情同意</li>
+                    <li>保護認知功能受損患者的權益</li>
+                    <li>維持患者自主權與醫療倫理的平衡</li>
+                    <li>避免不當的醫療決策造成傷害</li>
+                </ul>
+
+                <div class="info">
+                    <strong>📊 重要發現：</strong>根據 Sessums 等人的統合分析，醫師的臨床判斷只能正確辨識出約 <strong>42%</strong> 的決策能力缺損個案，顯示需要更系統性的評估方法。
+                </div>
+
+                <h3>決策能力 vs 認知功能</h3>
+                <p>決策能力與認知功能（如記憶、注意力）有關但並非等同。一位患者可能有認知障礙，但仍可能具備針對特定決定的決策能力；反之，認知功能正常者在某些情況下也可能暫時喪失決策能力。</p>
+
+                <div class="warning">
+                    <strong>⚠️ 注意：</strong>決策能力是<strong>針對特定決定</strong>而言，而非全有或全無。患者可能有能力做出簡單的醫療決定，但對於複雜的治療選擇則可能缺乏足夠能力。
+                </div>
+            `,
+            2: `
+                <h2>🧠 醫療決策能力的四大核心能力</h2>
+                <p>根據 Appelbaum 和 Grisso 的模型，醫療決策能力包含四個核心面向，臨床評估應涵蓋這四個能力：</p>
+
+                <div class="four-abilities">
+                    <div class="ability-card">
+                        <h5>1️⃣ 理解 Understanding</h5>
+                        <p>能夠理解診斷、治療選項、風險與好處等醫療資訊</p>
+                    </div>
+                    <div class="ability-card">
+                        <h5>2️⃣ 感知 Appreciation</h5>
+                        <p>認識到這些資訊與自己的情況相關</p>
+                    </div>
+                    <div class="ability-card">
+                        <h5>3️⃣ 推理 Reasoning</h5>
+                        <p>能夠權衡各選項的利弊並做出合理推論</p>
+                    </div>
+                    <div class="ability-card">
+                        <h5>4️⃣ 表達選擇 Expressing a Choice</h5>
+                        <p>能夠清楚傳達自己的決定</p>
+                    </div>
+                </div>
+
+                <h3>各能力的詳細說明</h3>
+
+                <h4>理解能力 (Understanding)</h4>
+                <p>患者必須能夠理解醫師所提供的關鍵資訊，包括：</p>
+                <ul>
+                    <li>診斷與預後</li>
+                    <li>建議的治療方案及其替代選項</li>
+                    <li>各種選擇的風險與好處</li>
+                    <li>不接受治療的可能後果</li>
+                </ul>
+                <div class="tip">
+                    <strong>💡 評估技巧：</strong>請患者用自己的話複述醫師說明的內容，確認其理解程度。
+                </div>
+
+                <h4>感知能力 (Appreciation)</h4>
+                <p>患者需要認識到所討論的醫療資訊與<strong>自己的情況相關</strong>。缺乏感知能力的患者可能：</p>
+                <ul>
+                    <li>否認自己生病（即使有明確的診斷依據）</li>
+                    <li>不相信治療對自己會有效</li>
+                    <li>對病情有不切實際的期望</li>
+                </ul>
+
+                <h4>推理能力 (Reasoning)</h4>
+                <p>患者必須能夠運用邏輯思考，比較不同選項並做出合理的決定。評估重點包括：</p>
+                <ul>
+                    <li>能夠比較不同治療選項</li>
+                    <li>能夠解釋選擇某個選項的原因</li>
+                    <li>推理過程在邏輯上是一致的</li>
+                </ul>
+
+                <h4>表達選擇能力 (Expressing a Choice)</h4>
+                <p>這是最基本的能力要求。患者必須能夠清楚表達自己的決定，並且這個選擇在時間上是相對穩定的（非反覆無常）。</p>
+
+                <div class="formula">
+                    <strong>完整決策能力 = 理解 + 感知 + 推理 + 表達選擇</strong><br>
+                    任何一項能力缺損都可能影響整體決策能力
+                </div>
+            `,
+            3: `
+                <h2>🔬 決策能力評估工具</h2>
+                <p>Sessums 等人的系統性回顧評估了多種決策能力評估工具的診斷效能：</p>
+
+                <h3>ACE (Aid to Capacity Evaluation)</h3>
+                <div class="good">
+                    <strong>✅ 最佳推薦工具</strong>
+                    <p>ACE 是目前證據支持最強的決策能力評估工具，可在 5-10 分鐘內完成。</p>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>指標</th>
+                            <th>數值</th>
+                            <th>95% CI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>陽性概似比 (LR+)</td>
+                            <td><strong>8.5</strong></td>
+                            <td>2.9 - 25</td>
+                        </tr>
+                        <tr>
+                            <td>陰性概似比 (LR-)</td>
+                            <td><strong>0.21</strong></td>
+                            <td>0.05 - 0.90</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p>ACE 評估涵蓋決策能力的四個面向，包含結構化問題來評估患者對疾病、治療選項的理解程度，以及推理和表達選擇的能力。</p>
+
+                <h3>MMSE (Mini-Mental State Examination)</h3>
+                <p>MMSE 是常用的認知功能篩檢工具，但對決策能力評估有其限制：</p>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>MMSE 分數</th>
+                            <th>對決策能力缺損的意義</th>
+                            <th>概似比</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>< 20 分</strong></td>
+                            <td>增加缺乏決策能力的可能性</td>
+                            <td>LR+ 6.3</td>
+                        </tr>
+                        <tr>
+                            <td><strong>20-24 分</strong></td>
+                            <td>對診斷無明確幫助</td>
+                            <td>LR ≈ 1.0</td>
+                        </tr>
+                        <tr>
+                            <td><strong>> 24 分</strong></td>
+                            <td>降低缺乏決策能力的可能性</td>
+                            <td>LR- 0.14</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="warning">
+                    <strong>⚠️ 重要限制：</strong>MMSE 評估的是一般認知功能，而非專門針對決策能力設計。MMSE 分數正常並不能保證決策能力完整，同樣地，MMSE 輕度異常也不代表一定缺乏決策能力。
+                </div>
+
+                <h3>MacCAT-T (MacArthur Competence Assessment Tool for Treatment)</h3>
+                <p>MacCAT-T 被視為決策能力評估的「黃金標準」，但較為耗時（約 15-20 分鐘），主要用於研究目的。</p>
+
+                <h3>臨床評估流程建議</h3>
+                <div class="formula">
+                    <strong>建議評估流程：</strong><br>
+                    1. 初步懷疑決策能力問題 → 使用 MMSE 快速篩檢<br>
+                    2. MMSE < 20 或有疑慮 → 使用 ACE 進行完整評估<br>
+                    3. 必要時 → 會診精神科進行深度評估
+                </div>
+            `,
+            4: `
+                <h2>📊 特殊族群與盛行率</h2>
+                <p>不同族群的決策能力缺損盛行率差異甚大，了解這些數據有助於臨床判斷：</p>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>族群</th>
+                            <th>決策能力缺損盛行率</th>
+                            <th>備註</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>健康社區老年人</td>
+                            <td><strong>2.8%</strong></td>
+                            <td>基線參考值</td>
+                        </tr>
+                        <tr>
+                            <td>一般內科住院病患</td>
+                            <td><strong>26%</strong></td>
+                            <td>約四分之一住院患者</td>
+                        </tr>
+                        <tr>
+                            <td>加護病房患者</td>
+                            <td><strong>40-50%</strong></td>
+                            <td>常合併譫妄</td>
+                        </tr>
+                        <tr>
+                            <td>輕度認知障礙 (MCI)</td>
+                            <td><strong>15-20%</strong></td>
+                            <td>需個別評估</td>
+                        </tr>
+                        <tr>
+                            <td>阿茲海默症</td>
+                            <td><strong>54%</strong></td>
+                            <td>隨疾病進展增加</td>
+                        </tr>
+                        <tr>
+                            <td>中重度失智症</td>
+                            <td><strong>68%</strong></td>
+                            <td>多數需替代決策者</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>臨床醫師辨識能力的限制</h3>
+                <div class="danger">
+                    <strong>🚨 關鍵發現：</strong>研究顯示醫師的床邊評估只能正確辨識出約 <strong>42%</strong> 的決策能力缺損個案。這意味著超過一半的個案被漏診！
+                </div>
+
+                <p>這個發現強調了使用標準化評估工具的重要性，而非僅依賴臨床印象。</p>
+
+                <h3>需要特別注意的高風險情境</h3>
+                <ul>
+                    <li><strong>急性病況變化：</strong>感染、電解質失衡、藥物影響等可能暫時影響決策能力</li>
+                    <li><strong>精神疾病發作期：</strong>思覺失調症、重度憂鬱症、躁症發作時</li>
+                    <li><strong>譫妄狀態：</strong>住院老年患者常見，需先處理譫妄</li>
+                    <li><strong>複雜的高風險決定：</strong>拒絕必要治療、選擇非標準療法時</li>
+                </ul>
+
+                <div class="info">
+                    <strong>💡 實用建議：</strong>當患者做出看似不合理的決定時，不應直接判定其缺乏決策能力。應先確認患者是否充分理解資訊，並評估是否有可逆因素影響其判斷。
+                </div>
+
+                <h3>決策能力的可變性</h3>
+                <p>決策能力可能隨時間變化，因此：</p>
+                <ul>
+                    <li>急性疾病改善後應重新評估</li>
+                    <li>譫妄解除後決策能力可能恢復</li>
+                    <li>失智症患者的能力可能每日波動</li>
+                    <li>複雜決定可能需要比簡單決定更高的認知能力</li>
+                </ul>
+            `,
+            5: `
+                <h2>🏥 臨床應用案例</h2>
+
+                <div class="case-box">
+                    <h4>📋 案例一：術後譫妄</h4>
+                    <p><strong>病史：</strong>78歲男性，髖關節置換術後第2天，護理師發現患者拒絕接受術後抗凝血治療，表示「我不需要這些藥，我要回家」。</p>
+                    <p><strong>評估：</strong></p>
+                    <ul>
+                        <li>MMSE: 18/30（注意力、記憶、定向力差）</li>
+                        <li>4AT 譫妄篩檢：陽性</li>
+                    </ul>
+                    <p><strong>處置：</strong>優先處理術後譫妄，待譫妄改善後再重新評估決策能力。在此期間由家屬作為替代決策者。</p>
+                </div>
+
+                <div class="case-box">
+                    <h4>📋 案例二：拒絕化療的癌症病患</h4>
+                    <p><strong>病史：</strong>65歲女性，新診斷乳癌，腫瘤科建議術後輔助化療，但患者明確表示拒絕，希望只接受中醫調理。</p>
+                    <p><strong>ACE 評估結果：</strong></p>
+                    <ul>
+                        <li><strong>理解：</strong>能正確說出診斷和預後，了解化療可降低復發風險</li>
+                        <li><strong>感知：</strong>承認自己有癌症，理解不治療的風險</li>
+                        <li><strong>推理：</strong>表示害怕化療副作用，且有親人化療後仍復發的經歷，決定嘗試其他方法</li>
+                        <li><strong>表達選擇：</strong>清楚且一致地表達拒絕化療的決定</li>
+                    </ul>
+                    <p><strong>結論：</strong>患者具有完整決策能力，應尊重其自主權。可提供持續追蹤和隨時改變決定的機會。</p>
+                </div>
+
+                <div class="tip">
+                    <strong>💡 重要觀念：</strong>「不同意醫師建議」≠「缺乏決策能力」。只要患者展現出理解、感知、推理和表達選擇的能力，即使其決定與醫師建議不同，仍應尊重其自主權。
+                </div>
+
+                <div class="case-box">
+                    <h4>📋 案例三：失智症患者的手術同意</h4>
+                    <p><strong>病史：</strong>82歲男性，已知輕度阿茲海默症（MMSE 21/30），因膽囊炎需要手術，患者本人表示同意手術。</p>
+                    <p><strong>ACE 評估結果：</strong></p>
+                    <ul>
+                        <li><strong>理解：</strong>能說出「膽囊發炎要開刀」，但無法說明手術風險</li>
+                        <li><strong>感知：</strong>知道自己肚子痛，同意需要治療</li>
+                        <li><strong>推理：</strong>無法比較手術與保守治療的優缺點</li>
+                        <li><strong>表達選擇：</strong>反覆說「都聽醫生的」、「我不知道」</li>
+                    </ul>
+                    <p><strong>結論：</strong>患者在理解和推理能力方面有明顯缺損，需要替代決策者（如配偶或成年子女）參與決策過程。</p>
+                </div>
+
+                <h3>臨床評估流程總結</h3>
+                <div class="formula">
+                    <strong>決策能力評估流程：</strong><br><br>
+                    1. 懷疑決策能力問題 → 排除可逆因素（譫妄、藥物、代謝異常）<br>
+                    2. 使用 MMSE 初步篩檢認知功能<br>
+                    3. 使用 ACE 系統評估四大決策能力<br>
+                    4. 根據決定的複雜度和風險調整評估門檻<br>
+                    5. 必要時尋求精神科會診<br>
+                    6. 記錄評估過程和結果
+                </div>
+
+                <div class="good">
+                    <strong>✅ 最佳實務提醒：</strong>
+                    <ul>
+                        <li>評估應針對特定決定，而非泛論患者的一般能力</li>
+                        <li>使用患者能理解的語言說明醫療資訊</li>
+                        <li>允許患者有足夠時間思考和提問</li>
+                        <li>記錄評估過程，包括使用的工具和結果</li>
+                        <li>定期重新評估，特別是臨床狀況改變時</li>
+                    </ul>
+                </div>
+            `
+        };
+
+        function App() {
+            const [currentLesson, setCurrentLesson] = React.useState(1);
+            const [quizStarted, setQuizStarted] = React.useState(false);
+            const [currentQuestion, setCurrentQuestion] = React.useState(0);
+            const [selectedAnswer, setSelectedAnswer] = React.useState(null);
+            const [showExplanation, setShowExplanation] = React.useState(false);
+            const [score, setScore] = React.useState(0);
+            const [quizComplete, setQuizComplete] = React.useState(false);
+            const [progress, setProgress] = React.useState(ProgressTracker.getProgress());
+
+            React.useEffect(() => {
+                ProgressTracker.markLessonComplete(currentLesson);
+                setProgress(ProgressTracker.getProgress());
+            }, [currentLesson]);
+
+            const handleAnswerSelect = (index) => {
+                if (showExplanation) return;
+                setSelectedAnswer(index);
+            };
+
+            const handleConfirmAnswer = () => {
+                if (selectedAnswer === null) return;
+                setShowExplanation(true);
+                if (selectedAnswer === quiz[currentQuestion].c) {
+                    setScore(score + 1);
+                }
+            };
+
+            const handleNextQuestion = () => {
+                if (currentQuestion < quiz.length - 1) {
+                    setCurrentQuestion(currentQuestion + 1);
+                    setSelectedAnswer(null);
+                    setShowExplanation(false);
+                } else {
+                    setQuizComplete(true);
+                    ProgressTracker.saveQuizScore(score + (selectedAnswer === quiz[currentQuestion].c ? 1 : 0), quiz.length);
+                }
+            };
+
+            const resetQuiz = () => {
+                setQuizStarted(false);
+                setCurrentQuestion(0);
+                setSelectedAnswer(null);
+                setShowExplanation(false);
+                setScore(0);
+                setQuizComplete(false);
+            };
+
+            const progressPercent = (progress.lessonComplete.length / lessons.length) * 100;
+
+            return (
+                <div className="container">
+                    <nav className="back-nav">
+                        <a href="jama-rational-exam.html" className="back-btn">
+                            ← 返回總覽
+                        </a>
+                        <span className="breadcrumb">JAMA Rational Clinical Examination 系列</span>
+                    </nav>
+
+                    <header className="hero">
+                        <span className="hero-badge">JAMA Rational Clinical Examination</span>
+                        <h1>Does This Patient Have Medical Decision-Making Capacity?</h1>
+                        <p className="hero-subtitle">這位病人有醫療決策能力嗎？</p>
+                        <p className="hero-citation">
+                            Sessums LL, Zembrzuska H, Jackson JL. JAMA. 2011;306(4):420-427.
+                            <br />
+                            <a href="https://jamanetwork.com/journals/jama/fullarticle/1104154" target="_blank" className="hero-link">
+                                閱讀原文 Read Full Article →
+                            </a>
+                        </p>
+                    </header>
+
+                    <section className="objectives">
+                        <h2>🎯 學習目標</h2>
+                        <ul>
+                            <li>了解醫療決策能力的定義與四大核心能力（理解、感知、推理、表達選擇）</li>
+                            <li>熟悉 ACE 等標準化評估工具及其診斷效能</li>
+                            <li>認識不同族群的決策能力缺損盛行率</li>
+                            <li>能夠在臨床情境中適當評估並記錄患者的決策能力</li>
+                        </ul>
+                        <div className="progress-bar">
+                            <div className="progress-fill" style={{width: `${progressPercent}%`}}></div>
+                        </div>
+                        <p style={{fontSize: '0.85rem', color: '#666', marginTop: '10px'}}>
+                            學習進度：{progress.lessonComplete.length}/{lessons.length} 課程完成
+                            {progress.quizScore && ` | 測驗分數：${progress.quizScore.score}/${progress.quizScore.total}`}
+                        </p>
+                    </section>
+
+                    <nav className="lesson-nav">
+                        {lessons.map(lesson => (
+                            <button
+                                key={lesson.id}
+                                className={`lesson-tab ${currentLesson === lesson.id ? 'active' : ''}`}
+                                onClick={() => setCurrentLesson(lesson.id)}
+                            >
+                                {lesson.title}
+                            </button>
+                        ))}
+                    </nav>
+
+                    <article className="content-card" dangerouslySetInnerHTML={{__html: lessonContents[currentLesson]}} />
+
+                    <section className="quiz-section">
+                        <h2>📝 課後測驗</h2>
+
+                        {!quizStarted ? (
+                            <div style={{textAlign: 'center'}}>
+                                <p style={{marginBottom: '20px', color: '#555'}}>
+                                    共 {quiz.length} 題選擇題，測試您對醫療決策能力評估的了解程度
+                                </p>
+                                <button className="quiz-btn" onClick={() => setQuizStarted(true)}>
+                                    開始測驗
+                                </button>
+                            </div>
+                        ) : quizComplete ? (
+                            <div className="score-display">
+                                <h3>{score}/{quiz.length}</h3>
+                                <p>
+                                    {score === quiz.length ? '太棒了！完美成績！🎉' :
+                                     score >= quiz.length * 0.8 ? '表現優秀！👏' :
+                                     score >= quiz.length * 0.6 ? '不錯的成績！繼續加油！' :
+                                     '建議再複習一下課程內容 📚'}
+                                </p>
+                                <button className="quiz-btn" onClick={resetQuiz} style={{marginTop: '20px', background: 'rgba(255,255,255,0.2)'}}>
+                                    重新測驗
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="quiz-card">
+                                <p style={{color: '#666', marginBottom: '10px'}}>
+                                    問題 {currentQuestion + 1} / {quiz.length}
+                                </p>
+                                <h4>{quiz[currentQuestion].q}</h4>
+                                <div className="quiz-options">
+                                    {quiz[currentQuestion].o.map((option, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`quiz-option
+                                                ${selectedAnswer === idx ? 'selected' : ''}
+                                                ${showExplanation && idx === quiz[currentQuestion].c ? 'correct' : ''}
+                                                ${showExplanation && selectedAnswer === idx && idx !== quiz[currentQuestion].c ? 'wrong' : ''}`}
+                                            onClick={() => handleAnswerSelect(idx)}
+                                        >
+                                            {String.fromCharCode(65 + idx)}. {option}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {showExplanation && (
+                                    <div className="quiz-explanation">
+                                        <strong>解析：</strong>{quiz[currentQuestion].e}
+                                    </div>
+                                )}
+
+                                <div style={{marginTop: '20px', textAlign: 'center'}}>
+                                    {!showExplanation ? (
+                                        <button
+                                            className="quiz-btn"
+                                            onClick={handleConfirmAnswer}
+                                            disabled={selectedAnswer === null}
+                                            style={{opacity: selectedAnswer === null ? 0.5 : 1}}
+                                        >
+                                            確認答案
+                                        </button>
+                                    ) : (
+                                        <button className="quiz-btn" onClick={handleNextQuestion}>
+                                            {currentQuestion < quiz.length - 1 ? '下一題' : '查看結果'}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </section>
+
+                    <footer>
+                        <p>
+                            <strong>新竹台大分院教學部</strong><br />
+                            謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良
+                        </p>
+                        <p style={{marginTop: '15px'}}>
+                            <a href="jama-rational-exam.html">← 返回 JAMA Rational Clinical Examination 系列</a>
+                        </p>
+                    </footer>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>

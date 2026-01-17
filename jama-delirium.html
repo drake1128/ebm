@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>譫妄診斷評估 - JAMA 理性臨床診察</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Playfair+Display:wght@400;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const MODULE_ID = 'jama-delirium';
+
+const ProgressTracker = {
+    getProgress: () => {
+        try {
+            const saved = localStorage.getItem(`progress_${MODULE_ID}`);
+            return saved ? JSON.parse(saved) : { lessonsCompleted: [], quizScores: [], lastVisit: null };
+        } catch { return { lessonsCompleted: [], quizScores: [], lastVisit: null }; }
+    },
+    saveProgress: (progress) => {
+        try {
+            localStorage.setItem(`progress_${MODULE_ID}`, JSON.stringify({...progress, lastVisit: new Date().toISOString()}));
+        } catch {}
+    },
+    completeLesson: (lessonId) => {
+        const progress = ProgressTracker.getProgress();
+        if (!progress.lessonsCompleted.includes(lessonId)) {
+            progress.lessonsCompleted.push(lessonId);
+            ProgressTracker.saveProgress(progress);
+        }
+    },
+    saveQuizScore: (score, total) => {
+        const progress = ProgressTracker.getProgress();
+        progress.quizScores.push({ score, total, date: new Date().toISOString() });
+        ProgressTracker.saveProgress(progress);
+    }
+};
+
+const lessons = [
+    {
+        id: 1,
+        title: '譫妄概論與臨床重要性',
+        sub: 'Delirium Overview & Clinical Importance',
+        color: '#5E35B1',
+        sections: [
+            {
+                title: '什麼是譫妄？',
+                content: `
+                    <p>譫妄是一種<strong>急性發作</strong>的意識混亂狀態，特徵包括：</p>
+                    <ul>
+                        <li><strong>注意力障礙</strong>：無法集中、維持或轉移注意力</li>
+                        <li><strong>認知改變</strong>：記憶力、定向感、語言能力下降</li>
+                        <li><strong>知覺障礙</strong>：幻覺、錯覺</li>
+                        <li><strong>病程波動</strong>：症狀在一天中起伏變化</li>
+                        <li><strong>短時間內發生</strong>：通常在數小時到數天內發展</li>
+                    </ul>
+                    <div class="warning">譫妄通常有潛在的<strong>醫學原因</strong>，可從病史、理學檢查或檢驗發現。</div>
+                `
+            },
+            {
+                title: '臨床重要性',
+                content: `
+                    <h4>為什麼譫妄如此重要？</h4>
+                    <p>譫妄是住院老年患者常見的問題，且與多種不良預後相關：</p>
+                    <ul>
+                        <li><strong>死亡率增加</strong>：住院後 12 個月內死亡率顯著上升</li>
+                        <li><strong>住院時間延長</strong></li>
+                        <li><strong>院內併發症增加</strong></li>
+                        <li><strong>持續性認知缺損</strong></li>
+                        <li><strong>轉入長照機構比例增加</strong></li>
+                    </ul>
+                    <div class="danger">
+                        <strong>診斷不足的問題：</strong>醫療人員無法識別超過<strong>一半</strong>的譫妄病例！<br>
+                        一項研究發現，系統性應用 DSM-III 標準診斷出 20 位譫妄患者，但只有 1 位被主治醫師發現。
+                    </div>
+                `
+            },
+            {
+                title: '譫妄的病因與類型',
+                content: `
+                    <h4>常見病因</h4>
+                    <p>譫妄通常是<strong>多因素</strong>的，常見原因包括：</p>
+                    <ul>
+                        <li><strong>藥物不良反應</strong>：鎮靜安眠藥、抗膽鹼藥物、鴉片類</li>
+                        <li><strong>手術壓力</strong></li>
+                        <li><strong>感染</strong>：肺炎、泌尿道感染、敗血症</li>
+                        <li><strong>代謝異常</strong>：電解質不平衡、低血糖、缺氧</li>
+                        <li><strong>臥床不動</strong></li>
+                    </ul>
+                    <h4>譫妄的類型</h4>
+                    <table>
+                        <tr><th>類型</th><th>特徵</th><th>臨床意義</th></tr>
+                        <tr><td><strong>過動型 (Hyperactive)</strong></td><td>躁動、警覺性增加、常有幻覺</td><td>容易被發現</td></tr>
+                        <tr><td><strong>低動型 (Hypoactive)</strong></td><td>嗜睡、精神運動功能下降</td><td><strong>常被忽略</strong></td></tr>
+                        <tr><td><strong>混合型 (Mixed)</strong></td><td>在過動與低動之間波動</td><td>需持續觀察</td></tr>
+                    </table>
+                    <div class="tip">低動型譫妄最容易被忽略，因為患者看起來只是「昏昏欲睡」而非明顯躁動。</div>
+                `
+            }
+        ]
+    },
+    {
+        id: 2,
+        title: '譫妄 vs 失智症的鑑別',
+        sub: 'Delirium vs Dementia',
+        color: '#7E57C2',
+        sections: [
+            {
+                title: '關鍵鑑別點',
+                content: `
+                    <h4>譫妄與失智症的區別</h4>
+                    <table>
+                        <tr><th>特徵</th><th>譫妄</th><th>失智症</th></tr>
+                        <tr><td><strong>發病速度</strong></td><td>急性（數小時到數天）</td><td>慢性（數月到數年）</td></tr>
+                        <tr><td><strong>病程</strong></td><td>波動、日夜變化</td><td>穩定或緩慢惡化</td></tr>
+                        <tr><td><strong>注意力</strong></td><td><strong>明顯受損</strong></td><td>早期通常保留</td></tr>
+                        <tr><td><strong>意識程度</strong></td><td>常有改變</td><td>通常正常（直到晚期）</td></tr>
+                        <tr><td><strong>可逆性</strong></td><td>通常可逆（若治療病因）</td><td>通常不可逆</td></tr>
+                        <tr><td><strong>睡眠週期</strong></td><td>常混亂</td><td>可能有改變但較穩定</td></tr>
+                    </table>
+                    <div class="good">
+                        <strong>關鍵鑑別點：</strong><br>
+                        • 譫妄有<strong>急性且快速</strong>的發作<br>
+                        • 譫妄的<strong>注意力障礙</strong>和<strong>意識程度改變</strong>更為明顯
+                    </div>
+                `
+            },
+            {
+                title: 'DSM 診斷標準',
+                content: `
+                    <h4>DSM-IV 譫妄診斷標準</h4>
+                    <div class="formula">
+                        <strong>A. 意識障礙</strong><br>
+                        對環境的覺察降低，伴隨注意力集中、維持或轉移的能力下降<br><br>
+                        <strong>B. 認知改變或知覺障礙</strong><br>
+                        記憶缺損、定向障礙、語言障礙、或知覺障礙（非既有失智症可解釋）<br><br>
+                        <strong>C. 急性發作與波動病程</strong><br>
+                        短時間內發展（通常數小時到數天），且一天中症狀會波動<br><br>
+                        <strong>D. 有醫學原因的證據</strong><br>
+                        從病史、理學檢查或檢驗可發現潛在的醫學病因
+                    </div>
+                    <div class="info">DSM 標準是譫妄診斷的參考標準，但實際應用需要專家評估，可能耗時且有主觀性。</div>
+                `
+            },
+            {
+                title: '譫妄的臨床特徵',
+                content: `
+                    <h4>專家共識的譫妄臨床特徵</h4>
+                    <ul>
+                        <li><strong>急性發作與波動病程</strong></li>
+                        <li><strong>注意力障礙</strong>（核心特徵）</li>
+                        <li><strong>思考紊亂</strong></li>
+                        <li><strong>意識程度改變</strong></li>
+                        <li>定向障礙</li>
+                        <li>記憶障礙</li>
+                        <li>知覺障礙（幻覺、錯覺）</li>
+                        <li>精神運動活動增加或減少</li>
+                        <li>睡眠-覺醒週期紊亂</li>
+                    </ul>
+                    <div class="warning">
+                        <strong>注意：</strong>家屬或護理人員通常比醫師更早發現譫妄，因為他們與患者相處時間較長。<br>
+                        當家屬說「這不像我認識的他/她」時，應高度警覺譫妄的可能性。
+                    </div>
+                `
+            }
+        ]
+    },
+    {
+        id: 3,
+        title: '床邊評估工具',
+        sub: 'Bedside Assessment Instruments',
+        color: '#9575CD',
+        sections: [
+            {
+                title: '各種評估工具比較',
+                content: `
+                    <h4>床邊譫妄評估工具的診斷價值</h4>
+                    <table>
+                        <tr><th>工具</th><th>敏感度</th><th>特異度</th><th>LR+</th><th>LR-</th><th>時間</th></tr>
+                        <tr><td><strong>CAM</strong></td><td>86%</td><td>93%</td><td><strong>9.6</strong></td><td><strong>0.16</strong></td><td>5 分鐘</td></tr>
+                        <tr><td>GAR</td><td>94%</td><td>99%</td><td>65</td><td>0.06</td><td>2 分鐘</td></tr>
+                        <tr><td>MDAS ≥10</td><td>92%</td><td>92%</td><td>12</td><td>0.09</td><td>10 分鐘</td></tr>
+                        <tr><td>DRS-R-98 ≥20</td><td>93%</td><td>89%</td><td>8.0</td><td>0.08</td><td>20-25 分鐘</td></tr>
+                        <tr><td>DRS ≥10</td><td>95%</td><td>79%</td><td>4.3</td><td>0.07</td><td>10 分鐘</td></tr>
+                        <tr><td>DOSS</td><td>92%</td><td>82%</td><td>5.2</td><td>0.10</td><td>&lt;5 分鐘</td></tr>
+                        <tr><td>Nu-DESC</td><td>96%</td><td>69%</td><td>3.1</td><td>0.06</td><td>1 分鐘</td></tr>
+                        <tr><td>MMSE &lt;24</td><td>96%</td><td>38%</td><td><strong>1.6</strong></td><td>0.12</td><td>10 分鐘</td></tr>
+                    </table>
+                    <div class="danger">
+                        <strong>MMSE 對診斷譫妄最沒用！</strong><br>
+                        MMSE &lt;24 的 LR+ 僅 1.6，無法有效區分譫妄與非譫妄患者。
+                    </div>
+                `
+            },
+            {
+                title: 'CAM：最佳選擇',
+                content: `
+                    <h4>為什麼 CAM 是最佳選擇？</h4>
+                    <ul>
+                        <li><strong>準確性</strong>：LR+ 9.6，LR- 0.16</li>
+                        <li><strong>快速</strong>：僅需 5 分鐘</li>
+                        <li><strong>易學易用</strong>：可由醫師或護理師執行</li>
+                        <li><strong>已翻譯成 10 種語言</strong></li>
+                        <li><strong>有訓練手冊</strong>可供參考</li>
+                    </ul>
+                    <div class="formula">
+                        <strong>CAM 診斷價值</strong><br>
+                        Summary LR+ = 9.6 (95% CI: 5.8-16.0)<br>
+                        Summary LR- = 0.16 (95% CI: 0.09-0.29)
+                    </div>
+                    <h4>不同執行者的表現</h4>
+                    <table>
+                        <tr><th>執行者</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td>護理師執行 CAM</td><td>7.3 (95% CI: 1.9-27)</td><td>0.08 (95% CI: 0.03-0.21)</td></tr>
+                        <tr><td>醫師執行 CAM</td><td>19 (95% CI: 6.7-51)</td><td>0.19 (95% CI: 0.13-0.27)</td></tr>
+                    </table>
+                    <div class="good">醫師執行 CAM 的 LR+ 更高（19 vs 7.3），但護理師執行的 LR- 更低（0.08 vs 0.19），更適合排除譫妄。</div>
+                `
+            },
+            {
+                title: '其他工具的適用情境',
+                content: `
+                    <h4>時間有限時的選擇</h4>
+                    <p>若只有不到 5 分鐘，可考慮：</p>
+                    <ul>
+                        <li><strong>CAM</strong>：5 分鐘，最推薦</li>
+                        <li><strong>DOSS</strong>：&lt;5 分鐘，由護理師觀察執行</li>
+                        <li><strong>GAR</strong>：2 分鐘，但僅在老年科醫師驗證</li>
+                        <li><strong>Nu-DESC</strong>：1 分鐘，敏感度高但特異度較低</li>
+                    </ul>
+                    <h4>GAR（Global Attentiveness Rating）</h4>
+                    <p>最簡單快速的評估方式：</p>
+                    <div class="formula">
+                        <strong>GAR 評估方法</strong><br>
+                        1. 與患者進行至少 2 分鐘的一般對話<br>
+                        2. 不需要正式認知測試或旁人提供資訊<br>
+                        3. 評估問題：「患者在對話中保持注意力的程度如何？」<br>
+                        4. 在 10 公分視覺類比量表上評分<br>
+                        高分 = 患者容易參與對話<br>
+                        低分 = 患者無法被喚醒或過度躁動無法對話
+                    </div>
+                    <div class="warning">GAR 的 LR+ 高達 65，LR- 僅 0.06，但<strong>僅在一項研究</strong>中由老年科醫師驗證，推廣性有限。</div>
+                `
+            }
+        ]
+    },
+    {
+        id: 4,
+        title: 'CAM 評估演算法',
+        sub: 'CAM Diagnostic Algorithm',
+        color: '#B39DDB',
+        sections: [
+            {
+                title: 'CAM 四大特徵',
+                content: `
+                    <h4>Confusion Assessment Method (CAM) 診斷演算法</h4>
+                    <div class="formula">
+                        <strong>特徵 1：急性發作與波動病程</strong><br>
+                        患者的精神狀態是否有急性改變？<br>
+                        這種行為是否在過去一天中波動（時好時壞）？<br><br>
+                        <strong>特徵 2：注意力障礙</strong><br>
+                        患者是否難以集中注意力？<br>
+                        例如：容易分心，或難以跟上對話內容？<br><br>
+                        <strong>特徵 3：思考紊亂</strong><br>
+                        患者的說話是否紊亂或不連貫？<br>
+                        例如：話題跳躍、邏輯不清、無關的對話？<br><br>
+                        <strong>特徵 4：意識程度改變</strong><br>
+                        患者的意識程度如何？<br>
+                        • 警覺（正常）<br>
+                        • 過度警覺<br>
+                        • 嗜睡（容易喚醒）<br>
+                        • 昏迷（難以喚醒）<br>
+                        • 昏睡（無法喚醒）
+                    </div>
+                `
+            },
+            {
+                title: 'CAM 診斷標準',
+                content: `
+                    <h4>CAM 陽性診斷標準</h4>
+                    <div class="good">
+                        <strong>譫妄診斷需要：</strong><br><br>
+                        <strong>必要條件：</strong><br>
+                        ✓ 特徵 1（急性發作與波動病程）存在<br>
+                        ✓ 特徵 2（注意力障礙）存在<br><br>
+                        <strong>加上以下任一：</strong><br>
+                        ✓ 特徵 3（思考紊亂）存在<br>
+                        或<br>
+                        ✓ 特徵 4（意識程度改變）存在
+                    </div>
+                    <div class="formula">
+                        <strong>CAM 診斷公式</strong><br>
+                        譫妄 = (特徵 1 + 特徵 2) + (特徵 3 或 特徵 4)
+                    </div>
+                    <div class="tip">
+                        <strong>執行技巧：</strong><br>
+                        • CAM 應在正式認知評估（如 MMSE、Digit Span）後立即執行<br>
+                        • 評估應基於整個接觸過程的觀察，不限於訪談期間<br>
+                        • 訪談後應立即完成評分以確保準確性
+                    </div>
+                `
+            },
+            {
+                title: '注意力測試方法',
+                content: `
+                    <h4>評估注意力的具體方法</h4>
+                    <p>CAM 的特徵 2（注意力障礙）可透過以下測試評估：</p>
+                    <h4>1. Digit Span Test（數字廣度測試）</h4>
+                    <div class="formula">
+                        • 以每秒一個數字的速度唸出一串隨機數字<br>
+                        • 請患者重複<br>
+                        • 從 2 位數開始，每次正確後增加一位<br>
+                        • <strong>無法重複至少 5 位數字 = 異常</strong>
+                    </div>
+                    <h4>2. Vigilance "A" Test（警覺性 A 測試）</h4>
+                    <div class="formula">
+                        • 以每秒一個字母的速度唸出 60 個字母<br>
+                        • 其中 18 個是字母 A<br>
+                        • 每當聽到 A 時，患者需表示<br>
+                        • <strong>超過 2 個錯誤 = 異常</strong>
+                    </div>
+                    <div class="warning">
+                        單獨使用 Digit Span Test（LR+ 3.4）或 Vigilance "A" Test（LR+ 2.7）診斷譫妄的效果有限，應與其他 CAM 特徵一起評估。
+                    </div>
+                `
+            }
+        ]
+    },
+    {
+        id: 5,
+        title: '臨床案例應用',
+        sub: 'Clinical Application',
+        color: '#D1C4E9',
+        sections: [
+            {
+                title: '案例：高度懷疑譫妄',
+                content: `
+                    <div class="danger">
+                        <strong>85 歲男性</strong>，非小細胞肺癌，因肺炎入住腫瘤病房。開始抗生素和氧氣治療。<br>
+                        入院前獨立生活在社區。<br>
+                        <strong>夜班護理報告：</strong>整夜未睡，在病房走來走去。<br>
+                        <strong>早晨查房：</strong>容易受驚嚇，不停撥弄床單。<br>
+                        <strong>女兒說：</strong>「這不是我爸爸。他現在像活在自己的世界，他從來不會這樣！」
+                    </div>
+                    <h4>CAM 評估</h4>
+                    <table>
+                        <tr><th>特徵</th><th>評估結果</th></tr>
+                        <tr><td>特徵 1：急性發作與波動</td><td>✓ 入院後急性改變，白天和夜間表現不同</td></tr>
+                        <tr><td>特徵 2：注意力障礙</td><td>✓ 容易受驚嚇，無法專注對話</td></tr>
+                        <tr><td>特徵 3：思考紊亂</td><td>評估中</td></tr>
+                        <tr><td>特徵 4：意識程度改變</td><td>✓ 意識程度改變（過度警覺）</td></tr>
+                    </table>
+                `
+            },
+            {
+                title: '案例分析與處置',
+                content: `
+                    <h4>診斷機率計算</h4>
+                    <div class="formula">
+                        <strong>前測機率：</strong>63%（腫瘤病房肺炎患者）<br>
+                        <strong>CAM 陽性：</strong>LR+ = 9.6<br><br>
+                        前測勝算 = 63/(100-63) = 1.70<br>
+                        後測勝算 = 1.70 × 9.6 = 16.3<br>
+                        <strong>後測機率 = 16.3/(1+16.3) = 94%</strong>
+                    </div>
+                    <div class="good">
+                        <strong>護理師使用 CAM：</strong><br>
+                        後測機率 = 93%（使用 LR+ 7.3）<br><br>
+                        <strong>醫師使用 CAM：</strong><br>
+                        後測機率 = 97%（使用 LR+ 19）
+                    </div>
+                    <h4>後續處置</h4>
+                    <ul>
+                        <li>尋找並治療潛在病因（肺炎、藥物、電解質）</li>
+                        <li>非藥物介入：重新定向、維持睡眠週期、早期活動</li>
+                        <li>必要時使用低劑量抗精神病藥物</li>
+                        <li>監測並預防併發症</li>
+                    </ul>
+                `
+            },
+            {
+                title: '診斷策略總結',
+                content: `
+                    <h4>譫妄診斷的關鍵要點</h4>
+                    <div class="good">
+                        <strong>最佳診斷工具：CAM</strong><br>
+                        • LR+ 9.6（醫師執行可達 19）<br>
+                        • LR- 0.16（護理師執行可達 0.08）<br>
+                        • 僅需 5 分鐘<br>
+                        • 需要正式認知評估搭配使用
+                    </div>
+                    <div class="danger">
+                        <strong>最沒用的工具：MMSE &lt;24</strong><br>
+                        • LR+ 僅 1.6<br>
+                        • 無法有效診斷譫妄
+                    </div>
+                    <h4>何時應評估譫妄？</h4>
+                    <ul>
+                        <li>所有 ≥65 歲的住院患者</li>
+                        <li>有精神狀態改變印象的患者</li>
+                        <li>家屬報告「這不像我認識的他/她」</li>
+                        <li>高風險情境：術後、ICU、感染、多重用藥</li>
+                    </ul>
+                    <div class="tip">
+                        <strong>記住：</strong>譫妄是可以預防和治療的！<br>
+                        多因素介入策略已被證實可有效預防譫妄發生。
+                    </div>
+                `
+            }
+        ]
+    }
+];
+
+const quiz = [
+    {
+        q: '下列哪項床邊工具對診斷譫妄最有價值？',
+        o: ['MMSE <24 (LR+ 1.6)', 'CAM (LR+ 9.6)', 'Digit Span Test (LR+ 3.4)', 'Vigilance "A" Test (LR+ 2.7)'],
+        c: 1,
+        e: 'CAM（Confusion Assessment Method）的 summary LR+ 為 9.6（95% CI: 5.8-16.0），summary LR- 為 0.16（95% CI: 0.09-0.29），是最佳的床邊譫妄評估工具。MMSE <24 的 LR+ 僅 1.6，對診斷譫妄最沒用。'
+    },
+    {
+        q: '關於 CAM 診斷演算法，下列敘述何者正確？',
+        o: ['只需要特徵 1（急性發作）陽性即可診斷', '需要四個特徵全部陽性', '需要特徵 1+2，加上特徵 3 或 4', '僅需要注意力障礙即可診斷'],
+        c: 2,
+        e: 'CAM 診斷譫妄需要：特徵 1（急性發作與波動病程）和特徵 2（注意力障礙）必須存在，加上特徵 3（思考紊亂）或特徵 4（意識程度改變）。公式：(特徵 1 + 特徵 2) + (特徵 3 或 特徵 4)。'
+    },
+    {
+        q: '關於譫妄與失智症的鑑別，下列哪項是區分兩者最重要的特徵？',
+        o: ['記憶障礙程度', '發病速度（急性 vs 慢性）', '患者年齡', '是否有幻覺'],
+        c: 1,
+        e: '區分譫妄與失智症最關鍵的特徵是發病速度。譫妄有急性且快速的發作（數小時到數天），而失智症進展緩慢（數月到數年）。注意力障礙和意識程度改變也有助於鑑別。'
+    },
+    {
+        q: '關於譫妄的類型，下列敘述何者正確？',
+        o: ['過動型譫妄最容易被忽略', '低動型譫妄表現為躁動和幻覺', '低動型譫妄最容易被臨床醫師和照護者忽略', '混合型譫妄最常見且最易診斷'],
+        c: 2,
+        e: '低動型（Hypoactive）譫妄的特徵是嗜睡和精神運動功能下降，最容易被臨床醫師和照護者忽略。過動型（Hyperactive）譫妄表現為躁動、警覺性增加和幻覺，很少被忽略。'
+    },
+    {
+        q: '醫療人員對譫妄的識別率大約是多少？',
+        o: ['超過 90%', '約 70-80%', '約 50%', '不到 50%'],
+        c: 3,
+        e: '研究顯示醫療人員無法識別超過一半的譫妄病例。一項研究發現，系統性應用 DSM-III 標準在 133 位連續入院患者中診斷出 20 位譫妄患者，但只有 1 位被主治醫師報告為譫妄。'
+    },
+    {
+        q: '在 Digit Span Test 中，下列何者被認為是異常結果？',
+        o: ['無法重複 3 位數字', '無法重複 4 位數字', '無法重複 5 位數字', '無法重複 7 位數字'],
+        c: 2,
+        e: 'Digit Span Test 中，若患者無法重複至少 5 位數字，則被認為是異常結果，可能代表注意力障礙。'
+    },
+    {
+        q: '關於不同執行者使用 CAM 的效果，下列敘述何者正確？',
+        o: ['護理師執行的 LR+ 比醫師高', '醫師執行的 LR- 比護理師低', '護理師執行更適合排除譫妄', '兩者效果完全相同'],
+        c: 2,
+        e: '護理師執行 CAM 的 LR- 為 0.08，比醫師執行的 0.19 更低，因此護理師執行更適合排除譫妄。醫師執行的 LR+ 較高（19 vs 7.3），更適合確認診斷。'
+    },
+    {
+        q: '若時間非常有限（不到 5 分鐘），下列哪項評估工具最適合？',
+        o: ['MDAS（需 10 分鐘）', 'DRS-R-98（需 20-25 分鐘）', 'CAM（需 5 分鐘）', 'MMSE（需 10 分鐘）'],
+        c: 2,
+        e: 'CAM 僅需 5 分鐘即可完成，是時間有限時的最佳選擇。其他快速選項包括 DOSS（<5 分鐘）、GAR（2 分鐘）和 Nu-DESC（1 分鐘），但 CAM 的整體診斷價值最高。'
+    },
+    {
+        q: '關於 CAM 評估的執行時機，下列敘述何者正確？',
+        o: ['應在患者入睡後執行', '應在正式認知評估後立即執行', '可以在任何時候回顧性評分', '只需要根據訪談期間的觀察'],
+        c: 1,
+        e: 'CAM 原本設計為在正式認知評估（如 MMSE、Digit Span Test）後立即執行。評估應基於整個接觸過程的觀察，但應在訪談後立即完成評分以確保準確性。'
+    },
+    {
+        q: '一位住院患者的前測機率為 25%（一般內科病房），CAM 評估陽性。使用 summary LR+ 9.6，後測機率約為多少？',
+        o: ['約 50%', '約 65%', '約 76%', '約 90%'],
+        c: 2,
+        e: '前測機率 25% 的前測勝算 = 25/75 = 0.33。後測勝算 = 0.33 × 9.6 = 3.17。後測機率 = 3.17/(1+3.17) = 76%。CAM 陽性可將 25% 的前測機率提升至約 76%。'
+    }
+];
+
+// Same React components as template
+function App() {
+    const [activeLesson, setActiveLesson] = React.useState(1);
+    const [showQuiz, setShowQuiz] = React.useState(false);
+    const [currentQ, setCurrentQ] = React.useState(0);
+    const [score, setScore] = React.useState(0);
+    const [answered, setAnswered] = React.useState(null);
+    const [showResult, setShowResult] = React.useState(false);
+    const [showExplanation, setShowExplanation] = React.useState(false);
+    const [progress, setProgress] = React.useState(ProgressTracker.getProgress());
+    const [sectionIdx, setSectionIdx] = React.useState(0);
+
+    const lesson = lessons.find(l => l.id === activeLesson);
+
+    const handleAnswer = (idx) => {
+        if (answered !== null) return;
+        setAnswered(idx);
+        setShowExplanation(true);
+        if (idx === quiz[currentQ].c) setScore(s => s + 1);
+    };
+
+    const nextQuestion = () => {
+        setShowExplanation(false);
+        if (currentQ < quiz.length - 1) {
+            setCurrentQ(c => c + 1);
+            setAnswered(null);
+        } else {
+            ProgressTracker.saveQuizScore(score + (answered === quiz[currentQ].c ? 0 : 0), quiz.length);
+            setShowResult(true);
+        }
+    };
+
+    const resetQuiz = () => {
+        setCurrentQ(0);
+        setScore(0);
+        setAnswered(null);
+        setShowResult(false);
+        setShowExplanation(false);
+    };
+
+    const changeLesson = (id) => {
+        ProgressTracker.completeLesson(activeLesson);
+        setProgress(ProgressTracker.getProgress());
+        setActiveLesson(id);
+        setSectionIdx(0);
+        setShowQuiz(false);
+    };
+
+    const startQuiz = () => {
+        ProgressTracker.completeLesson(activeLesson);
+        setProgress(ProgressTracker.getProgress());
+        setShowQuiz(true);
+        resetQuiz();
+    };
+
+    const completionRate = Math.round((progress.lessonsCompleted.length / lessons.length) * 100);
+
+    return (
+        <div style={{fontFamily: "'Noto Sans TC', 'Source Sans Pro', sans-serif", background: 'linear-gradient(135deg, #EDE7F6 0%, #D1C4E9 100%)', minHeight: '100vh'}}>
+            {/* Header */}
+            <header style={{background: 'linear-gradient(135deg, #5E35B1 0%, #7E57C2 50%, #9575CD 100%)', color: 'white', padding: '1rem 2rem', boxShadow: '0 2px 10px rgba(0,0,0,0.15)'}}>
+                <div style={{maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem'}}>
+                    <a href="jama-rational-exam.html" style={{color: 'white', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8, opacity: 0.9, transition: 'opacity 0.2s'}}
+                       onMouseOver={e => e.currentTarget.style.opacity = '1'} onMouseOut={e => e.currentTarget.style.opacity = '0.9'}>
+                        <span style={{fontSize: '1.5rem'}}>←</span>
+                        <span>返回模組列表</span>
+                    </a>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                        <div style={{background: 'rgba(255,255,255,0.2)', borderRadius: 20, padding: '0.3rem 1rem', fontSize: '0.9rem'}}>
+                            完成度: {completionRate}%
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            {/* Hero */}
+            <section style={{background: 'linear-gradient(135deg, #5E35B1 0%, #7E57C2 50%, #9575CD 100%)', color: 'white', padding: '3rem 2rem 4rem', textAlign: 'center'}}>
+                <div style={{maxWidth: 900, margin: '0 auto'}}>
+                    <div style={{display: 'inline-block', background: 'rgba(255,255,255,0.2)', borderRadius: 20, padding: '0.3rem 1rem', fontSize: '0.85rem', marginBottom: '1rem'}}>
+                        JAMA Rational Clinical Examination
+                    </div>
+                    <h1 style={{fontFamily: "'Playfair Display', 'Crimson Pro', serif", fontSize: 'clamp(1.8rem, 5vw, 2.8rem)', fontWeight: 700, margin: '0.5rem 0', lineHeight: 1.2}}>
+                        Does This Patient Have Delirium?
+                    </h1>
+                    <p style={{fontSize: 'clamp(1rem, 2.5vw, 1.3rem)', opacity: 0.95, marginBottom: '0.5rem'}}>譫妄的床邊評估工具診斷價值</p>
+                    <p style={{fontSize: '0.95rem', opacity: 0.85}}>Wong CL, et al. JAMA 2010;304(7):779-786</p>
+                    <a href="https://jamanetwork.com/journals/jama/fullarticle/186431" target="_blank" rel="noopener noreferrer"
+                       style={{display: 'inline-block', marginTop: '1rem', color: 'white', background: 'rgba(255,255,255,0.2)', padding: '0.5rem 1.2rem', borderRadius: 20, textDecoration: 'none', fontSize: '0.9rem', transition: 'background 0.2s'}}
+                       onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+                       onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
+                        閱讀原文 Read Full Article →
+                    </a>
+                </div>
+            </section>
+
+            {/* Learning Objectives */}
+            <section style={{maxWidth: 1000, margin: '-2rem auto 2rem', padding: '0 1rem'}}>
+                <div style={{background: 'white', borderRadius: 16, padding: '1.5rem 2rem', boxShadow: '0 4px 20px rgba(0,0,0,0.1)'}}>
+                    <h3 style={{margin: '0 0 1rem', color: '#5E35B1'}}>📚 學習目標</h3>
+                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '0.8rem'}}>
+                        {['理解譫妄的臨床特徵與類型', '掌握 CAM 診斷演算法的應用', '學會各種床邊評估工具的診斷價值', '能夠鑑別譫妄與失智症'].map((obj, i) => (
+                            <div key={i} style={{display: 'flex', alignItems: 'flex-start', gap: '0.5rem'}}>
+                                <span style={{color: '#7E57C2', fontWeight: 'bold'}}>✓</span>
+                                <span style={{fontSize: '0.95rem'}}>{obj}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Lesson Tabs */}
+            <nav style={{maxWidth: 1200, margin: '0 auto 2rem', padding: '0 1rem'}}>
+                <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center'}}>
+                    {lessons.map(l => (
+                        <button key={l.id} onClick={() => changeLesson(l.id)}
+                            style={{
+                                padding: '0.7rem 1.2rem', border: 'none', borderRadius: 25,
+                                background: activeLesson === l.id ? `linear-gradient(135deg, ${l.color}, ${l.color}dd)` : 'white',
+                                color: activeLesson === l.id ? 'white' : '#333',
+                                cursor: 'pointer', fontWeight: 500, fontSize: '0.9rem',
+                                boxShadow: activeLesson === l.id ? `0 4px 15px ${l.color}40` : '0 2px 8px rgba(0,0,0,0.1)',
+                                transition: 'all 0.3s ease', display: 'flex', alignItems: 'center', gap: '0.5rem'
+                            }}>
+                            {progress.lessonsCompleted.includes(l.id) && <span>✓</span>}
+                            <span>{l.title}</span>
+                        </button>
+                    ))}
+                    <button onClick={startQuiz}
+                        style={{
+                            padding: '0.7rem 1.2rem', border: 'none', borderRadius: 25,
+                            background: showQuiz ? 'linear-gradient(135deg, #2E7D32, #388E3C)' : 'white',
+                            color: showQuiz ? 'white' : '#2E7D32',
+                            cursor: 'pointer', fontWeight: 500, fontSize: '0.9rem',
+                            boxShadow: showQuiz ? '0 4px 15px rgba(46,125,50,0.4)' : '0 2px 8px rgba(0,0,0,0.1)',
+                            transition: 'all 0.3s ease'
+                        }}>
+                        📝 測驗
+                    </button>
+                </div>
+            </nav>
+
+            {/* Main Content */}
+            <main style={{maxWidth: 1000, margin: '0 auto', padding: '0 1rem 3rem'}}>
+                {!showQuiz ? (
+                    <div style={{background: 'white', borderRadius: 16, padding: '2rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)'}}>
+                        <div style={{borderBottom: `3px solid ${lesson.color}`, paddingBottom: '1rem', marginBottom: '1.5rem'}}>
+                            <h2 style={{margin: 0, color: lesson.color, fontSize: '1.6rem'}}>{lesson.title}</h2>
+                            <p style={{margin: '0.3rem 0 0', color: '#666', fontSize: '0.95rem'}}>{lesson.sub}</p>
+                        </div>
+
+                        {/* Section Tabs */}
+                        <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem'}}>
+                            {lesson.sections.map((sec, idx) => (
+                                <button key={idx} onClick={() => setSectionIdx(idx)}
+                                    style={{
+                                        padding: '0.5rem 1rem', border: `2px solid ${sectionIdx === idx ? lesson.color : '#ddd'}`,
+                                        borderRadius: 20, background: sectionIdx === idx ? `${lesson.color}10` : 'white',
+                                        color: sectionIdx === idx ? lesson.color : '#666', cursor: 'pointer',
+                                        fontWeight: sectionIdx === idx ? 600 : 400, fontSize: '0.85rem', transition: 'all 0.2s'
+                                    }}>
+                                    {sec.title}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Section Content */}
+                        <div className="content-area" dangerouslySetInnerHTML={{__html: lesson.sections[sectionIdx].content}} />
+
+                        {/* Navigation */}
+                        <div style={{display: 'flex', justifyContent: 'space-between', marginTop: '2rem', paddingTop: '1rem', borderTop: '1px solid #eee'}}>
+                            <button onClick={() => sectionIdx > 0 ? setSectionIdx(sectionIdx - 1) : activeLesson > 1 && changeLesson(activeLesson - 1)}
+                                disabled={sectionIdx === 0 && activeLesson === 1}
+                                style={{
+                                    padding: '0.7rem 1.5rem', border: 'none', borderRadius: 8,
+                                    background: (sectionIdx === 0 && activeLesson === 1) ? '#ccc' : '#f0f0f0',
+                                    cursor: (sectionIdx === 0 && activeLesson === 1) ? 'not-allowed' : 'pointer',
+                                    fontWeight: 500, transition: 'background 0.2s'
+                                }}>
+                                ← 上一頁
+                            </button>
+                            <button onClick={() => sectionIdx < lesson.sections.length - 1 ? setSectionIdx(sectionIdx + 1) : activeLesson < lessons.length ? changeLesson(activeLesson + 1) : startQuiz()}
+                                style={{
+                                    padding: '0.7rem 1.5rem', border: 'none', borderRadius: 8,
+                                    background: `linear-gradient(135deg, ${lesson.color}, ${lesson.color}dd)`,
+                                    color: 'white', cursor: 'pointer', fontWeight: 500, transition: 'transform 0.2s'
+                                }}>
+                                {sectionIdx < lesson.sections.length - 1 ? '下一頁 →' : activeLesson < lessons.length ? '下一課 →' : '開始測驗 →'}
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div style={{background: 'white', borderRadius: 16, padding: '2rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)'}}>
+                        {!showResult ? (
+                            <>
+                                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem'}}>
+                                    <h2 style={{margin: 0, color: '#2E7D32'}}>📝 課後測驗</h2>
+                                    <span style={{background: '#E8F5E9', color: '#2E7D32', padding: '0.3rem 1rem', borderRadius: 20, fontWeight: 600}}>
+                                        {currentQ + 1} / {quiz.length}
+                                    </span>
+                                </div>
+                                <div style={{background: '#E8F5E9', height: 8, borderRadius: 4, marginBottom: '2rem'}}>
+                                    <div style={{background: 'linear-gradient(90deg, #2E7D32, #4CAF50)', height: '100%', borderRadius: 4, width: `${((currentQ + 1) / quiz.length) * 100}%`, transition: 'width 0.3s'}} />
+                                </div>
+                                <h3 style={{fontSize: '1.2rem', lineHeight: 1.6, marginBottom: '1.5rem'}}>{quiz[currentQ].q}</h3>
+                                <div style={{display: 'flex', flexDirection: 'column', gap: '0.8rem'}}>
+                                    {quiz[currentQ].o.map((opt, idx) => (
+                                        <button key={idx} onClick={() => handleAnswer(idx)}
+                                            style={{
+                                                padding: '1rem 1.2rem', border: '2px solid',
+                                                borderColor: answered === null ? '#ddd' : idx === quiz[currentQ].c ? '#4CAF50' : answered === idx ? '#f44336' : '#ddd',
+                                                borderRadius: 12, background: answered === null ? 'white' : idx === quiz[currentQ].c ? '#E8F5E9' : answered === idx ? '#FFEBEE' : 'white',
+                                                cursor: answered === null ? 'pointer' : 'default', textAlign: 'left', fontSize: '1rem',
+                                                transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.8rem'
+                                            }}>
+                                            <span style={{
+                                                width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                background: answered === null ? '#f5f5f5' : idx === quiz[currentQ].c ? '#4CAF50' : answered === idx ? '#f44336' : '#f5f5f5',
+                                                color: (answered !== null && (idx === quiz[currentQ].c || answered === idx)) ? 'white' : '#666', fontWeight: 600, fontSize: '0.9rem'
+                                            }}>
+                                                {answered !== null && idx === quiz[currentQ].c ? '✓' : answered !== null && answered === idx ? '✗' : String.fromCharCode(65 + idx)}
+                                            </span>
+                                            <span>{opt}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                {showExplanation && (
+                                    <div style={{marginTop: '1.5rem', padding: '1.2rem', background: answered === quiz[currentQ].c ? '#E8F5E9' : '#FFF3E0', borderRadius: 12, borderLeft: `4px solid ${answered === quiz[currentQ].c ? '#4CAF50' : '#FF9800'}`}}>
+                                        <h4 style={{margin: '0 0 0.5rem', color: answered === quiz[currentQ].c ? '#2E7D32' : '#E65100'}}>
+                                            {answered === quiz[currentQ].c ? '✓ 正確！' : '✗ 不正確'}
+                                        </h4>
+                                        <p style={{margin: 0, lineHeight: 1.7}}>{quiz[currentQ].e}</p>
+                                    </div>
+                                )}
+                                {answered !== null && (
+                                    <button onClick={nextQuestion}
+                                        style={{
+                                            marginTop: '1.5rem', padding: '0.8rem 2rem', border: 'none', borderRadius: 8,
+                                            background: 'linear-gradient(135deg, #2E7D32, #388E3C)', color: 'white',
+                                            cursor: 'pointer', fontWeight: 600, fontSize: '1rem'
+                                        }}>
+                                        {currentQ < quiz.length - 1 ? '下一題 →' : '查看結果'}
+                                    </button>
+                                )}
+                            </>
+                        ) : (
+                            <div style={{textAlign: 'center', padding: '2rem 0'}}>
+                                <div style={{fontSize: '4rem', marginBottom: '1rem'}}>{score >= 8 ? '🎉' : score >= 6 ? '👍' : '💪'}</div>
+                                <h2 style={{margin: '0 0 0.5rem', color: '#2E7D32'}}>測驗完成！</h2>
+                                <p style={{fontSize: '1.5rem', fontWeight: 600, color: score >= 8 ? '#2E7D32' : score >= 6 ? '#FF9800' : '#f44336'}}>
+                                    {score} / {quiz.length} 分
+                                </p>
+                                <p style={{color: '#666', marginBottom: '2rem'}}>
+                                    {score >= 8 ? '太棒了！你已經掌握了譫妄診斷評估的重點！' : score >= 6 ? '不錯！但還有進步空間，建議複習相關章節。' : '建議重新閱讀課程內容後再次測驗。'}
+                                </p>
+                                <div style={{display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap'}}>
+                                    <button onClick={resetQuiz}
+                                        style={{padding: '0.8rem 2rem', border: '2px solid #2E7D32', borderRadius: 8, background: 'white', color: '#2E7D32', cursor: 'pointer', fontWeight: 600}}>
+                                        重新測驗
+                                    </button>
+                                    <button onClick={() => { setShowQuiz(false); setActiveLesson(1); setSectionIdx(0); }}
+                                        style={{padding: '0.8rem 2rem', border: 'none', borderRadius: 8, background: 'linear-gradient(135deg, #2E7D32, #388E3C)', color: 'white', cursor: 'pointer', fontWeight: 600}}>
+                                        返回課程
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </main>
+
+            {/* Footer */}
+            <footer style={{background: '#37474F', color: 'white', padding: '2rem', textAlign: 'center'}}>
+                <p style={{margin: '0 0 0.5rem', opacity: 0.9}}>新竹台大分院教學部</p>
+                <p style={{margin: 0, fontSize: '0.9rem', opacity: 0.7}}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+
+            <style>{`
+                .content-area h4 { color: #5E35B1; margin: 1.5rem 0 0.8rem; font-size: 1.1rem; }
+                .content-area p { line-height: 1.8; margin: 0.8rem 0; }
+                .content-area ul, .content-area ol { line-height: 1.8; padding-left: 1.5rem; }
+                .content-area li { margin: 0.4rem 0; }
+                .content-area table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.95rem; }
+                .content-area th, .content-area td { border: 1px solid #ddd; padding: 0.7rem; text-align: left; }
+                .content-area th { background: linear-gradient(135deg, #5E35B1, #7E57C2); color: white; font-weight: 500; }
+                .content-area tr:nth-child(even) { background: #EDE7F6; }
+                .content-area tr:hover { background: #D1C4E9; }
+                .content-area .tip { background: linear-gradient(135deg, #E3F2FD, #BBDEFB); border-left: 4px solid #1976D2; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .good { background: linear-gradient(135deg, #E8F5E9, #C8E6C9); border-left: 4px solid #388E3C; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .info { background: linear-gradient(135deg, #E0F2F1, #B2DFDB); border-left: 4px solid #00796B; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .warning { background: linear-gradient(135deg, #FFF3E0, #FFE0B2); border-left: 4px solid #F57C00; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .danger { background: linear-gradient(135deg, #FFEBEE, #FFCDD2); border-left: 4px solid #C62828; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .formula { background: linear-gradient(135deg, #EDE7F6, #D1C4E9); border: 2px solid #7E57C2; padding: 1rem; border-radius: 8px; margin: 1rem 0; font-family: 'Crimson Pro', serif; }
+            `}</style>
+        </div>
+    );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
