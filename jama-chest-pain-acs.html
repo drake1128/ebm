@@ -164,6 +164,259 @@ const lessons = [
     { id: 5, title: '臨床應用整合', sub: 'Clinical Application', color: '#00695C' }
 ];
 
+// Interactive Clinical Cases
+const clinicalCases = [
+    {
+        id: 1,
+        title: '急診室的胸痛患者',
+        titleEn: 'Chest Pain in the Emergency Department',
+        difficulty: '基礎',
+        estimatedTime: '5-8分鐘',
+        description: '一位中年男性因胸痛來到急診，運用所學知識進行臨床評估。',
+        steps: [
+            {
+                type: 'intro',
+                content: {
+                    title: '📋 病患資料',
+                    text: '55歲男性，因胸骨後壓迫感持續45分鐘至急診求診。',
+                    vitals: { BP: '145/92 mmHg', HR: '88 bpm', RR: '18/min', SpO2: '97%', Temp: '36.8°C' }
+                }
+            },
+            {
+                type: 'question',
+                content: {
+                    title: '🏥 初步評估',
+                    text: '護理師已完成生命徵象測量。作為急診醫師，您首先需要評估什麼？',
+                    options: [
+                        { text: '立即安排心導管檢查', feedback: '太急進了！需要先完成初步評估，包括心電圖和病史詢問。', correct: false },
+                        { text: '詢問詳細病史並安排心電圖', feedback: '正確！心電圖是評估胸痛的第一步，可在10分鐘內完成，同時詢問病史。', correct: true },
+                        { text: '先給予硝化甘油再觀察', feedback: '不建議。硝化甘油對ACS的診斷價值有限(LR+ = 1.1)，應先完成評估。', correct: false },
+                        { text: '安排胸部X光檢查', feedback: '胸部X光對ACS診斷幫助有限，應優先安排心電圖。', correct: false }
+                    ]
+                }
+            },
+            {
+                type: 'info',
+                content: {
+                    title: '📊 心電圖結果',
+                    text: '心電圖顯示V3-V5導程有0.5mm ST段下降。',
+                    highlight: 'ST段下降的診斷價值：LR+ = 5.3 (95% CI, 2.1-8.6)',
+                    note: '這是心電圖發現中最有價值的指標，特異度達95%。'
+                }
+            },
+            {
+                type: 'question',
+                content: {
+                    title: '📝 病史詢問',
+                    text: '您詢問病史時，下列哪個問題對診斷最有幫助？',
+                    options: [
+                        { text: '疼痛會不會放射到左臂？', feedback: '放射至左臂的LR+僅1.3，診斷價值有限。', correct: false },
+                        { text: '疼痛會不會放射到雙側上肢？', feedback: '正確！放射至雙側上肢的LR+ = 2.6，特異度96%，是症狀中預測ACS最強的特徵。', correct: true },
+                        { text: '吃胃藥有沒有改善？', feedback: '胃藥反應對區分心因性與非心因性胸痛幫助不大。', correct: false },
+                        { text: '硝化甘油有沒有緩解？', feedback: '硝化甘油反應的LR+ = 1.1，對ACS診斷幾乎沒有幫助！', correct: false }
+                    ]
+                }
+            },
+            {
+                type: 'info',
+                content: {
+                    title: '📋 完整病史',
+                    text: '患者表示疼痛確實放射至左臂，但未放射至雙側上肢。過去病史包括高血壓(服藥中)、高血脂，無糖尿病。父親65歲時曾心肌梗塞。',
+                    details: [
+                        '胸痛性質：壓迫感，與過去經驗不同',
+                        '伴隨症狀：輕微冒冷汗',
+                        '疼痛持續時間：約45分鐘',
+                        '硝化甘油：尚未使用'
+                    ]
+                }
+            },
+            {
+                type: 'question',
+                content: {
+                    title: '🔍 理學檢查',
+                    text: '理學檢查時，下列哪個發現最能降低ACS的可能性？',
+                    options: [
+                        { text: '心搏過速 (HR > 120)', feedback: '心搏過速的LR+ = 1.3，既不能確認也不能排除ACS。', correct: false },
+                        { text: '低血壓 (SBP < 100)', feedback: '低血壓的LR+ = 3.9，反而增加ACS可能性！', correct: false },
+                        { text: '觸診可重現疼痛', feedback: '正確！觸診可重現疼痛的LR = 0.28，是所有發現中最能降低ACS可能性的，但仍不能完全排除。', correct: true },
+                        { text: '聽診有肺囉音', feedback: '肺囉音的LR+ = 2.0，增加ACS可能性。', correct: false }
+                    ]
+                }
+            },
+            {
+                type: 'info',
+                content: {
+                    title: '🔬 實驗室結果',
+                    text: '理學檢查：胸壁無壓痛，心音正常，肺部清晰。',
+                    lab: { troponin: '0.08 ng/mL', reference: '正常 < 0.04 ng/mL', status: '輕度升高' }
+                }
+            },
+            {
+                type: 'calculator',
+                content: {
+                    title: '❤️ 計算 HEART 評分',
+                    text: '根據目前收集到的資訊，請計算這位患者的HEART評分：',
+                    items: [
+                        { label: 'H - History (病史)', value: '壓迫性胸痛，可能符合ACS', score: 1 },
+                        { label: 'E - ECG (心電圖)', value: 'ST段下降', score: 2 },
+                        { label: 'A - Age (年齡)', value: '55歲 (45-65歲)', score: 1 },
+                        { label: 'R - Risk factors', value: '高血壓、高血脂 (2個危險因子)', score: 1 },
+                        { label: 'T - Troponin', value: '0.08 (1-3倍正常)', score: 1 }
+                    ],
+                    total: 6,
+                    interpretation: '中風險 (5-6分)',
+                    lr: 'LR = 2.4',
+                    postTestProb: '以13%前測機率計算 → 後測機率約26%'
+                }
+            },
+            {
+                type: 'question',
+                content: {
+                    title: '🏥 臨床決策',
+                    text: 'HEART評分6分，屬於中風險。您的處置建議是？',
+                    options: [
+                        { text: '開立止痛藥後讓患者回家', feedback: '危險！HEART 5-6分的患者ACS機率約26%，不應直接出院。', correct: false },
+                        { text: '觀察2小時後若無症狀即可出院', feedback: '不建議。中風險患者需要更完整的評估，包括連續肌鈣蛋白檢測。', correct: false },
+                        { text: '住院接受ACS治療並進一步評估', feedback: '正確！HEART 5-6分屬中風險，應住院接受抗血小板、抗凝血治療，並安排進一步心臟評估。', correct: true },
+                        { text: '直接安排緊急心導管', feedback: '患者目前沒有STEMI的心電圖變化，不需要緊急心導管，但確實需要住院評估。', correct: false }
+                    ]
+                }
+            },
+            {
+                type: 'summary',
+                content: {
+                    title: '📊 案例總結',
+                    diagnosis: 'NSTE-ACS (高度懷疑)',
+                    keyFindings: [
+                        'ST段下降 (LR+ = 5.3) 顯著增加ACS可能性',
+                        'HEART評分6分，後測機率約26%',
+                        '肌鈣蛋白輕度升高支持心肌損傷'
+                    ],
+                    management: '住院接受雙抗血小板治療、抗凝血，安排非侵入性或侵入性心臟評估',
+                    learningPoints: [
+                        '心電圖ST段下降是最有價值的發現',
+                        '硝化甘油反應對診斷無幫助',
+                        'HEART評分可有效進行風險分層',
+                        '中風險患者需要住院評估'
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        id: 2,
+        title: '低風險胸痛的快速評估',
+        titleEn: 'Rapid Assessment of Low-Risk Chest Pain',
+        difficulty: '進階',
+        estimatedTime: '5-8分鐘',
+        description: '一位年輕女性因胸痛就診，學習如何識別低風險患者。',
+        steps: [
+            {
+                type: 'intro',
+                content: {
+                    title: '📋 病患資料',
+                    text: '38歲女性，過去健康，因間歇性左側胸痛2天至急診。疼痛為刺痛感，與呼吸相關，每次持續數秒到數分鐘。',
+                    vitals: { BP: '118/72 mmHg', HR: '76 bpm', RR: '16/min', SpO2: '99%', Temp: '36.5°C' }
+                }
+            },
+            {
+                type: 'question',
+                content: {
+                    title: '🤔 初步印象',
+                    text: '根據這個描述，您的初步臨床印象是？',
+                    options: [
+                        { text: '「肯定是」ACS', feedback: '不太可能。年輕女性、間歇性刺痛、與呼吸相關，這些都是非典型特徵。', correct: false },
+                        { text: '「可能是」ACS', feedback: '仍需評估，但這些特徵降低ACS可能性。', correct: false },
+                        { text: '「可能不是」ACS', feedback: '正確！根據研究，「可能不是」ACS的臨床印象LR = 0.20，可顯著降低ACS可能性。', correct: true },
+                        { text: '無法判斷', feedback: '臨床印象是有價值的！「可能不是」ACS的LR = 0.20。', correct: false }
+                    ]
+                }
+            },
+            {
+                type: 'info',
+                content: {
+                    title: '📊 心電圖結果',
+                    text: '心電圖完全正常，無ST-T波變化。',
+                    highlight: '正常心電圖不能完全排除ACS',
+                    note: '心電圖對ACS的敏感度僅25-32%，約68-75%的ACS患者心電圖可能正常。'
+                }
+            },
+            {
+                type: 'question',
+                content: {
+                    title: '🔍 理學檢查發現',
+                    text: '檢查時發現左側胸壁第4-5肋間觸診可重現疼痛。這個發現的意義是？',
+                    options: [
+                        { text: '確定排除ACS', feedback: '錯誤！觸診可重現疼痛的LR = 0.28，雖然是最有價值的排除發現，但仍不能「完全」排除ACS。', correct: false },
+                        { text: '顯著降低ACS可能性，但不能完全排除', feedback: '正確！LR = 0.28是所有發現中最能降低ACS可能性的，但仍需結合其他資訊判斷。', correct: true },
+                        { text: '對ACS診斷沒有幫助', feedback: '錯誤。觸診可重現疼痛的LR = 0.28，是非常有價值的發現。', correct: false },
+                        { text: '增加ACS可能性', feedback: '相反！這個發現降低ACS可能性。', correct: false }
+                    ]
+                }
+            },
+            {
+                type: 'info',
+                content: {
+                    title: '🔬 實驗室結果',
+                    text: '初始肌鈣蛋白：0.01 ng/mL (正常 < 0.04 ng/mL)',
+                    note: '肌鈣蛋白在正常範圍內。'
+                }
+            },
+            {
+                type: 'calculator',
+                content: {
+                    title: '❤️ 計算 HEART 評分',
+                    text: '根據目前收集到的資訊，請計算這位患者的HEART評分：',
+                    items: [
+                        { label: 'H - History (病史)', value: '非典型胸痛，不符合ACS', score: 0 },
+                        { label: 'E - ECG (心電圖)', value: '正常', score: 0 },
+                        { label: 'A - Age (年齡)', value: '38歲 (<45歲)', score: 0 },
+                        { label: 'R - Risk factors', value: '無危險因子', score: 0 },
+                        { label: 'T - Troponin', value: '正常', score: 0 }
+                    ],
+                    total: 0,
+                    interpretation: '低風險 (0-3分)',
+                    lr: 'LR = 0.20',
+                    postTestProb: '以13%前測機率計算 → 後測機率約2.9%'
+                }
+            },
+            {
+                type: 'question',
+                content: {
+                    title: '🏥 臨床決策',
+                    text: 'HEART評分0分，屬於低風險。您的處置建議是？',
+                    options: [
+                        { text: '住院觀察24小時', feedback: '對於HEART 0-3分的患者，可能過度處置。', correct: false },
+                        { text: '2-3小時後複驗肌鈣蛋白，若仍正常可考慮出院', feedback: '正確！低風險患者可考慮加速診斷流程，若連續肌鈣蛋白陰性，可安全出院並門診追蹤。', correct: true },
+                        { text: '直接出院，無需複驗', feedback: '仍建議複驗肌鈣蛋白以確認安全。單次檢測可能無法達到<1%漏診率。', correct: false },
+                        { text: '安排運動心電圖', feedback: '對於HEART 0分、肌鈣蛋白陰性的患者，可能不需要常規壓力測試。', correct: false }
+                    ]
+                }
+            },
+            {
+                type: 'summary',
+                content: {
+                    title: '📊 案例總結',
+                    diagnosis: '非心因性胸痛（可能為肌肉骨骼性）',
+                    keyFindings: [
+                        '非典型胸痛特徵（刺痛、與呼吸相關）',
+                        '觸診可重現疼痛 (LR = 0.28)',
+                        'HEART評分0分 → 後測機率約2.9%',
+                        '正常心電圖和肌鈣蛋白'
+                    ],
+                    management: '複驗肌鈣蛋白後若仍正常可出院，門診追蹤，衛教警示症狀',
+                    learningPoints: [
+                        '臨床印象「可能不是ACS」有診斷價值 (LR = 0.20)',
+                        '觸診可重現疼痛是最有價值的排除發現',
+                        'HEART 0-3分可有效識別低風險患者',
+                        '低風險患者可使用加速診斷流程'
+                    ]
+                }
+            }
+        ]
+    }
+];
+
 const quiz = [
     {
         q: '根據JAMA系統性回顧，急診胸痛患者中最終診斷為ACS的比例約為多少？',
@@ -236,6 +489,11 @@ const App = () => {
     const [show, setShow] = useState(false);
     const [done, setDone] = useState(false);
     const [quizStartTime, setQuizStartTime] = useState(null);
+    // Case-based learning states
+    const [caseId, setCaseId] = useState(1);
+    const [caseStep, setCaseStep] = useState(0);
+    const [caseScore, setCaseScore] = useState(0);
+    const [caseAnswers, setCaseAnswers] = useState({});
 
     useEffect(() => { if (page === 'quiz' && !done && !quizStartTime) setQuizStartTime(Date.now()) }, [page, done]);
     useEffect(() => { if (done && quizStartTime) { const t = Math.round((Date.now() - quizStartTime) / 1000); ProgressTracker.saveQuizResult(MODULE_ID, score, quiz.length, t) } }, [done]);
@@ -417,10 +675,18 @@ const App = () => {
                         </div>
                     ))}
                     
-                    <button 
-                        className="btn btn-pri" 
-                        onClick={() => { setQIdx(0); setScore(0); setSel(null); setShow(false); setDone(false); setPage('quiz'); }} 
-                        style={{ width: '100%', justifyContent: 'center', marginTop: 24, marginBottom: 16, padding: '16px 24px' }}
+                    <button
+                        className="btn btn-sec"
+                        onClick={() => setPage('cases')}
+                        style={{ width: '100%', justifyContent: 'center', marginTop: 24, marginBottom: 12, padding: '16px 24px' }}
+                    >
+                        🏥 臨床案例演練 (2個案例)
+                    </button>
+
+                    <button
+                        className="btn btn-pri"
+                        onClick={() => { setQIdx(0); setScore(0); setSel(null); setShow(false); setDone(false); setPage('quiz'); }}
+                        style={{ width: '100%', justifyContent: 'center', marginBottom: 16, padding: '16px 24px' }}
                     >
                         📝 開始測驗 (10題)
                     </button>
@@ -1510,9 +1776,461 @@ const App = () => {
         );
     };
 
+    // Case Selection Component
+    const CaseSelection = () => (
+        <div className="fade-in">
+            <Header title="臨床案例演練" />
+            <div style={{
+                background: 'linear-gradient(135deg, #1565C0 0%, #0D47A1 100%)',
+                padding: '32px 20px',
+                color: '#fff'
+            }}>
+                <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                    <div style={{ fontSize: 28, marginBottom: 8 }}>🏥</div>
+                    <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>臨床案例演練</h1>
+                    <p style={{ opacity: 0.9, fontSize: 14 }}>Interactive Clinical Cases</p>
+                </div>
+            </div>
+            <div style={{ padding: '20px 16px' }}>
+                <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                    <div className="info" style={{ marginBottom: 20 }}>
+                        <strong>💡 案例學習模式</strong>
+                        <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 6 }}>
+                            透過互動式臨床案例，將課程所學應用於實際情境。每個案例包含病史收集、理學檢查、檢驗判讀和臨床決策等環節。
+                        </p>
+                    </div>
+                    {clinicalCases.map(c => (
+                        <div
+                            key={c.id}
+                            className="card"
+                            onClick={() => { setCaseId(c.id); setCaseStep(0); setCaseScore(0); setCaseAnswers({}); setPage('case'); }}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                                <div style={{
+                                    width: 56,
+                                    height: 56,
+                                    borderRadius: 14,
+                                    background: 'linear-gradient(135deg, #1565C0, #0D47A1)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#fff',
+                                    fontSize: 24,
+                                    flexShrink: 0
+                                }}>
+                                    {c.id === 1 ? '🫀' : '🩺'}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+                                        <span style={{
+                                            background: c.difficulty === '基礎' ? '#E8F5E9' : '#FFF3E0',
+                                            color: c.difficulty === '基礎' ? 'var(--suc)' : '#E65100',
+                                            padding: '2px 8px',
+                                            borderRadius: 6,
+                                            fontSize: 11,
+                                            fontWeight: 600
+                                        }}>{c.difficulty}</span>
+                                        <span style={{
+                                            background: '#E3F2FD',
+                                            color: '#1565C0',
+                                            padding: '2px 8px',
+                                            borderRadius: 6,
+                                            fontSize: 11,
+                                            fontWeight: 600
+                                        }}>{c.estimatedTime}</span>
+                                    </div>
+                                    <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--txt)', marginBottom: 4 }}>{c.title}</h3>
+                                    <p style={{ fontSize: 12, color: 'var(--txt2)', marginBottom: 6 }}>{c.titleEn}</p>
+                                    <p style={{ fontSize: 13, color: 'var(--txt2)', lineHeight: 1.6 }}>{c.description}</p>
+                                </div>
+                                <svg viewBox="0 0 24 24" fill="#1565C0" width="22" height="22" style={{ flexShrink: 0 }}>
+                                    <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/>
+                                </svg>
+                            </div>
+                        </div>
+                    ))}
+                    <button
+                        className="btn"
+                        onClick={() => setPage('home')}
+                        style={{
+                            width: '100%',
+                            justifyContent: 'center',
+                            marginTop: 16,
+                            background: '#fff',
+                            border: '2px solid var(--pri)',
+                            color: 'var(--pri)'
+                        }}
+                    >
+                        ← 返回課程
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+
+    // Interactive Case Component
+    const CaseLearning = () => {
+        const currentCase = clinicalCases.find(c => c.id === caseId);
+        if (!currentCase) return null;
+
+        const step = currentCase.steps[caseStep];
+        const totalSteps = currentCase.steps.length;
+        const progress = ((caseStep + 1) / totalSteps) * 100;
+
+        const handleAnswer = (optionIndex, isCorrect) => {
+            if (caseAnswers[caseStep] !== undefined) return;
+            setCaseAnswers({ ...caseAnswers, [caseStep]: optionIndex });
+            if (isCorrect) setCaseScore(caseScore + 1);
+        };
+
+        const nextStep = () => {
+            if (caseStep < totalSteps - 1) {
+                setCaseStep(caseStep + 1);
+            }
+        };
+
+        const renderStepContent = () => {
+            const c = step.content;
+
+            switch (step.type) {
+                case 'intro':
+                    return (
+                        <div className="fade-in">
+                            <div className="card">
+                                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--info)', marginBottom: 14 }}>{c.title}</h3>
+                                <p style={{ fontSize: 15, color: 'var(--txt)', lineHeight: 1.8, marginBottom: 16 }}>{c.text}</p>
+                                {c.vitals && (
+                                    <div style={{
+                                        background: 'linear-gradient(135deg, #E3F2FD, #BBDEFB)',
+                                        borderRadius: 12,
+                                        padding: 16
+                                    }}>
+                                        <h4 style={{ fontSize: 14, fontWeight: 600, color: '#1565C0', marginBottom: 10 }}>📊 生命徵象</h4>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, fontSize: 13 }}>
+                                            {Object.entries(c.vitals).map(([key, val]) => (
+                                                <div key={key} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                    <span style={{ color: 'var(--txt2)' }}>{key}:</span>
+                                                    <span style={{ fontWeight: 600, color: 'var(--txt)' }}>{val}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+
+                case 'question':
+                    const answered = caseAnswers[caseStep] !== undefined;
+                    return (
+                        <div className="fade-in">
+                            <div className="card">
+                                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>{c.title}</h3>
+                                <p style={{ fontSize: 15, color: 'var(--txt)', lineHeight: 1.8, marginBottom: 20 }}>{c.text}</p>
+                                {c.options.map((opt, i) => {
+                                    let bg = '#fff', bd = '#E5E5E5';
+                                    if (answered) {
+                                        if (opt.correct) { bg = '#E8F5E9'; bd = 'var(--suc)'; }
+                                        else if (i === caseAnswers[caseStep]) { bg = '#FFEBEE'; bd = 'var(--danger)'; }
+                                    }
+                                    return (
+                                        <button
+                                            key={i}
+                                            onClick={() => handleAnswer(i, opt.correct)}
+                                            disabled={answered}
+                                            style={{
+                                                width: '100%',
+                                                padding: '14px 16px',
+                                                marginBottom: 10,
+                                                background: bg,
+                                                border: `2px solid ${bd}`,
+                                                borderRadius: 12,
+                                                textAlign: 'left',
+                                                fontSize: 14,
+                                                cursor: answered ? 'default' : 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 12,
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            <span style={{
+                                                width: 28,
+                                                height: 28,
+                                                borderRadius: 8,
+                                                background: answered && opt.correct ? 'var(--suc)' : answered && i === caseAnswers[caseStep] ? 'var(--danger)' : 'linear-gradient(135deg, #E3F2FD, #BBDEFB)',
+                                                color: answered && (opt.correct || i === caseAnswers[caseStep]) ? '#fff' : '#1565C0',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                fontWeight: 700,
+                                                fontSize: 13,
+                                                flexShrink: 0
+                                            }}>
+                                                {answered && opt.correct ? '✓' : answered && i === caseAnswers[caseStep] && !opt.correct ? '✗' : String.fromCharCode(65 + i)}
+                                            </span>
+                                            <span style={{ lineHeight: 1.5 }}>{opt.text}</span>
+                                        </button>
+                                    );
+                                })}
+                                {answered && (
+                                    <div className={c.options[caseAnswers[caseStep]].correct ? 'good' : 'tip'} style={{ marginTop: 16 }}>
+                                        <strong style={{ color: c.options[caseAnswers[caseStep]].correct ? 'var(--suc)' : '#F57F17' }}>
+                                            {c.options[caseAnswers[caseStep]].correct ? '✓ 正確！' : '✗ 再想想'}
+                                        </strong>
+                                        <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 8, lineHeight: 1.7 }}>
+                                            {c.options[caseAnswers[caseStep]].feedback}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+
+                case 'info':
+                    return (
+                        <div className="fade-in">
+                            <div className="card">
+                                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--sec)', marginBottom: 14 }}>{c.title}</h3>
+                                <p style={{ fontSize: 15, color: 'var(--txt)', lineHeight: 1.8, marginBottom: 12 }}>{c.text}</p>
+                                {c.highlight && (
+                                    <div className="formula">{c.highlight}</div>
+                                )}
+                                {c.note && (
+                                    <div className="info">
+                                        <p style={{ fontSize: 14, color: 'var(--txt2)' }}>{c.note}</p>
+                                    </div>
+                                )}
+                                {c.details && (
+                                    <ul style={{ marginTop: 12, marginLeft: 20, color: 'var(--txt2)', fontSize: 14 }}>
+                                        {c.details.map((d, i) => <li key={i} style={{ marginBottom: 6 }}>{d}</li>)}
+                                    </ul>
+                                )}
+                                {c.lab && (
+                                    <div style={{
+                                        background: c.lab.status === '輕度升高' ? 'linear-gradient(135deg, #FFF8E1, #FFECB3)' : 'linear-gradient(135deg, #E8F5E9, #C8E6C9)',
+                                        borderRadius: 12,
+                                        padding: 16,
+                                        marginTop: 12
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ fontWeight: 600 }}>Troponin</span>
+                                            <span style={{
+                                                fontWeight: 700,
+                                                color: c.lab.status === '輕度升高' ? '#F57F17' : 'var(--suc)'
+                                            }}>{c.lab.troponin}</span>
+                                        </div>
+                                        <div style={{ fontSize: 12, color: 'var(--txt2)', marginTop: 4 }}>
+                                            {c.lab.reference} • <strong>{c.lab.status}</strong>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+
+                case 'calculator':
+                    return (
+                        <div className="fade-in">
+                            <div className="card">
+                                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)', marginBottom: 14 }}>{c.title}</h3>
+                                <p style={{ fontSize: 14, color: 'var(--txt2)', marginBottom: 16 }}>{c.text}</p>
+                                {c.items.map((item, i) => (
+                                    <div key={i} className="score-box" style={{ marginBottom: 10 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div>
+                                                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--pri)' }}>{item.label}</div>
+                                                <div style={{ fontSize: 12, color: 'var(--txt2)' }}>{item.value}</div>
+                                            </div>
+                                            <div style={{
+                                                background: 'var(--pri)',
+                                                color: '#fff',
+                                                padding: '4px 12px',
+                                                borderRadius: 8,
+                                                fontWeight: 700,
+                                                fontSize: 14
+                                            }}>{item.score}分</div>
+                                        </div>
+                                    </div>
+                                ))}
+                                <div style={{
+                                    background: 'linear-gradient(135deg, var(--pri), var(--pri2))',
+                                    borderRadius: 12,
+                                    padding: 16,
+                                    color: '#fff',
+                                    marginTop: 16
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                        <span style={{ fontSize: 16, fontWeight: 600 }}>總分</span>
+                                        <span style={{ fontSize: 28, fontWeight: 700 }}>{c.total}分</span>
+                                    </div>
+                                    <div style={{ fontSize: 14, opacity: 0.95 }}>{c.interpretation}</div>
+                                    <div style={{ fontSize: 13, opacity: 0.9, marginTop: 4 }}>{c.lr}</div>
+                                </div>
+                                <div className="good" style={{ marginTop: 16 }}>
+                                    <strong>後測機率</strong>
+                                    <p style={{ fontSize: 14, color: 'var(--txt2)', marginTop: 4 }}>{c.postTestProb}</p>
+                                </div>
+                            </div>
+                        </div>
+                    );
+
+                case 'summary':
+                    const totalQuestions = currentCase.steps.filter(s => s.type === 'question').length;
+                    return (
+                        <div className="fade-in">
+                            <div className="card" style={{ background: 'linear-gradient(135deg, #E8F5E9, #C8E6C9)', border: '2px solid var(--suc)' }}>
+                                <h3 style={{ fontSize: 20, fontWeight: 700, color: 'var(--suc)', marginBottom: 16 }}>{c.title}</h3>
+
+                                <div style={{
+                                    background: '#fff',
+                                    borderRadius: 12,
+                                    padding: 16,
+                                    marginBottom: 16
+                                }}>
+                                    <div style={{ fontSize: 13, color: 'var(--txt2)', marginBottom: 4 }}>最終診斷</div>
+                                    <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--pri)' }}>{c.diagnosis}</div>
+                                </div>
+
+                                <div style={{ marginBottom: 16 }}>
+                                    <h4 style={{ fontSize: 14, fontWeight: 600, color: 'var(--txt)', marginBottom: 10 }}>🔍 關鍵發現</h4>
+                                    {c.keyFindings.map((f, i) => (
+                                        <div key={i} style={{
+                                            background: '#fff',
+                                            borderRadius: 8,
+                                            padding: '10px 14px',
+                                            marginBottom: 8,
+                                            fontSize: 13,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 10
+                                        }}>
+                                            <span style={{ color: 'var(--suc)' }}>✓</span>
+                                            {f}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div style={{
+                                    background: '#fff',
+                                    borderRadius: 12,
+                                    padding: 16,
+                                    marginBottom: 16
+                                }}>
+                                    <h4 style={{ fontSize: 14, fontWeight: 600, color: 'var(--txt)', marginBottom: 8 }}>🏥 處置建議</h4>
+                                    <p style={{ fontSize: 14, color: 'var(--txt2)', lineHeight: 1.7 }}>{c.management}</p>
+                                </div>
+
+                                <div>
+                                    <h4 style={{ fontSize: 14, fontWeight: 600, color: 'var(--txt)', marginBottom: 10 }}>💡 學習重點</h4>
+                                    {c.learningPoints.map((p, i) => (
+                                        <div key={i} style={{
+                                            background: 'linear-gradient(135deg, #FFF8E1, #FFECB3)',
+                                            borderRadius: 8,
+                                            padding: '10px 14px',
+                                            marginBottom: 8,
+                                            fontSize: 13,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 10
+                                        }}>
+                                            <span>💡</span>
+                                            {p}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="card" style={{ textAlign: 'center' }}>
+                                <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
+                                <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>案例完成！</h3>
+                                <p style={{ color: 'var(--txt2)', marginBottom: 16 }}>
+                                    您的答題正確率：{caseScore}/{totalQuestions} ({Math.round((caseScore/totalQuestions)*100)}%)
+                                </p>
+                                <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                                    <button
+                                        className="btn btn-pri"
+                                        onClick={() => setPage('cases')}
+                                    >
+                                        更多案例
+                                    </button>
+                                    <button
+                                        className="btn"
+                                        onClick={() => setPage('home')}
+                                        style={{ background: '#fff', border: '2px solid var(--pri)', color: 'var(--pri)' }}
+                                    >
+                                        返回課程
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    );
+
+                default:
+                    return null;
+            }
+        };
+
+        const canProceed = step.type !== 'question' || caseAnswers[caseStep] !== undefined;
+
+        return (
+            <div className="fade-in">
+                <Header title={currentCase.title} />
+                <div style={{
+                    background: 'linear-gradient(135deg, #1565C0, #0D47A1)',
+                    padding: '16px 20px',
+                    color: '#fff'
+                }}>
+                    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13 }}>
+                            <span style={{ opacity: 0.9 }}>步驟 {caseStep + 1} / {totalSteps}</span>
+                            <span style={{ fontWeight: 600 }}>{Math.round(progress)}%</span>
+                        </div>
+                        <div style={{ height: 6, background: 'rgba(255,255,255,0.3)', borderRadius: 3, overflow: 'hidden' }}>
+                            <div style={{
+                                height: '100%',
+                                width: `${progress}%`,
+                                background: '#fff',
+                                borderRadius: 3,
+                                transition: 'width 0.4s ease'
+                            }} />
+                        </div>
+                    </div>
+                </div>
+                <div style={{ padding: '20px 16px' }}>
+                    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+                        {renderStepContent()}
+
+                        {step.type !== 'summary' && (
+                            <button
+                                className="btn btn-pri"
+                                onClick={nextStep}
+                                disabled={!canProceed}
+                                style={{
+                                    width: '100%',
+                                    justifyContent: 'center',
+                                    marginTop: 20,
+                                    opacity: canProceed ? 1 : 0.5,
+                                    cursor: canProceed ? 'pointer' : 'not-allowed'
+                                }}
+                            >
+                                {caseStep < totalSteps - 1 ? '繼續 →' : '查看總結'}
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div style={{ maxWidth: '100%', minHeight: '100vh', background: 'var(--bg)' }}>
-            {page === 'home' ? <Home /> : page === 'lesson' ? <Lesson /> : <Quiz />}
+            {page === 'home' && <Home />}
+            {page === 'lesson' && <Lesson />}
+            {page === 'quiz' && <Quiz />}
+            {page === 'cases' && <CaseSelection />}
+            {page === 'case' && <CaseLearning />}
         </div>
     );
 };
