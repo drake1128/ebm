@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>慢性傷口感染診斷 - JAMA 理性臨床診察</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Playfair+Display:wght@400;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const MODULE_ID = 'jama-wound-infection';
+
+const ProgressTracker = {
+    getProgress: () => {
+        try {
+            const saved = localStorage.getItem(`progress_${MODULE_ID}`);
+            return saved ? JSON.parse(saved) : { lessonsCompleted: [], quizScores: [], lastVisit: null };
+        } catch { return { lessonsCompleted: [], quizScores: [], lastVisit: null }; }
+    },
+    saveProgress: (progress) => {
+        try {
+            localStorage.setItem(`progress_${MODULE_ID}`, JSON.stringify({...progress, lastVisit: new Date().toISOString()}));
+        } catch {}
+    },
+    completeLesson: (lessonId) => {
+        const progress = ProgressTracker.getProgress();
+        if (!progress.lessonsCompleted.includes(lessonId)) {
+            progress.lessonsCompleted.push(lessonId);
+            ProgressTracker.saveProgress(progress);
+        }
+    },
+    saveQuizScore: (score, total) => {
+        const progress = ProgressTracker.getProgress();
+        progress.quizScores.push({ score, total, date: new Date().toISOString() });
+        ProgressTracker.saveProgress(progress);
+    }
+};
+
+const lessons = [
+    {
+        id: 1,
+        title: '慢性傷口感染概論',
+        sub: 'Chronic Wound Infection Overview',
+        color: '#E65100',
+        sections: [
+            {
+                title: '臨床重要性',
+                content: `
+                    <p>慢性傷口是指經過適當治療後，仍無法在預期時間內（通常為 4-6 週）癒合的傷口。常見類型包括：</p>
+                    <ul>
+                        <li><strong>壓瘡（褥瘡）</strong>：長期臥床或坐輪椅患者</li>
+                        <li><strong>糖尿病足潰瘍</strong>：糖尿病患者的足部傷口</li>
+                        <li><strong>靜脈潰瘍</strong>：慢性靜脈功能不全導致</li>
+                        <li><strong>動脈性潰瘍</strong>：周邊動脈疾病導致</li>
+                    </ul>
+                    <div class="warning">慢性傷口的感染盛行率很高：整體約 <strong>53%</strong>（在設計較佳的研究中約 <strong>45%</strong>）。</div>
+                    <h4>為何需要準確診斷感染？</h4>
+                    <ul>
+                        <li><strong>延遲癒合</strong>：感染是傷口無法癒合的主要原因之一</li>
+                        <li><strong>避免過度治療</strong>：不必要的抗生素使用增加抗藥性</li>
+                        <li><strong>預防嚴重併發症</strong>：蜂窩性組織炎、骨髓炎、敗血症</li>
+                        <li><strong>指導治療決策</strong>：清創、局部抗菌劑、全身性抗生素</li>
+                    </ul>
+                `
+            },
+            {
+                title: '感染診斷的挑戰',
+                content: `
+                    <h4>為什麼慢性傷口感染難以診斷？</h4>
+                    <p>與急性傷口不同，慢性傷口感染的診斷面臨獨特挑戰：</p>
+                    <ul>
+                        <li><strong>所有慢性傷口都有細菌定植</strong>：細菌存在不等於感染</li>
+                        <li><strong>經典發炎徵象不可靠</strong>：紅、腫、熱、痛可能來自傷口本身</li>
+                        <li><strong>免疫功能受損</strong>：糖尿病、周邊血管疾病患者免疫反應減弱</li>
+                        <li><strong>生物膜形成</strong>：細菌形成保護性生物膜，增加抗藥性</li>
+                    </ul>
+                    <div class="info">
+                        <strong>細菌負荷的連續光譜：</strong><br>
+                        汙染 → 定植 → 臨界定植 → 感染<br>
+                        • <strong>汙染</strong>：細菌存在但不繁殖<br>
+                        • <strong>定植</strong>：細菌繁殖但無組織損傷<br>
+                        • <strong>臨界定植</strong>：細菌開始干擾癒合<br>
+                        • <strong>感染</strong>：細菌引起組織損傷和全身反應
+                    </div>
+                `
+            },
+            {
+                title: '診斷標準與參考標準',
+                content: `
+                    <h4>感染的定義與參考標準</h4>
+                    <p>本篇研究採用的參考標準為<strong>深層組織切片培養</strong>：</p>
+                    <div class="formula">
+                        <strong>感染定義：深層組織切片培養 ≥10<sup>5</sup> 菌落形成單位/克組織</strong><br>
+                        (Colony-forming units, CFU/g tissue)
+                    </div>
+                    <h4>為何使用這個門檻？</h4>
+                    <ul>
+                        <li>細菌數量 <10<sup>5</sup> CFU/g：通常可由宿主免疫控制</li>
+                        <li>細菌數量 ≥10<sup>5</sup> CFU/g：超過宿主防禦能力，導致感染</li>
+                        <li>此門檻已被多項研究證實與傷口癒合不良相關</li>
+                    </ul>
+                    <div class="tip">深層組織切片培養被視為黃金標準，但屬於侵入性檢查。臨床上需要更實用的診斷方法。</div>
+                `
+            }
+        ]
+    },
+    {
+        id: 2,
+        title: '臨床徵象與症狀',
+        sub: 'Clinical Signs and Symptoms',
+        color: '#F57C00',
+        sections: [
+            {
+                title: '傳統發炎徵象的診斷價值',
+                content: `
+                    <h4>經典發炎徵象：令人驚訝的結果</h4>
+                    <p>傳統上認為感染的四大徵象是紅、腫、熱、痛。然而，在慢性傷口中，這些徵象的診斷價值非常有限：</p>
+                    <table>
+                        <tr><th>臨床徵象</th><th>敏感度</th><th>特異度</th><th>LR+</th><th>LR- (95% CI)</th></tr>
+                        <tr><td>化膿性分泌物 (Purulent exudate)</td><td>10%</td><td>97%</td><td>2.6</td><td>0.93 (0.72-1.2)</td></tr>
+                        <tr><td>紅腫 (Erythema)</td><td>13%</td><td>94%</td><td>2.0</td><td>0.92 (0.53-1.6)</td></tr>
+                        <tr><td>溫熱 (Heat/Warmth)</td><td>1%</td><td>100%</td><td>3.4</td><td>0.99 (0.65-1.5)</td></tr>
+                        <tr><td>水腫 (Edema)</td><td>38%</td><td>73%</td><td>1.4</td><td>0.85 (0.42-1.7)</td></tr>
+                    </table>
+                    <div class="danger">
+                        <strong>重要發現：</strong>所有傳統發炎徵象的 95% CI 都包含 1.0！<br>
+                        這代表這些徵象<strong>無法有效區分</strong>感染與非感染的慢性傷口。
+                    </div>
+                `
+            },
+            {
+                title: '疼痛增加：關鍵症狀',
+                content: `
+                    <h4>疼痛增加 (Increasing Pain) 是最有價值的症狀</h4>
+                    <p>在所有研究的臨床發現中，<strong>疼痛增加</strong>是唯一具有顯著診斷價值的症狀：</p>
+                    <table>
+                        <tr><th>研究</th><th>傷口類型</th><th>敏感度</th><th>特異度</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td>Gardner et al 2001</td><td>壓瘡、腿部潰瘍</td><td>100%</td><td>90%</td><td>11</td><td>0</td></tr>
+                        <tr><td>Cutting & Harding 1994</td><td>慢性傷口</td><td>25%</td><td>99%</td><td>20</td><td>0.76</td></tr>
+                    </table>
+                    <div class="formula">
+                        <strong>疼痛增加的診斷價值</strong><br>
+                        LR+ 範圍：11 - 20<br>
+                        LR- 範圍：0 - 0.76<br>
+                        彙整 LR-：0.64 - 0.88
+                    </div>
+                    <div class="good">
+                        <strong>臨床意義：</strong><br>
+                        • 疼痛增加存在時，感染的可能性大幅增加（LR+ 11-20）<br>
+                        • 這可能是因為疼痛增加反映了<strong>組織損傷</strong>的程度<br>
+                        • 特別是在糖尿病足潰瘍患者，神經病變可能掩蓋疼痛
+                    </div>
+                `
+            },
+            {
+                title: '其他臨床發現',
+                content: `
+                    <h4>其他臨床徵象的診斷價值</h4>
+                    <table>
+                        <tr><th>臨床徵象</th><th>敏感度</th><th>特異度</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td>傷口癒合延遲 (Delayed healing)</td><td>56%</td><td>73%</td><td>2.0</td><td>0.61</td></tr>
+                        <tr><td>肉芽組織異常 (Friable granulation)</td><td>43%</td><td>77%</td><td>1.9</td><td>0.74</td></tr>
+                        <tr><td>傷口面積擴大 (Wound breakdown)</td><td>56%</td><td>67%</td><td>1.7</td><td>0.66</td></tr>
+                        <tr><td>惡臭 (Foul odor)</td><td>9%</td><td>98%</td><td>4.0</td><td>0.93</td></tr>
+                    </table>
+                    <div class="info">
+                        <strong>次要發現的臨床應用：</strong><br>
+                        • <strong>惡臭</strong>的 LR+ 為 4.0，但敏感度極低（9%），缺席不能排除感染<br>
+                        • <strong>傷口癒合延遲</strong>和<strong>傷口面積擴大</strong>提示需要進一步評估<br>
+                        • 單一徵象不足以確診，需綜合評估
+                    </div>
+                    <div class="warning">
+                        <strong>警告：</strong>傳統的 NERDS 和 STONEES 評估系統<strong>尚未經過嚴格驗證</strong>，無法確定其準確性。
+                    </div>
+                `
+            }
+        ]
+    },
+    {
+        id: 3,
+        title: '傷口取樣技術',
+        sub: 'Wound Sampling Techniques',
+        color: '#FF9800',
+        sections: [
+            {
+                title: '取樣技術比較',
+                content: `
+                    <h4>傷口細菌培養的取樣方法</h4>
+                    <p>傷口培養的準確性高度依賴取樣技術：</p>
+                    <table>
+                        <tr><th>取樣方法</th><th>描述</th><th>優點</th><th>缺點</th></tr>
+                        <tr><td><strong>深層組織切片</strong></td><td>以手術刀取得傷口床組織</td><td>黃金標準，最準確</td><td>侵入性、需要麻醉、技術要求高</td></tr>
+                        <tr><td><strong>Levine 技術</strong></td><td>在 1 cm² 區域旋轉棉棒，施加足夠壓力使組織液滲出</td><td>標準化、可重複、較準確</td><td>需要正確技術</td></tr>
+                        <tr><td><strong>Z 型技術</strong></td><td>以 Z 型方式在整個傷口表面移動棉棒</td><td>簡單快速</td><td>主要採集表面細菌</td></tr>
+                        <tr><td><strong>針吸抽取</strong></td><td>以針筒抽取傷口液體</td><td>可取得深層檢體</td><td>可能無法取得足夠檢體</td></tr>
+                    </table>
+                    <div class="tip">
+                        <strong>臨床實務建議：</strong>若無法進行深層組織切片，<strong>Levine 技術</strong>是最佳替代方案。
+                    </div>
+                `
+            },
+            {
+                title: 'Levine 技術詳解',
+                content: `
+                    <h4>Levine 技術的標準操作步驟</h4>
+                    <div class="formula">
+                        <strong>Levine 技術標準操作</strong><br>
+                        1. 清潔傷口：移除表面壞死組織和分泌物<br>
+                        2. 選擇區域：選擇傷口床看起來最健康的 1 cm² 區域<br>
+                        3. 取樣：將棉棒放在該區域<br>
+                        4. 施壓旋轉：以足夠壓力旋轉棉棒 5 秒鐘<br>
+                        5. 壓力標準：壓力應足以使<strong>組織液滲出</strong><br>
+                        6. 送檢：立即將檢體送至實驗室
+                    </div>
+                    <h4>Levine 技術 vs 其他方法的比較</h4>
+                    <table>
+                        <tr><th>比較項目</th><th>Levine 技術</th><th>Z 型技術</th></tr>
+                        <tr><td>取樣區域</td><td>1 cm² 集中區域</td><td>整個傷口表面</td></tr>
+                        <tr><td>施加壓力</td><td>足以使組織液滲出</td><td>輕壓表面</td></tr>
+                        <tr><td>取樣深度</td><td>較深（組織液來自深層）</td><td>表層</td></tr>
+                        <tr><td>準確性</td><td>較高</td><td>較低</td></tr>
+                    </table>
+                    <div class="good">Levine 技術的關鍵是<strong>施加足夠壓力</strong>使組織液滲出，這樣才能採集到深層細菌。</div>
+                `
+            },
+            {
+                title: '定量培養的價值',
+                content: `
+                    <h4>定量培養 vs 定性培養</h4>
+                    <p>棉棒培養可以進行定量或定性分析：</p>
+                    <ul>
+                        <li><strong>定性培養</strong>：僅報告是否有細菌生長及菌種</li>
+                        <li><strong>定量培養</strong>：報告細菌數量（CFU/swab 或 CFU/mL）</li>
+                    </ul>
+                    <h4>Levine 技術定量棉棒培養的診斷價值</h4>
+                    <table>
+                        <tr><th>門檻</th><th>敏感度</th><th>特異度</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td>≥10<sup>5</sup> CFU/swab</td><td>90%</td><td>57%</td><td>2.1</td><td>0.18</td></tr>
+                        <tr><td><strong>≥10<sup>6</sup> CFU/swab</strong></td><td>73%</td><td>88%</td><td><strong>6.3</strong></td><td><strong>0.30</strong></td></tr>
+                    </table>
+                    <div class="formula">
+                        <strong>最佳門檻：Levine 技術定量培養 ≥10<sup>6</sup> CFU/swab</strong><br>
+                        LR+ = 6.3 (95% CI: 2.5-15.6)<br>
+                        LR- = 0.30 (95% CI: 0.14-0.67)
+                    </div>
+                    <div class="info">定量培養結果 ≥10<sup>6</sup> CFU/swab 可以有效確認感染（LR+ 6.3），而 <10<sup>6</sup> CFU/swab 有助於排除感染（LR- 0.30）。</div>
+                `
+            }
+        ]
+    },
+    {
+        id: 4,
+        title: '診斷策略與整合',
+        sub: 'Diagnostic Strategy & Integration',
+        color: '#FFA726',
+        sections: [
+            {
+                title: '彙整診斷價值',
+                content: `
+                    <h4>各項檢查的診斷價值比較</h4>
+                    <table>
+                        <tr><th>類別</th><th>最佳發現</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td>症狀</td><td><strong>疼痛增加</strong></td><td><strong>11-20</strong></td><td>0.64-0.88</td></tr>
+                        <tr><td>傳統徵象</td><td>惡臭</td><td>4.0</td><td>0.93</td></tr>
+                        <tr><td>實驗室檢查</td><td><strong>Levine 定量培養 ≥10<sup>6</sup></strong></td><td><strong>6.3</strong></td><td><strong>0.30</strong></td></tr>
+                    </table>
+                    <div class="good">
+                        <strong>確認感染的最佳發現：</strong><br>
+                        1. 疼痛增加（LR+ 11-20）<br>
+                        2. Levine 定量培養 ≥10<sup>6</sup> CFU/swab（LR+ 6.3）
+                    </div>
+                    <div class="tip">
+                        <strong>排除感染的最佳發現：</strong><br>
+                        1. Levine 定量培養 <10<sup>6</sup> CFU/swab（LR- 0.30）<br>
+                        2. 無疼痛增加（LR- 0.64-0.88，效果較弱）
+                    </div>
+                `
+            },
+            {
+                title: '診斷策略',
+                content: `
+                    <h4>建議的臨床診斷流程</h4>
+                    <div class="formula">
+                        <strong>Step 1：評估前測機率</strong><br>
+                        慢性傷口感染的基礎盛行率約 45-53%<br><br>
+                        <strong>Step 2：臨床評估</strong><br>
+                        • 詢問疼痛是否增加（最重要的症狀）<br>
+                        • 評估傷口癒合進展<br>
+                        • 傳統發炎徵象（紅、腫、熱）診斷價值有限<br><br>
+                        <strong>Step 3：取樣培養（若需要）</strong><br>
+                        • 優先使用 Levine 技術<br>
+                        • 要求定量培養結果<br>
+                        • ≥10<sup>6</sup> CFU/swab 支持感染診斷
+                    </div>
+                    <div class="warning">
+                        <strong>常見錯誤：</strong><br>
+                        • 僅憑化膿性分泌物或紅腫就診斷感染<br>
+                        • 使用 Z 型技術取樣（僅採集表面細菌）<br>
+                        • 僅依賴定性培養結果（「有細菌生長」）
+                    </div>
+                `
+            },
+            {
+                title: '特殊族群考量',
+                content: `
+                    <h4>糖尿病足潰瘍</h4>
+                    <ul>
+                        <li><strong>神經病變</strong>：可能無法感受疼痛增加</li>
+                        <li><strong>血管病變</strong>：發炎反應可能減弱</li>
+                        <li><strong>骨髓炎風險</strong>：需評估是否有深層感染</li>
+                        <li><strong>Probe-to-bone test</strong>：若探針可觸及骨頭，骨髓炎可能性增加</li>
+                    </ul>
+                    <h4>壓瘡</h4>
+                    <ul>
+                        <li>通常位於薦骨、坐骨、股骨大轉子等位置</li>
+                        <li>深層壓瘡可能有隧道或瘻管</li>
+                        <li>需評估壓瘡分級（Stage I-IV）</li>
+                    </ul>
+                    <h4>靜脈潰瘍</h4>
+                    <ul>
+                        <li>通常位於小腿內側</li>
+                        <li>周圍可能有色素沉著和脂質硬化</li>
+                        <li>需治療潛在的靜脈功能不全</li>
+                    </ul>
+                    <div class="info">所有慢性傷口都需要評估並治療潛在病因，感染只是影響癒合的因素之一。</div>
+                `
+            }
+        ]
+    },
+    {
+        id: 5,
+        title: '臨床案例應用',
+        sub: 'Clinical Application',
+        color: '#FFB74D',
+        sections: [
+            {
+                title: '案例一：高度懷疑感染',
+                content: `
+                    <div class="danger">
+                        <strong>72 歲男性</strong>，糖尿病史 15 年，左足第一蹠趾關節內側潰瘍 6 週，近期疼痛明顯增加。<br>
+                        <strong>傷口評估：</strong>直徑 2.5 cm，傷口底部有少量膿性分泌物，周圍輕度紅腫<br>
+                        <strong>Levine 技術定量培養：</strong>3×10<sup>6</sup> CFU/swab（金黃色葡萄球菌）
+                    </div>
+                    <h4>診斷分析</h4>
+                    <table>
+                        <tr><th>發現</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td><strong>疼痛增加</strong></td><td><strong>11-20</strong></td><td>-</td></tr>
+                        <tr><td>化膿性分泌物</td><td>2.6</td><td>-</td></tr>
+                        <tr><td>紅腫</td><td>2.0</td><td>-</td></tr>
+                        <tr><td><strong>Levine 培養 ≥10<sup>6</sup></strong></td><td><strong>6.3</strong></td><td>-</td></tr>
+                    </table>
+                    <div class="formula">
+                        前測機率 ~50% + 疼痛增加（LR+ 11-20）+ 定量培養陽性（LR+ 6.3）<br>
+                        <strong>→ 後測機率極高，確認感染診斷</strong>
+                    </div>
+                    <div class="good">
+                        <strong>處置建議：</strong>開始經驗性抗生素治療，根據培養結果調整。評估骨髓炎可能性（考慮 X 光或 MRI）。
+                    </div>
+                `
+            },
+            {
+                title: '案例二：診斷不確定',
+                content: `
+                    <div class="info">
+                        <strong>68 歲女性</strong>，靜脈功能不全，左小腿內側潰瘍 8 週，無疼痛變化。<br>
+                        <strong>傷口評估：</strong>直徑 4 cm，傷口底部有肉芽組織，周圍無明顯紅腫，無膿性分泌物<br>
+                        <strong>Levine 技術定量培養：</strong>5×10<sup>4</sup> CFU/swab（混合菌叢）
+                    </div>
+                    <h4>診斷分析</h4>
+                    <p><strong>降低感染可能性的發現：</strong></p>
+                    <ul>
+                        <li>無疼痛增加：LR- 0.64-0.88（效果有限）</li>
+                        <li>無化膿性分泌物：LR- 0.93（無診斷價值）</li>
+                        <li>無紅腫：LR- 0.92（無診斷價值）</li>
+                        <li><strong>Levine 培養 <10<sup>6</sup>：LR- 0.30</strong></li>
+                    </ul>
+                    <div class="formula">
+                        前測機率 ~50% + 無疼痛增加 + 定量培養陰性（LR- 0.30）<br>
+                        <strong>→ 後測機率降低，感染可能性較低</strong>
+                    </div>
+                    <div class="tip">
+                        <strong>處置建議：</strong>不需要抗生素治療。專注於傷口護理和壓迫治療。若傷口持續無法癒合，可重新評估。
+                    </div>
+                `
+            },
+            {
+                title: '診斷策略總結',
+                content: `
+                    <h4>慢性傷口感染診斷的關鍵要點</h4>
+                    <div class="good">
+                        <strong>確認感染（高 LR+）：</strong><br>
+                        1. 疼痛增加（LR+ 11-20）- 最有價值的臨床發現<br>
+                        2. Levine 定量培養 ≥10<sup>6</sup> CFU/swab（LR+ 6.3）
+                    </div>
+                    <div class="tip">
+                        <strong>排除感染（低 LR-）：</strong><br>
+                        1. Levine 定量培養 <10<sup>6</sup> CFU/swab（LR- 0.30）<br>
+                        2. 無疼痛增加的效果有限（LR- 0.64-0.88）
+                    </div>
+                    <div class="danger">
+                        <strong>不可靠的發現：</strong><br>
+                        • 化膿性分泌物、紅腫、溫熱、水腫 - 所有傳統發炎徵象的 CI 都包含 1.0<br>
+                        • 這些徵象無法有效區分感染與非感染的慢性傷口
+                    </div>
+                    <h4>實務建議</h4>
+                    <table>
+                        <tr><th>情境</th><th>建議</th></tr>
+                        <tr><td>疼痛增加 + 培養陽性</td><td>高度懷疑感染，開始治療</td></tr>
+                        <tr><td>疼痛增加 + 培養陰性</td><td>仍需高度警覺，考慮重新取樣</td></tr>
+                        <tr><td>無疼痛增加 + 培養陰性</td><td>感染可能性低，專注傷口護理</td></tr>
+                        <tr><td>無疼痛增加 + 培養陽性</td><td>可能為臨界定植，密切追蹤</td></tr>
+                    </table>
+                `
+            }
+        ]
+    }
+];
+
+const quiz = [
+    {
+        q: '下列哪項臨床發現對診斷慢性傷口感染最有價值？',
+        o: ['化膿性分泌物 (LR+ 2.6)', '傷口周圍紅腫 (LR+ 2.0)', '疼痛增加 (LR+ 11-20)', '傷口溫熱 (LR+ 3.4)'],
+        c: 2,
+        e: '疼痛增加的 LR+ 為 11-20，是所有臨床發現中最高的。傳統發炎徵象（化膿、紅腫、溫熱）的 95% CI 都包含 1.0，無法有效區分感染與非感染的慢性傷口。'
+    },
+    {
+        q: '關於傳統發炎徵象（紅、腫、熱、膿）在慢性傷口感染診斷的價值，下列敘述何者正確？',
+        o: ['化膿性分泌物可以確診感染', '所有傳統發炎徵象的 95% CI 都包含 1.0，無法有效診斷', '傷口周圍紅腫是排除感染的最佳指標', '溫熱是最敏感的發現'],
+        c: 1,
+        e: '研究顯示，所有傳統發炎徵象（化膿性分泌物、紅腫、溫熱、水腫）的 95% CI 都包含 1.0，表示這些徵象無法有效區分感染與非感染的慢性傷口。這是本篇研究最重要的發現之一。'
+    },
+    {
+        q: '使用 Levine 技術進行傷口棉棒培養時，下列何者是正確的操作方式？',
+        o: ['以 Z 型方式在整個傷口表面移動棉棒', '在傷口邊緣取樣', '在 1 cm² 區域旋轉棉棒，施加足夠壓力使組織液滲出', '輕輕觸碰傷口表面即可'],
+        c: 2,
+        e: 'Levine 技術的關鍵是在 1 cm² 區域旋轉棉棒約 5 秒，施加足夠壓力使組織液滲出。這樣才能採集到較深層的細菌，而非僅採集表面定植的細菌。Z 型技術只能採集表面細菌，準確性較低。'
+    },
+    {
+        q: 'Levine 技術定量棉棒培養結果 ≥10⁶ CFU/swab 的診斷價值為何？',
+        o: ['LR+ 2.1，LR- 0.18', 'LR+ 6.3，LR- 0.30', 'LR+ 11，LR- 0.64', 'LR+ 20，LR- 0.76'],
+        c: 1,
+        e: '使用 Levine 技術的定量棉棒培養，門檻設為 ≥10⁶ CFU/swab 時，LR+ 為 6.3（95% CI: 2.5-15.6），LR- 為 0.30（95% CI: 0.14-0.67）。這是目前最佳的非侵入性診斷工具之一。'
+    },
+    {
+        q: '慢性傷口感染的參考標準（黃金標準）是什麼？',
+        o: ['傷口表面棉棒培養陽性', '傷口臨床表現符合感染', '深層組織切片培養 ≥10⁵ CFU/g 組織', 'Levine 技術培養 ≥10⁶ CFU/swab'],
+        c: 2,
+        e: '深層組織切片培養 ≥10⁵ CFU/g 組織是診斷慢性傷口感染的黃金標準。這個門檻已被多項研究證實與傷口癒合不良相關。棉棒培養（即使使用 Levine 技術）只是替代方法。'
+    },
+    {
+        q: '關於慢性傷口的細菌負荷，下列敘述何者正確？',
+        o: ['所有慢性傷口都沒有細菌', '有細菌生長就代表感染', '從汙染到感染是一個連續光譜', '細菌數量與傷口癒合無關'],
+        c: 2,
+        e: '慢性傷口的細菌負荷是一個連續光譜：汙染（細菌存在但不繁殖）→ 定植（細菌繁殖但無組織損傷）→ 臨界定植（細菌開始干擾癒合）→ 感染（細菌引起組織損傷）。所有慢性傷口都有細菌定植，細菌存在不等於感染。'
+    },
+    {
+        q: '一位 70 歲糖尿病患者的足部潰瘍近日疼痛明顯增加。關於診斷感染的意義，下列何者正確？',
+        o: ['糖尿病患者疼痛增加的診斷價值較低，因為神經病變可能掩蓋症狀', '疼痛增加在糖尿病患者更有意義，因為他們通常感覺遲鈍', '疼痛增加無診斷價值', '應忽略疼痛，專注於發炎徵象'],
+        c: 1,
+        e: '糖尿病患者通常有周邊神經病變，感覺遲鈍。因此，如果他們報告疼痛增加，這可能更有意義，代表組織損傷已經相當嚴重。然而，缺乏疼痛增加不能排除感染，因為神經病變可能掩蓋症狀。'
+    },
+    {
+        q: '下列哪個取樣技術最能準確反映傷口深層的細菌負荷？',
+        o: ['Z 型技術棉棒培養', 'Levine 技術棉棒培養', '傷口表面分泌物培養', '以上三者準確性相同'],
+        c: 1,
+        e: 'Levine 技術因為施加足夠壓力使組織液滲出，可以採集到較深層的細菌，因此最能準確反映深層細菌負荷。Z 型技術和表面分泌物培養主要採集表面定植的細菌，準確性較低。深層組織切片是黃金標準，但為侵入性檢查。'
+    },
+    {
+        q: '關於 Levine 技術定量培養門檻 ≥10⁵ vs ≥10⁶ CFU/swab 的比較，下列何者正確？',
+        o: ['≥10⁵ 的 LR+ 較高', '≥10⁶ 的 LR+ 較高（6.3 vs 2.1）', '兩者的診斷價值相同', '≥10⁶ 的敏感度較高'],
+        c: 1,
+        e: '門檻 ≥10⁶ CFU/swab 的 LR+ 為 6.3，明顯高於 ≥10⁵ CFU/swab 的 LR+ 2.1。提高門檻會增加特異度（88% vs 57%）但降低敏感度（73% vs 90%）。臨床上，使用 ≥10⁶ 門檻可以更有效地確認感染。'
+    },
+    {
+        q: '一位患者的慢性傷口無疼痛增加，Levine 技術定量培養為 2×10⁵ CFU/swab。下列何者是最適當的處置？',
+        o: ['立即開始廣效抗生素治療', '感染可能性較低，專注於傷口護理', '需要進行深層組織切片確認', '等待疼痛增加再治療'],
+        c: 1,
+        e: '無疼痛增加加上培養結果 <10⁶ CFU/swab（LR- 0.30），感染可能性顯著降低。此時應專注於傷口護理（清潔、敷料、治療潛在病因），而非使用抗生素。若傷口持續無法癒合，可以重新評估。'
+    }
+];
+
+// Same React components as template
+function App() {
+    const [activeLesson, setActiveLesson] = React.useState(1);
+    const [showQuiz, setShowQuiz] = React.useState(false);
+    const [currentQ, setCurrentQ] = React.useState(0);
+    const [score, setScore] = React.useState(0);
+    const [answered, setAnswered] = React.useState(null);
+    const [showResult, setShowResult] = React.useState(false);
+    const [showExplanation, setShowExplanation] = React.useState(false);
+    const [progress, setProgress] = React.useState(ProgressTracker.getProgress());
+    const [sectionIdx, setSectionIdx] = React.useState(0);
+
+    const lesson = lessons.find(l => l.id === activeLesson);
+
+    const handleAnswer = (idx) => {
+        if (answered !== null) return;
+        setAnswered(idx);
+        setShowExplanation(true);
+        if (idx === quiz[currentQ].c) setScore(s => s + 1);
+    };
+
+    const nextQuestion = () => {
+        setShowExplanation(false);
+        if (currentQ < quiz.length - 1) {
+            setCurrentQ(c => c + 1);
+            setAnswered(null);
+        } else {
+            ProgressTracker.saveQuizScore(score + (answered === quiz[currentQ].c ? 0 : 0), quiz.length);
+            setShowResult(true);
+        }
+    };
+
+    const resetQuiz = () => {
+        setCurrentQ(0);
+        setScore(0);
+        setAnswered(null);
+        setShowResult(false);
+        setShowExplanation(false);
+    };
+
+    const changeLesson = (id) => {
+        ProgressTracker.completeLesson(activeLesson);
+        setProgress(ProgressTracker.getProgress());
+        setActiveLesson(id);
+        setSectionIdx(0);
+        setShowQuiz(false);
+    };
+
+    const startQuiz = () => {
+        ProgressTracker.completeLesson(activeLesson);
+        setProgress(ProgressTracker.getProgress());
+        setShowQuiz(true);
+        resetQuiz();
+    };
+
+    const completionRate = Math.round((progress.lessonsCompleted.length / lessons.length) * 100);
+
+    return (
+        <div style={{fontFamily: "'Noto Sans TC', 'Source Sans Pro', sans-serif", background: 'linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%)', minHeight: '100vh'}}>
+            {/* Header */}
+            <header style={{background: 'linear-gradient(135deg, #E65100 0%, #F57C00 50%, #FF9800 100%)', color: 'white', padding: '1rem 2rem', boxShadow: '0 2px 10px rgba(0,0,0,0.15)'}}>
+                <div style={{maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem'}}>
+                    <a href="jama-rational-exam.html" style={{color: 'white', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8, opacity: 0.9, transition: 'opacity 0.2s'}}
+                       onMouseOver={e => e.currentTarget.style.opacity = '1'} onMouseOut={e => e.currentTarget.style.opacity = '0.9'}>
+                        <span style={{fontSize: '1.5rem'}}>←</span>
+                        <span>返回模組列表</span>
+                    </a>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                        <div style={{background: 'rgba(255,255,255,0.2)', borderRadius: 20, padding: '0.3rem 1rem', fontSize: '0.9rem'}}>
+                            完成度: {completionRate}%
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            {/* Hero */}
+            <section style={{background: 'linear-gradient(135deg, #E65100 0%, #F57C00 50%, #FF9800 100%)', color: 'white', padding: '3rem 2rem 4rem', textAlign: 'center'}}>
+                <div style={{maxWidth: 900, margin: '0 auto'}}>
+                    <div style={{display: 'inline-block', background: 'rgba(255,255,255,0.2)', borderRadius: 20, padding: '0.3rem 1rem', fontSize: '0.85rem', marginBottom: '1rem'}}>
+                        JAMA Rational Clinical Examination
+                    </div>
+                    <h1 style={{fontFamily: "'Playfair Display', 'Crimson Pro', serif", fontSize: 'clamp(1.8rem, 5vw, 2.8rem)', fontWeight: 700, margin: '0.5rem 0', lineHeight: 1.2}}>
+                        Does This Patient With a Wound Have an Infection?
+                    </h1>
+                    <p style={{fontSize: 'clamp(1rem, 2.5vw, 1.3rem)', opacity: 0.95, marginBottom: '0.5rem'}}>慢性傷口感染的臨床診斷評估</p>
+                    <p style={{fontSize: '0.95rem', opacity: 0.85}}>Reddy M, et al. JAMA 2012;307(6):605-611</p>
+                    <a href="https://jamanetwork.com/journals/jama/fullarticle/1104963" target="_blank" rel="noopener noreferrer"
+                       style={{display: 'inline-block', marginTop: '1rem', color: 'white', background: 'rgba(255,255,255,0.2)', padding: '0.5rem 1.2rem', borderRadius: 20, textDecoration: 'none', fontSize: '0.9rem', transition: 'background 0.2s'}}
+                       onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+                       onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
+                        閱讀原文 Read Full Article →
+                    </a>
+                </div>
+            </section>
+
+            {/* Learning Objectives */}
+            <section style={{maxWidth: 1000, margin: '-2rem auto 2rem', padding: '0 1rem'}}>
+                <div style={{background: 'white', borderRadius: 16, padding: '1.5rem 2rem', boxShadow: '0 4px 20px rgba(0,0,0,0.1)'}}>
+                    <h3 style={{margin: '0 0 1rem', color: '#E65100'}}>📚 學習目標</h3>
+                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '0.8rem'}}>
+                        {['理解慢性傷口感染的診斷挑戰', '掌握臨床徵象的診斷價值（疼痛增加最重要）', '學會 Levine 技術傷口取樣方法', '應用定量培養結果進行診斷決策'].map((obj, i) => (
+                            <div key={i} style={{display: 'flex', alignItems: 'flex-start', gap: '0.5rem'}}>
+                                <span style={{color: '#F57C00', fontWeight: 'bold'}}>✓</span>
+                                <span style={{fontSize: '0.95rem'}}>{obj}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Lesson Tabs */}
+            <nav style={{maxWidth: 1200, margin: '0 auto 2rem', padding: '0 1rem'}}>
+                <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center'}}>
+                    {lessons.map(l => (
+                        <button key={l.id} onClick={() => changeLesson(l.id)}
+                            style={{
+                                padding: '0.7rem 1.2rem', border: 'none', borderRadius: 25,
+                                background: activeLesson === l.id ? `linear-gradient(135deg, ${l.color}, ${l.color}dd)` : 'white',
+                                color: activeLesson === l.id ? 'white' : '#333',
+                                cursor: 'pointer', fontWeight: 500, fontSize: '0.9rem',
+                                boxShadow: activeLesson === l.id ? `0 4px 15px ${l.color}40` : '0 2px 8px rgba(0,0,0,0.1)',
+                                transition: 'all 0.3s ease', display: 'flex', alignItems: 'center', gap: '0.5rem'
+                            }}>
+                            {progress.lessonsCompleted.includes(l.id) && <span>✓</span>}
+                            <span>{l.title}</span>
+                        </button>
+                    ))}
+                    <button onClick={startQuiz}
+                        style={{
+                            padding: '0.7rem 1.2rem', border: 'none', borderRadius: 25,
+                            background: showQuiz ? 'linear-gradient(135deg, #2E7D32, #388E3C)' : 'white',
+                            color: showQuiz ? 'white' : '#2E7D32',
+                            cursor: 'pointer', fontWeight: 500, fontSize: '0.9rem',
+                            boxShadow: showQuiz ? '0 4px 15px rgba(46,125,50,0.4)' : '0 2px 8px rgba(0,0,0,0.1)',
+                            transition: 'all 0.3s ease'
+                        }}>
+                        📝 測驗
+                    </button>
+                </div>
+            </nav>
+
+            {/* Main Content */}
+            <main style={{maxWidth: 1000, margin: '0 auto', padding: '0 1rem 3rem'}}>
+                {!showQuiz ? (
+                    <div style={{background: 'white', borderRadius: 16, padding: '2rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)'}}>
+                        <div style={{borderBottom: `3px solid ${lesson.color}`, paddingBottom: '1rem', marginBottom: '1.5rem'}}>
+                            <h2 style={{margin: 0, color: lesson.color, fontSize: '1.6rem'}}>{lesson.title}</h2>
+                            <p style={{margin: '0.3rem 0 0', color: '#666', fontSize: '0.95rem'}}>{lesson.sub}</p>
+                        </div>
+
+                        {/* Section Tabs */}
+                        <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem'}}>
+                            {lesson.sections.map((sec, idx) => (
+                                <button key={idx} onClick={() => setSectionIdx(idx)}
+                                    style={{
+                                        padding: '0.5rem 1rem', border: `2px solid ${sectionIdx === idx ? lesson.color : '#ddd'}`,
+                                        borderRadius: 20, background: sectionIdx === idx ? `${lesson.color}10` : 'white',
+                                        color: sectionIdx === idx ? lesson.color : '#666', cursor: 'pointer',
+                                        fontWeight: sectionIdx === idx ? 600 : 400, fontSize: '0.85rem', transition: 'all 0.2s'
+                                    }}>
+                                    {sec.title}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Section Content */}
+                        <div className="content-area" dangerouslySetInnerHTML={{__html: lesson.sections[sectionIdx].content}} />
+
+                        {/* Navigation */}
+                        <div style={{display: 'flex', justifyContent: 'space-between', marginTop: '2rem', paddingTop: '1rem', borderTop: '1px solid #eee'}}>
+                            <button onClick={() => sectionIdx > 0 ? setSectionIdx(sectionIdx - 1) : activeLesson > 1 && changeLesson(activeLesson - 1)}
+                                disabled={sectionIdx === 0 && activeLesson === 1}
+                                style={{
+                                    padding: '0.7rem 1.5rem', border: 'none', borderRadius: 8,
+                                    background: (sectionIdx === 0 && activeLesson === 1) ? '#ccc' : '#f0f0f0',
+                                    cursor: (sectionIdx === 0 && activeLesson === 1) ? 'not-allowed' : 'pointer',
+                                    fontWeight: 500, transition: 'background 0.2s'
+                                }}>
+                                ← 上一頁
+                            </button>
+                            <button onClick={() => sectionIdx < lesson.sections.length - 1 ? setSectionIdx(sectionIdx + 1) : activeLesson < lessons.length ? changeLesson(activeLesson + 1) : startQuiz()}
+                                style={{
+                                    padding: '0.7rem 1.5rem', border: 'none', borderRadius: 8,
+                                    background: `linear-gradient(135deg, ${lesson.color}, ${lesson.color}dd)`,
+                                    color: 'white', cursor: 'pointer', fontWeight: 500, transition: 'transform 0.2s'
+                                }}>
+                                {sectionIdx < lesson.sections.length - 1 ? '下一頁 →' : activeLesson < lessons.length ? '下一課 →' : '開始測驗 →'}
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div style={{background: 'white', borderRadius: 16, padding: '2rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)'}}>
+                        {!showResult ? (
+                            <>
+                                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem'}}>
+                                    <h2 style={{margin: 0, color: '#2E7D32'}}>📝 課後測驗</h2>
+                                    <span style={{background: '#E8F5E9', color: '#2E7D32', padding: '0.3rem 1rem', borderRadius: 20, fontWeight: 600}}>
+                                        {currentQ + 1} / {quiz.length}
+                                    </span>
+                                </div>
+                                <div style={{background: '#E8F5E9', height: 8, borderRadius: 4, marginBottom: '2rem'}}>
+                                    <div style={{background: 'linear-gradient(90deg, #2E7D32, #4CAF50)', height: '100%', borderRadius: 4, width: `${((currentQ + 1) / quiz.length) * 100}%`, transition: 'width 0.3s'}} />
+                                </div>
+                                <h3 style={{fontSize: '1.2rem', lineHeight: 1.6, marginBottom: '1.5rem'}}>{quiz[currentQ].q}</h3>
+                                <div style={{display: 'flex', flexDirection: 'column', gap: '0.8rem'}}>
+                                    {quiz[currentQ].o.map((opt, idx) => (
+                                        <button key={idx} onClick={() => handleAnswer(idx)}
+                                            style={{
+                                                padding: '1rem 1.2rem', border: '2px solid',
+                                                borderColor: answered === null ? '#ddd' : idx === quiz[currentQ].c ? '#4CAF50' : answered === idx ? '#f44336' : '#ddd',
+                                                borderRadius: 12, background: answered === null ? 'white' : idx === quiz[currentQ].c ? '#E8F5E9' : answered === idx ? '#FFEBEE' : 'white',
+                                                cursor: answered === null ? 'pointer' : 'default', textAlign: 'left', fontSize: '1rem',
+                                                transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.8rem'
+                                            }}>
+                                            <span style={{
+                                                width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                background: answered === null ? '#f5f5f5' : idx === quiz[currentQ].c ? '#4CAF50' : answered === idx ? '#f44336' : '#f5f5f5',
+                                                color: (answered !== null && (idx === quiz[currentQ].c || answered === idx)) ? 'white' : '#666', fontWeight: 600, fontSize: '0.9rem'
+                                            }}>
+                                                {answered !== null && idx === quiz[currentQ].c ? '✓' : answered !== null && answered === idx ? '✗' : String.fromCharCode(65 + idx)}
+                                            </span>
+                                            <span>{opt}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                {showExplanation && (
+                                    <div style={{marginTop: '1.5rem', padding: '1.2rem', background: answered === quiz[currentQ].c ? '#E8F5E9' : '#FFF3E0', borderRadius: 12, borderLeft: `4px solid ${answered === quiz[currentQ].c ? '#4CAF50' : '#FF9800'}`}}>
+                                        <h4 style={{margin: '0 0 0.5rem', color: answered === quiz[currentQ].c ? '#2E7D32' : '#E65100'}}>
+                                            {answered === quiz[currentQ].c ? '✓ 正確！' : '✗ 不正確'}
+                                        </h4>
+                                        <p style={{margin: 0, lineHeight: 1.7}}>{quiz[currentQ].e}</p>
+                                    </div>
+                                )}
+                                {answered !== null && (
+                                    <button onClick={nextQuestion}
+                                        style={{
+                                            marginTop: '1.5rem', padding: '0.8rem 2rem', border: 'none', borderRadius: 8,
+                                            background: 'linear-gradient(135deg, #2E7D32, #388E3C)', color: 'white',
+                                            cursor: 'pointer', fontWeight: 600, fontSize: '1rem'
+                                        }}>
+                                        {currentQ < quiz.length - 1 ? '下一題 →' : '查看結果'}
+                                    </button>
+                                )}
+                            </>
+                        ) : (
+                            <div style={{textAlign: 'center', padding: '2rem 0'}}>
+                                <div style={{fontSize: '4rem', marginBottom: '1rem'}}>{score >= 8 ? '🎉' : score >= 6 ? '👍' : '💪'}</div>
+                                <h2 style={{margin: '0 0 0.5rem', color: '#2E7D32'}}>測驗完成！</h2>
+                                <p style={{fontSize: '1.5rem', fontWeight: 600, color: score >= 8 ? '#2E7D32' : score >= 6 ? '#FF9800' : '#f44336'}}>
+                                    {score} / {quiz.length} 分
+                                </p>
+                                <p style={{color: '#666', marginBottom: '2rem'}}>
+                                    {score >= 8 ? '太棒了！你已經掌握了慢性傷口感染診斷的重點！' : score >= 6 ? '不錯！但還有進步空間，建議複習相關章節。' : '建議重新閱讀課程內容後再次測驗。'}
+                                </p>
+                                <div style={{display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap'}}>
+                                    <button onClick={resetQuiz}
+                                        style={{padding: '0.8rem 2rem', border: '2px solid #2E7D32', borderRadius: 8, background: 'white', color: '#2E7D32', cursor: 'pointer', fontWeight: 600}}>
+                                        重新測驗
+                                    </button>
+                                    <button onClick={() => { setShowQuiz(false); setActiveLesson(1); setSectionIdx(0); }}
+                                        style={{padding: '0.8rem 2rem', border: 'none', borderRadius: 8, background: 'linear-gradient(135deg, #2E7D32, #388E3C)', color: 'white', cursor: 'pointer', fontWeight: 600}}>
+                                        返回課程
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </main>
+
+            {/* Footer */}
+            <footer style={{background: '#37474F', color: 'white', padding: '2rem', textAlign: 'center'}}>
+                <p style={{margin: '0 0 0.5rem', opacity: 0.9}}>新竹台大分院教學部</p>
+                <p style={{margin: 0, fontSize: '0.9rem', opacity: 0.7}}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+
+            <style>{`
+                .content-area h4 { color: #E65100; margin: 1.5rem 0 0.8rem; font-size: 1.1rem; }
+                .content-area p { line-height: 1.8; margin: 0.8rem 0; }
+                .content-area ul, .content-area ol { line-height: 1.8; padding-left: 1.5rem; }
+                .content-area li { margin: 0.4rem 0; }
+                .content-area table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.95rem; }
+                .content-area th, .content-area td { border: 1px solid #ddd; padding: 0.7rem; text-align: left; }
+                .content-area th { background: linear-gradient(135deg, #E65100, #F57C00); color: white; font-weight: 500; }
+                .content-area tr:nth-child(even) { background: #FFF3E0; }
+                .content-area tr:hover { background: #FFE0B2; }
+                .content-area .tip { background: linear-gradient(135deg, #E3F2FD, #BBDEFB); border-left: 4px solid #1976D2; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .good { background: linear-gradient(135deg, #E8F5E9, #C8E6C9); border-left: 4px solid #388E3C; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .info { background: linear-gradient(135deg, #E0F2F1, #B2DFDB); border-left: 4px solid #00796B; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .warning { background: linear-gradient(135deg, #FFF3E0, #FFE0B2); border-left: 4px solid #F57C00; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .danger { background: linear-gradient(135deg, #FFEBEE, #FFCDD2); border-left: 4px solid #C62828; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .formula { background: linear-gradient(135deg, #FFF3E0, #FFE0B2); border: 2px solid #F57C00; padding: 1rem; border-radius: 8px; margin: 1rem 0; font-family: 'Crimson Pro', serif; }
+            `}</style>
+        </div>
+    );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

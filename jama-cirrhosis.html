@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>肝硬化診斷評估 - JAMA 理性臨床診察</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Playfair+Display:wght@400;700&family=Source+Sans+Pro:wght@300;400;600;700&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const MODULE_ID = 'jama-cirrhosis';
+
+const ProgressTracker = {
+    getProgress: () => {
+        try {
+            const saved = localStorage.getItem(`progress_${MODULE_ID}`);
+            return saved ? JSON.parse(saved) : { lessonsCompleted: [], quizScores: [], lastVisit: null };
+        } catch { return { lessonsCompleted: [], quizScores: [], lastVisit: null }; }
+    },
+    saveProgress: (progress) => {
+        try {
+            localStorage.setItem(`progress_${MODULE_ID}`, JSON.stringify({...progress, lastVisit: new Date().toISOString()}));
+        } catch {}
+    },
+    completeLesson: (lessonId) => {
+        const progress = ProgressTracker.getProgress();
+        if (!progress.lessonsCompleted.includes(lessonId)) {
+            progress.lessonsCompleted.push(lessonId);
+            ProgressTracker.saveProgress(progress);
+        }
+    },
+    saveQuizScore: (score, total) => {
+        const progress = ProgressTracker.getProgress();
+        progress.quizScores.push({ score, total, date: new Date().toISOString() });
+        ProgressTracker.saveProgress(progress);
+    }
+};
+
+const lessons = [
+    {
+        id: 1,
+        title: '肝硬化概論與病理生理學',
+        sub: 'Cirrhosis Overview & Pathophysiology',
+        color: '#6A1B9A',
+        sections: [
+            {
+                title: '臨床重要性',
+                content: `
+                    <p>肝硬化是多種慢性肝臟損傷的病理終點，其組織學特徵為<strong>廣泛纖維化</strong>合併<strong>再生結節</strong>形成。</p>
+                    <div class="tip">在美國，肝硬化是第 10 大死因，死亡率約為每 100,000 人 9.3 人。</div>
+                    <h4>為何需要診斷肝硬化？</h4>
+                    <ul>
+                        <li>需要進行<strong>食道靜脈曲張</strong>的內視鏡篩檢與治療</li>
+                        <li>需要進行<strong>肝細胞癌</strong>篩檢</li>
+                        <li>需要及時辨識<strong>肝性腦病變</strong>與<strong>自發性細菌性腹膜炎</strong></li>
+                        <li>需要考慮<strong>肝臟移植</strong></li>
+                    </ul>
+                    <div class="warning">約 10-17% 不明原因轉氨酶升高的患者，實際上已有未被診斷的肝硬化。</div>
+                `
+            },
+            {
+                title: '肝切片的限制',
+                content: `
+                    <p>肝切片是診斷肝硬化的黃金標準，但有其限制：</p>
+                    <h4>缺點</h4>
+                    <ul>
+                        <li><strong>費用高</strong>：約 US $1,000/次</li>
+                        <li><strong>併發症</strong>：可能出血，死亡率達 0.5%</li>
+                        <li><strong>取樣誤差</strong>：左右葉結果可能不一致（達 1/3 病例）</li>
+                        <li><strong>觀察者間變異</strong>：纖維化程度評估可能不一致</li>
+                    </ul>
+                    <div class="info">因此，臨床上需要能夠準確且有效率地<strong>非侵入性</strong>識別肝硬化的方法。</div>
+                `
+            },
+            {
+                title: '肝硬化的病理生理學',
+                content: `
+                    <h4>臨床表現的病理機轉</h4>
+                    <table>
+                        <tr><th>臨床表現</th><th>病理機轉</th></tr>
+                        <tr><td>掌紅斑、蜘蛛痣、男性女乳症、體毛減少、睪丸萎縮</td><td>雄性素代謝清除減少 → 周邊轉換成雌激素增加</td></tr>
+                        <tr><td>黃疸、低白蛋白血症</td><td>肝細胞功能喪失</td></tr>
+                        <tr><td>血小板低下</td><td>脾功能亢進或骨髓直接抑制</td></tr>
+                        <tr><td>凝血時間延長</td><td>凝血因子 I, II, V, VII, IX, X 製造減少</td></tr>
+                        <tr><td>食道靜脈曲張、脾腫大</td><td>門脈高壓（門脈壓差 >10 mmHg）</td></tr>
+                        <tr><td>水腫、腹水、肝性腦病變</td><td>肝細胞功能不全 + 門脈高壓</td></tr>
+                    </table>
+                    <div class="good">因子 VII 半衰期最短，是肝硬化中最先消耗的凝血因子，因此 PT 可能選擇性延長。</div>
+                `
+            }
+        ]
+    },
+    {
+        id: 2,
+        title: '理學檢查技巧',
+        sub: 'Physical Examination Techniques',
+        color: '#7B1FA2',
+        sections: [
+            {
+                title: '皮膚與指甲徵象',
+                content: `
+                    <h4>蜘蛛痣 (Spider Nevi)</h4>
+                    <ul>
+                        <li>由中央小動脈與放射狀小血管組成，形似蜘蛛腳</li>
+                        <li>壓迫中央小動脈會使整個病灶消失，放開後由中心向外充血</li>
+                        <li>通常位於<strong>上腔靜脈分布區域</strong>（胸部、頸部、面部）</li>
+                        <li><strong>>2-3 個蜘蛛痣</strong>可能為異常</li>
+                    </ul>
+                    <h4>Terry 指甲（白指甲）</h4>
+                    <ul>
+                        <li>近端指甲床呈銀白色，有時遮蓋指甲月牙</li>
+                        <li>嚴重時整個指甲板變白，僅留遠端 0.5-3 mm 正常粉紅色</li>
+                        <li>拇指和食指最常受影響</li>
+                    </ul>
+                    <h4>掌紅斑 (Palmar Erythema)</h4>
+                    <ul>
+                        <li>大小魚際肌區域強烈發紅，中央手掌不受影響</li>
+                        <li>壓迫會褪色，放開後快速恢復</li>
+                        <li>用玻片壓住可見每次動脈搏動時的充血</li>
+                    </ul>
+                `
+            },
+            {
+                title: '腹部檢查',
+                content: `
+                    <h4>腹壁靜脈擴張</h4>
+                    <p>當觀察到明顯或擴張的腹壁靜脈時，應測定血流方向：</p>
+                    <div class="formula">
+                        <strong>血流方向測定法</strong><br>
+                        1. 用手指壓住靜脈阻斷血流<br>
+                        2. 用另一手指將血液排空<br>
+                        3. 放開其中一指，觀察血管是否回充
+                    </div>
+                    <table>
+                        <tr><th>病因</th><th>臍上血流方向</th><th>臍下血流方向</th></tr>
+                        <tr><td><strong>門脈高壓</strong></td><td>向上（往上腔靜脈）</td><td>向下（往下腔靜脈）</td></tr>
+                        <tr><td>下腔靜脈阻塞</td><td>向上</td><td>向上（往上腔靜脈）</td></tr>
+                        <tr><td>上腔靜脈阻塞</td><td>向下</td><td>向下（往下腔靜脈）</td></tr>
+                    </table>
+                    <div class="tip">門脈高壓時，血流從臍部<strong>向外離開</strong>（caput medusae）。</div>
+                `
+            },
+            {
+                title: '神經學檢查：撲翼樣震顫',
+                content: `
+                    <h4>撲翼樣震顫 (Asterixis)</h4>
+                    <p>肝性腦病變的典型特徵，是一種<strong>自主持續性肌肉收縮突然短暫喪失</strong>的現象，休息時不會出現。</p>
+                    <div class="formula">
+                        <strong>檢查方法</strong><br>
+                        1. 請患者伸出手臂<br>
+                        2. 手腕背屈，手指伸直張開<br>
+                        3. 閉眼維持 30 秒以上<br>
+                        4. 觀察是否出現突然、不自主的屈伸運動
+                    </div>
+                    <div class="warning">撲翼樣震顫的嚴重程度從輕微的睡眠型態改變到昏迷不等，反映肝性腦病變的嚴重程度。</div>
+                `
+            }
+        ]
+    },
+    {
+        id: 3,
+        title: '理學檢查的診斷價值',
+        sub: 'Diagnostic Value of Physical Exam',
+        color: '#8E24AA',
+        sections: [
+            {
+                title: '病史因素',
+                content: `
+                    <h4>病史對肝硬化的診斷價值</h4>
+                    <table>
+                        <tr><th>病史因素</th><th>敏感度</th><th>特異度</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td><strong>糖尿病</strong></td><td>34%</td><td>88%</td><td><strong>2.8</strong></td><td>0.75</td></tr>
+                        <tr><td>酒精使用</td><td>47%</td><td>66%</td><td>1.5</td><td>0.76</td></tr>
+                        <tr><td>疲倦</td><td>63%</td><td>51%</td><td>1.3</td><td>0.80</td></tr>
+                    </table>
+                    <div class="info"><strong>糖尿病</strong>是唯一有診斷價值的病史因素（LR+ 2.8），但其缺席不能排除肝硬化。</div>
+                    <div class="warning"><strong>酒精使用史</strong>無法有效區分肝硬化（LR+ 僅 1.5），可能因為酒精使用在一般人群中常見，但發展成肝硬化的比例很低。</div>
+                `
+            },
+            {
+                title: '理學檢查徵象（確認診斷）',
+                content: `
+                    <h4>LR+ ≥ 4.0 的理學檢查發現（提示肝硬化）</h4>
+                    <table>
+                        <tr><th>徵象</th><th>敏感度</th><th>特異度</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td><strong>腹壁靜脈擴張</strong></td><td>31%</td><td>98%</td><td><strong>11</strong></td><td>0.72</td></tr>
+                        <tr><td><strong>肝性腦病變</strong></td><td>16%</td><td>98%</td><td><strong>10</strong></td><td>0.86</td></tr>
+                        <tr><td><strong>體毛減少</strong></td><td>36%</td><td>97%</td><td><strong>9.0</strong></td><td>0.65</td></tr>
+                        <tr><td><strong>腹水</strong></td><td>35%</td><td>95%</td><td><strong>7.2</strong></td><td>0.69</td></tr>
+                        <tr><td>面部毛細血管擴張</td><td>73-82%</td><td>88-92%</td><td>5.9-10</td><td>0.20-0.31</td></tr>
+                        <tr><td><strong>掌紅斑</strong></td><td>46%</td><td>91%</td><td><strong>5.0</strong></td><td>0.59</td></tr>
+                        <tr><td><strong>蜘蛛痣</strong></td><td>46%</td><td>89%</td><td><strong>4.3</strong></td><td>0.61</td></tr>
+                    </table>
+                    <div class="good"><strong>腹水</strong>（LR+ 7.2）和<strong>蜘蛛痣</strong>（LR+ 4.3）是最常被研究、可信度最高（CI 較窄）的發現。</div>
+                `
+            },
+            {
+                title: '理學檢查徵象（排除診斷）',
+                content: `
+                    <h4>LR- < 0.4 的理學檢查發現（排除肝硬化）</h4>
+                    <table>
+                        <tr><th>徵象缺席</th><th>LR-</th><th>95% CI</th><th>I²</th></tr>
+                        <tr><td><strong>無堅硬肝臟</strong></td><td><strong>0.37</strong></td><td>0.31-0.43</td><td>0%</td></tr>
+                        <tr><td><strong>無肝腫大</strong></td><td><strong>0.37</strong></td><td>0.24-0.51</td><td>81%</td></tr>
+                    </table>
+                    <div class="tip">整體而言，單一理學檢查發現對於<strong>確認</strong>肝硬化比<strong>排除</strong>肝硬化更有價值。排除肝硬化最有用的是「無堅硬肝臟」或「無肝腫大」。</div>
+                    <div class="info"><strong>臨床整體印象</strong>的 LR+ 為 4.8，LR- 為 0.52，表現不如個別發現或實驗室組合。</div>
+                `
+            }
+        ]
+    },
+    {
+        id: 4,
+        title: '實驗室檢查與評分系統',
+        sub: 'Laboratory Tests & Scoring Systems',
+        color: '#9C27B0',
+        sections: [
+            {
+                title: '單項實驗室檢查',
+                content: `
+                    <h4>實驗室檢查的診斷價值</h4>
+                    <table>
+                        <tr><th>檢驗項目</th><th>敏感度</th><th>特異度</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td>Platelet &lt;110×10³/µL</td><td>50%</td><td>95%</td><td><strong>9.8</strong></td><td>0.53</td></tr>
+                        <tr><td><strong>Platelet &lt;160×10³/µL</strong></td><td>74%</td><td>88%</td><td><strong>6.3</strong></td><td><strong>0.29</strong></td></tr>
+                        <tr><td>Platelet &lt;200×10³/µL</td><td>80%</td><td>72%</td><td>2.9</td><td>0.28</td></tr>
+                        <tr><td>PT/INR 延長</td><td>48%</td><td>90%</td><td><strong>5.0</strong></td><td>0.57</td></tr>
+                        <tr><td>Albumin &lt;3.5 g/dL</td><td>45%</td><td>90%</td><td><strong>4.4</strong></td><td>0.61</td></tr>
+                        <tr><td>AST &gt;ULN</td><td>78%</td><td>62%</td><td>2.1</td><td>0.38</td></tr>
+                        <tr><td>ALT &gt;ULN</td><td>88%</td><td>23%</td><td>1.1</td><td>0.54</td></tr>
+                    </table>
+                    <div class="formula">
+                        <strong>血小板 &lt;160×10³/µL 是最有用的單項實驗室檢查</strong><br>
+                        LR+ = 6.3 (95% CI: 4.3-8.3)<br>
+                        LR- = 0.29 (95% CI: 0.20-0.39)
+                    </div>
+                    <div class="warning">ALT 或膽紅素升高<strong>無法</strong>有效診斷肝硬化（CI 包含 1.0）。</div>
+                `
+            },
+            {
+                title: '評分系統：APRI 與 AST:ALT 比值',
+                content: `
+                    <h4>AST:Platelet Ratio Index (APRI)</h4>
+                    <div class="formula">
+                        <strong>APRI = (AST/AST 正常上限) × 100 / 血小板數 (×10³/µL)</strong>
+                    </div>
+                    <table>
+                        <tr><th>APRI 門檻</th><th>敏感度</th><th>特異度</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td>APRI &gt; 2</td><td>44%</td><td>90%</td><td><strong>4.6</strong></td><td>0.62</td></tr>
+                        <tr><td>APRI &gt; 1</td><td>76%</td><td>72%</td><td>2.7</td><td>0.33</td></tr>
+                    </table>
+                    <h4>AST:ALT 比值</h4>
+                    <table>
+                        <tr><th>門檻</th><th>敏感度</th><th>特異度</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td><strong>AST:ALT &gt; 1</strong></td><td>48%</td><td>90%</td><td><strong>4.6</strong></td><td>0.58</td></tr>
+                    </table>
+                    <div class="info">AST:ALT 比值和 APRI 是最容易計算的評分系統。AST:ALT &gt; 1 提示肝硬化（LR+ 4.6）。</div>
+                `
+            },
+            {
+                title: '評分系統：Bonacini CDS 與 Lok Index',
+                content: `
+                    <h4>Bonacini Cirrhosis Discriminant Score (CDS)</h4>
+                    <table>
+                        <tr><th>分數</th><th>血小板 (×10³/µL)</th><th>ALT:AST 比值</th><th>INR</th></tr>
+                        <tr><td>0</td><td>&gt;340</td><td>&gt;1.7</td><td>&lt;1.1</td></tr>
+                        <tr><td>1</td><td>280-340</td><td>1.2-1.7</td><td>1.1-1.4</td></tr>
+                        <tr><td>2</td><td>220-279</td><td>0.6-1.19</td><td>&gt;1.4</td></tr>
+                        <tr><td>3</td><td>160-219</td><td>&lt;0.6</td><td>-</td></tr>
+                        <tr><td>4</td><td>100-159</td><td>-</td><td>-</td></tr>
+                        <tr><td>5</td><td>40-99</td><td>-</td><td>-</td></tr>
+                        <tr><td>6</td><td>&lt;40</td><td>-</td><td>-</td></tr>
+                    </table>
+                    <p>總分 = 血小板分數 + ALT:AST 比值分數 + INR 分數（範圍 0-11）</p>
+                    <table>
+                        <tr><th>Bonacini CDS</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td>&gt; 8</td><td><strong>13</strong></td><td>0.77</td></tr>
+                        <tr><td>&gt; 7</td><td><strong>9.4</strong></td><td>0.65</td></tr>
+                        <tr><td>&lt; 3</td><td>1.4</td><td><strong>0.30</strong></td></tr>
+                    </table>
+                    <h4>Lok Index</h4>
+                    <div class="formula">
+                        log odds = -5.56 - (0.0089 × 血小板) + (1.26 × AST:ALT) + (5.27 × INR)<br>
+                        <strong>Lok Index = exp(log odds) / [1 + exp(log odds)]</strong>
+                    </div>
+                    <table>
+                        <tr><th>Lok Index</th><th>LR+</th><th>LR-</th></tr>
+                        <tr><td>≥ 0.5</td><td>5.0</td><td>0.60</td></tr>
+                        <tr><td><strong>&lt; 0.2</strong></td><td>2.4</td><td><strong>0.09</strong></td></tr>
+                    </table>
+                    <div class="good"><strong>Lok Index &lt; 0.2</strong> 的 LR- 為 0.09，是排除肝硬化最有效的工具！</div>
+                `
+            }
+        ]
+    },
+    {
+        id: 5,
+        title: '臨床案例應用',
+        sub: 'Clinical Application',
+        color: '#AB47BC',
+        sections: [
+            {
+                title: '案例一：高度懷疑肝硬化',
+                content: `
+                    <div class="danger">
+                        <strong>50 歲男性</strong>，因疲倦、虛弱、腹脹 3 個月就診。無其他病史。<br>
+                        <strong>理學檢查：</strong>掌紅斑、5 顆蜘蛛痣（胸壁）、中量腹水、多條腹壁靜脈擴張（血流從臍部向外）、周邊水腫<br>
+                        <strong>檢驗：</strong>血小板 90×10³/µL、AST 85 U/L（ULN 30）、ALT 35 U/L（ULN 30）、INR 1.6、Albumin 2.5 g/dL
+                    </div>
+                    <h4>診斷分析</h4>
+                    <table>
+                        <tr><th>發現</th><th>LR+</th></tr>
+                        <tr><td>掌紅斑</td><td>5.0</td></tr>
+                        <tr><td>蜘蛛痣</td><td>4.3</td></tr>
+                        <tr><td>腹水</td><td>7.2</td></tr>
+                        <tr><td>腹壁靜脈擴張</td><td>11</td></tr>
+                        <tr><td>周邊水腫</td><td>3.0</td></tr>
+                        <tr><td>血小板 &lt;110×10³/µL</td><td>9.8</td></tr>
+                        <tr><td>AST &gt;2×ULN</td><td>3.2</td></tr>
+                        <tr><td>INR 延長</td><td>5.0</td></tr>
+                        <tr><td>Albumin &lt;3.5 g/dL</td><td>4.4</td></tr>
+                        <tr><td>AST:ALT = 2.4 (&gt;1)</td><td>4.6</td></tr>
+                        <tr><td>APRI = 3.1 (&gt;2)</td><td>4.6</td></tr>
+                        <tr><td>Bonacini CDS = 10 (&gt;8)</td><td>13</td></tr>
+                    </table>
+                    <div class="formula">
+                        前測機率 24% + 多項高度提示肝硬化的發現<br>
+                        <strong>→ 整體徵象與實驗室檢查高度提示肝硬化，不需肝切片確認</strong>
+                    </div>
+                `
+            },
+            {
+                title: '案例二：診斷不確定',
+                content: `
+                    <div class="info">
+                        <strong>50 歲女性</strong>，1 年前診斷 C 型肝炎，轉介考慮治療。有糖尿病史，其餘無特殊症狀。<br>
+                        <strong>理學檢查：</strong>5 顆蜘蛛痣（胸壁），其餘正常<br>
+                        <strong>檢驗：</strong>血小板 210×10³/µL、AST 89 U/L、ALT 82 U/L、INR 正常、Albumin 正常
+                    </div>
+                    <h4>診斷分析</h4>
+                    <p><strong>降低肝硬化可能性的發現：</strong></p>
+                    <ul>
+                        <li>無堅硬肝臟：LR- 0.37</li>
+                        <li>無肝腫大：LR- 0.37</li>
+                        <li>血小板 &gt;200×10³/µL：LR- 0.28</li>
+                        <li>INR 正常：LR- 0.57</li>
+                        <li>Albumin &gt;3.5 g/dL：LR- 0.61</li>
+                    </ul>
+                    <p><strong>提高肝硬化可能性的發現：</strong></p>
+                    <ul>
+                        <li>糖尿病史：LR+ 2.8</li>
+                        <li>蜘蛛痣：LR+ 4.3</li>
+                        <li>AST:ALT = 1.1 (&gt;1)：LR+ 4.6</li>
+                    </ul>
+                    <p><strong>評分系統：</strong></p>
+                    <ul>
+                        <li>Bonacini CDS = 5：LR+ 1.4</li>
+                        <li>APRI = 1.4：LR+ 2.7</li>
+                        <li>Lok Index = 0.31：LR+ 2.4（介於 0.2-0.5）</li>
+                        <li>FIB-4 Index = 2.3：LR+ 2.8-6.5</li>
+                    </ul>
+                    <div class="formula">
+                        C 型肝炎的前測機率 19% + 混合的臨床發現<br>
+                        <strong>→ 診斷不確定，可能需要肝切片評估組織學證據</strong>
+                    </div>
+                `
+            },
+            {
+                title: '診斷策略總結',
+                content: `
+                    <h4>提高肝硬化可能性的最佳發現</h4>
+                    <table>
+                        <tr><th>類別</th><th>最佳發現</th><th>LR+</th></tr>
+                        <tr><td>病史</td><td>糖尿病</td><td>2.8</td></tr>
+                        <tr><td>理學檢查</td><td>腹水</td><td>7.2</td></tr>
+                        <tr><td>實驗室</td><td>血小板 &lt;160×10³/µL</td><td>6.3</td></tr>
+                        <tr><td>評分系統</td><td>Bonacini CDS &gt;7</td><td>9.4</td></tr>
+                    </table>
+                    <h4>降低肝硬化可能性的最佳發現</h4>
+                    <table>
+                        <tr><th>類別</th><th>最佳發現</th><th>LR-</th></tr>
+                        <tr><td>理學檢查</td><td>無肝腫大或無堅硬肝臟</td><td>0.37</td></tr>
+                        <tr><td>實驗室</td><td>血小板 &gt;160×10³/µL</td><td>0.29</td></tr>
+                        <tr><td>評分系統</td><td><strong>Lok Index &lt;0.2</strong></td><td><strong>0.09</strong></td></tr>
+                    </table>
+                    <div class="good">
+                        <strong>結論：</strong><br>
+                        • 單一發現對<strong>確認</strong>肝硬化比<strong>排除</strong>更有用<br>
+                        • 結合實驗室檢查的評分系統（如 Lok Index、Bonacini CDS）可能比單一發現或非結構化的臨床判斷更有用<br>
+                        • Lok Index &lt;0.2 是排除肝硬化最有效的工具
+                    </div>
+                `
+            }
+        ]
+    }
+];
+
+const quiz = [
+    {
+        q: '下列哪項理學檢查發現對診斷肝硬化最有價值（LR+ 最高）？',
+        o: ['腹水 (LR+ 7.2)', '蜘蛛痣 (LR+ 4.3)', '腹壁靜脈擴張 (LR+ 11)', '掌紅斑 (LR+ 5.0)'],
+        c: 2,
+        e: '腹壁靜脈擴張的 LR+ 為 11，是單一理學檢查發現中最高的。但因為其敏感度較低（31%），在排除肝硬化時不如其他發現有用。腹水（LR+ 7.2）和蜘蛛痣（LR+ 4.3）因為可信區間較窄，被認為是最可靠的發現。'
+    },
+    {
+        q: '關於血小板計數在肝硬化診斷的價值，下列敘述何者正確？',
+        o: ['血小板 <200×10³/µL 是最有診斷價值的門檻', '血小板 <160×10³/µL 的 LR+ 為 6.3，LR- 為 0.29', '血小板正常可以排除肝硬化', 'ALT 升高比血小板下降更能診斷肝硬化'],
+        c: 1,
+        e: '血小板 <160×10³/µL 是最有診斷價值的門檻，LR+ 為 6.3（95% CI: 4.3-8.3），LR- 為 0.29（95% CI: 0.20-0.39）。ALT 升高（LR+ 1.1）無法有效診斷肝硬化。'
+    },
+    {
+        q: '下列哪項評分系統/指標對於「排除」肝硬化最有效？',
+        o: ['Bonacini CDS >7 (LR+ 9.4)', 'AST:ALT >1 (LR+ 4.6)', 'Lok Index <0.2 (LR- 0.09)', 'APRI >2 (LR+ 4.6)'],
+        c: 2,
+        e: 'Lok Index <0.2 的 LR- 為 0.09（95% CI: 0.03-0.31），是排除肝硬化最有效的工具。其他選項主要用於確認而非排除肝硬化。'
+    },
+    {
+        q: 'AST:ALT 比值 >1 對肝硬化的診斷價值為何？',
+        o: ['可以排除肝硬化', 'LR+ 為 4.6，提示肝硬化可能性增加', '只對酒精性肝病有診斷價值', 'LR+ 接近 1，無診斷價值'],
+        c: 1,
+        e: 'AST:ALT 比值 >1 的 LR+ 為 4.6（95% CI: 2.6-6.5），可以增加肝硬化的可能性。這是因為在肝硬化中，AST 相對於 ALT 升高更明顯。這個發現在 23 個研究中被驗證，是最常被研究的評分指標之一。'
+    },
+    {
+        q: '關於肝硬化的病理生理學，下列敘述何者正確？',
+        o: ['蜘蛛痣是因為維生素 K 缺乏所致', 'PT 延長是因為因子 VII 半衰期最短，最先被消耗', '腹水主要是因為門脈壓力下降', '血小板下降主要是因為凝血因子消耗'],
+        c: 1,
+        e: '因子 VII 的半衰期最短，是肝硬化中最先被消耗的凝血因子，因此 PT 可能選擇性延長。蜘蛛痣是因為雄性素代謝清除減少導致周邊轉換成雌激素增加。腹水是因為門脈高壓和肝細胞功能不全。血小板下降是因為脾功能亢進或骨髓抑制。'
+    },
+    {
+        q: '一位有已知肝病的患者，理學檢查發現無肝腫大且肝臟不堅硬。這對診斷肝硬化的意義為何？',
+        o: ['可以確診肝硬化', '可以排除肝硬化（LR- 0.37）', '對診斷無幫助', '應立即進行肝切片'],
+        c: 1,
+        e: '無肝腫大（LR- 0.37）和無堅硬肝臟（LR- 0.37）是排除肝硬化最有用的理學檢查發現。但 LR- 0.37 只能中度降低肝硬化的可能性，不能完全排除。'
+    },
+    {
+        q: '關於 Bonacini Cirrhosis Discriminant Score (CDS)，下列敘述何者正確？',
+        o: ['包含血小板、ALT:AST 比值、INR 三個項目', '分數範圍為 0-20', 'CDS <3 可以確診肝硬化', 'CDS >7 的 LR+ 為 9.4'],
+        c: 3,
+        e: 'Bonacini CDS 包含血小板分數、ALT:AST 比值分數和 INR 分數，總分範圍 0-11。CDS >7 的 LR+ 為 9.4，可以增加肝硬化的可能性。CDS <3 的 LR- 為 0.30，用於降低（而非確診）肝硬化的可能性。'
+    },
+    {
+        q: '關於酒精使用史在肝硬化診斷的價值，下列敘述何者正確？',
+        o: ['酒精使用史的 LR+ 很高，是最有價值的病史', '酒精使用史的 LR+ 僅 1.5，無法有效區分肝硬化', '不喝酒可以排除肝硬化', '酒精使用史比糖尿病史更有診斷價值'],
+        c: 1,
+        e: '酒精使用史的 LR+ 僅 1.5，無法有效區分肝硬化。這可能是因為酒精使用在一般人群中常見，但發展成肝硬化的比例很低。糖尿病史（LR+ 2.8）反而是唯一有診斷價值的病史因素。'
+    },
+    {
+        q: '在肝硬化患者中，門脈高壓導致的腹壁靜脈擴張，其血流方向特徵為何？',
+        o: ['臍上臍下血流都向上（往上腔靜脈）', '臍上臍下血流都向下（往下腔靜脈）', '血流從臍部向外離開（臍上向上，臍下向下）', '血流向臍部匯集'],
+        c: 2,
+        e: '門脈高壓時，側支循環開放，腹壁靜脈的血流從臍部向外離開（caput medusae）。臍上的血流向上（往上腔靜脈），臍下的血流向下（往下腔靜脈）。這與下腔靜脈阻塞（全部向上）或上腔靜脈阻塞（全部向下）不同。'
+    },
+    {
+        q: '肝病患者的前測機率取決於病因。C 型肝炎患者的肝硬化前測機率約為多少？',
+        o: ['5%', '10%', '19%', '39%'],
+        c: 2,
+        e: '根據文獻回顧，C 型肝炎患者的肝硬化盛行率約為 19%（95% CI: 15%-23%）。不同病因的前測機率有很大差異（範圍 9%-39%），因此一旦知道肝病的病因，應使用病因特異性的盛行率來估計前測機率。'
+    }
+];
+
+// Same React components as template
+function App() {
+    const [activeLesson, setActiveLesson] = React.useState(1);
+    const [showQuiz, setShowQuiz] = React.useState(false);
+    const [currentQ, setCurrentQ] = React.useState(0);
+    const [score, setScore] = React.useState(0);
+    const [answered, setAnswered] = React.useState(null);
+    const [showResult, setShowResult] = React.useState(false);
+    const [showExplanation, setShowExplanation] = React.useState(false);
+    const [progress, setProgress] = React.useState(ProgressTracker.getProgress());
+    const [sectionIdx, setSectionIdx] = React.useState(0);
+
+    const lesson = lessons.find(l => l.id === activeLesson);
+
+    const handleAnswer = (idx) => {
+        if (answered !== null) return;
+        setAnswered(idx);
+        setShowExplanation(true);
+        if (idx === quiz[currentQ].c) setScore(s => s + 1);
+    };
+
+    const nextQuestion = () => {
+        setShowExplanation(false);
+        if (currentQ < quiz.length - 1) {
+            setCurrentQ(c => c + 1);
+            setAnswered(null);
+        } else {
+            ProgressTracker.saveQuizScore(score + (answered === quiz[currentQ].c ? 0 : 0), quiz.length);
+            setShowResult(true);
+        }
+    };
+
+    const resetQuiz = () => {
+        setCurrentQ(0);
+        setScore(0);
+        setAnswered(null);
+        setShowResult(false);
+        setShowExplanation(false);
+    };
+
+    const changeLesson = (id) => {
+        ProgressTracker.completeLesson(activeLesson);
+        setProgress(ProgressTracker.getProgress());
+        setActiveLesson(id);
+        setSectionIdx(0);
+        setShowQuiz(false);
+    };
+
+    const startQuiz = () => {
+        ProgressTracker.completeLesson(activeLesson);
+        setProgress(ProgressTracker.getProgress());
+        setShowQuiz(true);
+        resetQuiz();
+    };
+
+    const completionRate = Math.round((progress.lessonsCompleted.length / lessons.length) * 100);
+
+    return (
+        <div style={{fontFamily: "'Noto Sans TC', 'Source Sans Pro', sans-serif", background: 'linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%)', minHeight: '100vh'}}>
+            {/* Header */}
+            <header style={{background: 'linear-gradient(135deg, #6A1B9A 0%, #8E24AA 50%, #AB47BC 100%)', color: 'white', padding: '1rem 2rem', boxShadow: '0 2px 10px rgba(0,0,0,0.15)'}}>
+                <div style={{maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem'}}>
+                    <a href="jama-rational-exam.html" style={{color: 'white', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8, opacity: 0.9, transition: 'opacity 0.2s'}}
+                       onMouseOver={e => e.currentTarget.style.opacity = '1'} onMouseOut={e => e.currentTarget.style.opacity = '0.9'}>
+                        <span style={{fontSize: '1.5rem'}}>←</span>
+                        <span>返回模組列表</span>
+                    </a>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                        <div style={{background: 'rgba(255,255,255,0.2)', borderRadius: 20, padding: '0.3rem 1rem', fontSize: '0.9rem'}}>
+                            完成度: {completionRate}%
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            {/* Hero */}
+            <section style={{background: 'linear-gradient(135deg, #6A1B9A 0%, #8E24AA 50%, #AB47BC 100%)', color: 'white', padding: '3rem 2rem 4rem', textAlign: 'center'}}>
+                <div style={{maxWidth: 900, margin: '0 auto'}}>
+                    <div style={{display: 'inline-block', background: 'rgba(255,255,255,0.2)', borderRadius: 20, padding: '0.3rem 1rem', fontSize: '0.85rem', marginBottom: '1rem'}}>
+                        JAMA Rational Clinical Examination
+                    </div>
+                    <h1 style={{fontFamily: "'Playfair Display', 'Crimson Pro', serif", fontSize: 'clamp(1.8rem, 5vw, 2.8rem)', fontWeight: 700, margin: '0.5rem 0', lineHeight: 1.2}}>
+                        Does This Patient With Liver Disease Have Cirrhosis?
+                    </h1>
+                    <p style={{fontSize: 'clamp(1rem, 2.5vw, 1.3rem)', opacity: 0.95, marginBottom: '0.5rem'}}>肝硬化的臨床診斷評估</p>
+                    <p style={{fontSize: '0.95rem', opacity: 0.85}}>Udell JA, et al. JAMA 2012;307(8):832-842</p>
+                    <a href="https://jamanetwork.com/journals/jama/fullarticle/1355997" target="_blank" rel="noopener noreferrer"
+                       style={{display: 'inline-block', marginTop: '1rem', color: 'white', background: 'rgba(255,255,255,0.2)', padding: '0.5rem 1.2rem', borderRadius: 20, textDecoration: 'none', fontSize: '0.9rem', transition: 'background 0.2s'}}
+                       onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+                       onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
+                        閱讀原文 Read Full Article →
+                    </a>
+                </div>
+            </section>
+
+            {/* Learning Objectives */}
+            <section style={{maxWidth: 1000, margin: '-2rem auto 2rem', padding: '0 1rem'}}>
+                <div style={{background: 'white', borderRadius: 16, padding: '1.5rem 2rem', boxShadow: '0 4px 20px rgba(0,0,0,0.1)'}}>
+                    <h3 style={{margin: '0 0 1rem', color: '#6A1B9A'}}>📚 學習目標</h3>
+                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '0.8rem'}}>
+                        {['掌握肝硬化的理學檢查技巧與徵象', '理解各項檢查發現的診斷價值（LR+/LR-）', '學會使用 APRI、Bonacini CDS、Lok Index 等評分系統', '應用臨床發現與實驗室檢查進行風險分層'].map((obj, i) => (
+                            <div key={i} style={{display: 'flex', alignItems: 'flex-start', gap: '0.5rem'}}>
+                                <span style={{color: '#8E24AA', fontWeight: 'bold'}}>✓</span>
+                                <span style={{fontSize: '0.95rem'}}>{obj}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Lesson Tabs */}
+            <nav style={{maxWidth: 1200, margin: '0 auto 2rem', padding: '0 1rem'}}>
+                <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center'}}>
+                    {lessons.map(l => (
+                        <button key={l.id} onClick={() => changeLesson(l.id)}
+                            style={{
+                                padding: '0.7rem 1.2rem', border: 'none', borderRadius: 25,
+                                background: activeLesson === l.id ? `linear-gradient(135deg, ${l.color}, ${l.color}dd)` : 'white',
+                                color: activeLesson === l.id ? 'white' : '#333',
+                                cursor: 'pointer', fontWeight: 500, fontSize: '0.9rem',
+                                boxShadow: activeLesson === l.id ? `0 4px 15px ${l.color}40` : '0 2px 8px rgba(0,0,0,0.1)',
+                                transition: 'all 0.3s ease', display: 'flex', alignItems: 'center', gap: '0.5rem'
+                            }}>
+                            {progress.lessonsCompleted.includes(l.id) && <span>✓</span>}
+                            <span>{l.title}</span>
+                        </button>
+                    ))}
+                    <button onClick={startQuiz}
+                        style={{
+                            padding: '0.7rem 1.2rem', border: 'none', borderRadius: 25,
+                            background: showQuiz ? 'linear-gradient(135deg, #2E7D32, #388E3C)' : 'white',
+                            color: showQuiz ? 'white' : '#2E7D32',
+                            cursor: 'pointer', fontWeight: 500, fontSize: '0.9rem',
+                            boxShadow: showQuiz ? '0 4px 15px rgba(46,125,50,0.4)' : '0 2px 8px rgba(0,0,0,0.1)',
+                            transition: 'all 0.3s ease'
+                        }}>
+                        📝 測驗
+                    </button>
+                </div>
+            </nav>
+
+            {/* Main Content */}
+            <main style={{maxWidth: 1000, margin: '0 auto', padding: '0 1rem 3rem'}}>
+                {!showQuiz ? (
+                    <div style={{background: 'white', borderRadius: 16, padding: '2rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)'}}>
+                        <div style={{borderBottom: `3px solid ${lesson.color}`, paddingBottom: '1rem', marginBottom: '1.5rem'}}>
+                            <h2 style={{margin: 0, color: lesson.color, fontSize: '1.6rem'}}>{lesson.title}</h2>
+                            <p style={{margin: '0.3rem 0 0', color: '#666', fontSize: '0.95rem'}}>{lesson.sub}</p>
+                        </div>
+
+                        {/* Section Tabs */}
+                        <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem'}}>
+                            {lesson.sections.map((sec, idx) => (
+                                <button key={idx} onClick={() => setSectionIdx(idx)}
+                                    style={{
+                                        padding: '0.5rem 1rem', border: `2px solid ${sectionIdx === idx ? lesson.color : '#ddd'}`,
+                                        borderRadius: 20, background: sectionIdx === idx ? `${lesson.color}10` : 'white',
+                                        color: sectionIdx === idx ? lesson.color : '#666', cursor: 'pointer',
+                                        fontWeight: sectionIdx === idx ? 600 : 400, fontSize: '0.85rem', transition: 'all 0.2s'
+                                    }}>
+                                    {sec.title}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Section Content */}
+                        <div className="content-area" dangerouslySetInnerHTML={{__html: lesson.sections[sectionIdx].content}} />
+
+                        {/* Navigation */}
+                        <div style={{display: 'flex', justifyContent: 'space-between', marginTop: '2rem', paddingTop: '1rem', borderTop: '1px solid #eee'}}>
+                            <button onClick={() => sectionIdx > 0 ? setSectionIdx(sectionIdx - 1) : activeLesson > 1 && changeLesson(activeLesson - 1)}
+                                disabled={sectionIdx === 0 && activeLesson === 1}
+                                style={{
+                                    padding: '0.7rem 1.5rem', border: 'none', borderRadius: 8,
+                                    background: (sectionIdx === 0 && activeLesson === 1) ? '#ccc' : '#f0f0f0',
+                                    cursor: (sectionIdx === 0 && activeLesson === 1) ? 'not-allowed' : 'pointer',
+                                    fontWeight: 500, transition: 'background 0.2s'
+                                }}>
+                                ← 上一頁
+                            </button>
+                            <button onClick={() => sectionIdx < lesson.sections.length - 1 ? setSectionIdx(sectionIdx + 1) : activeLesson < lessons.length ? changeLesson(activeLesson + 1) : startQuiz()}
+                                style={{
+                                    padding: '0.7rem 1.5rem', border: 'none', borderRadius: 8,
+                                    background: `linear-gradient(135deg, ${lesson.color}, ${lesson.color}dd)`,
+                                    color: 'white', cursor: 'pointer', fontWeight: 500, transition: 'transform 0.2s'
+                                }}>
+                                {sectionIdx < lesson.sections.length - 1 ? '下一頁 →' : activeLesson < lessons.length ? '下一課 →' : '開始測驗 →'}
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div style={{background: 'white', borderRadius: 16, padding: '2rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)'}}>
+                        {!showResult ? (
+                            <>
+                                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem'}}>
+                                    <h2 style={{margin: 0, color: '#2E7D32'}}>📝 課後測驗</h2>
+                                    <span style={{background: '#E8F5E9', color: '#2E7D32', padding: '0.3rem 1rem', borderRadius: 20, fontWeight: 600}}>
+                                        {currentQ + 1} / {quiz.length}
+                                    </span>
+                                </div>
+                                <div style={{background: '#E8F5E9', height: 8, borderRadius: 4, marginBottom: '2rem'}}>
+                                    <div style={{background: 'linear-gradient(90deg, #2E7D32, #4CAF50)', height: '100%', borderRadius: 4, width: `${((currentQ + 1) / quiz.length) * 100}%`, transition: 'width 0.3s'}} />
+                                </div>
+                                <h3 style={{fontSize: '1.2rem', lineHeight: 1.6, marginBottom: '1.5rem'}}>{quiz[currentQ].q}</h3>
+                                <div style={{display: 'flex', flexDirection: 'column', gap: '0.8rem'}}>
+                                    {quiz[currentQ].o.map((opt, idx) => (
+                                        <button key={idx} onClick={() => handleAnswer(idx)}
+                                            style={{
+                                                padding: '1rem 1.2rem', border: '2px solid',
+                                                borderColor: answered === null ? '#ddd' : idx === quiz[currentQ].c ? '#4CAF50' : answered === idx ? '#f44336' : '#ddd',
+                                                borderRadius: 12, background: answered === null ? 'white' : idx === quiz[currentQ].c ? '#E8F5E9' : answered === idx ? '#FFEBEE' : 'white',
+                                                cursor: answered === null ? 'pointer' : 'default', textAlign: 'left', fontSize: '1rem',
+                                                transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.8rem'
+                                            }}>
+                                            <span style={{
+                                                width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                background: answered === null ? '#f5f5f5' : idx === quiz[currentQ].c ? '#4CAF50' : answered === idx ? '#f44336' : '#f5f5f5',
+                                                color: (answered !== null && (idx === quiz[currentQ].c || answered === idx)) ? 'white' : '#666', fontWeight: 600, fontSize: '0.9rem'
+                                            }}>
+                                                {answered !== null && idx === quiz[currentQ].c ? '✓' : answered !== null && answered === idx ? '✗' : String.fromCharCode(65 + idx)}
+                                            </span>
+                                            <span>{opt}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                {showExplanation && (
+                                    <div style={{marginTop: '1.5rem', padding: '1.2rem', background: answered === quiz[currentQ].c ? '#E8F5E9' : '#FFF3E0', borderRadius: 12, borderLeft: `4px solid ${answered === quiz[currentQ].c ? '#4CAF50' : '#FF9800'}`}}>
+                                        <h4 style={{margin: '0 0 0.5rem', color: answered === quiz[currentQ].c ? '#2E7D32' : '#E65100'}}>
+                                            {answered === quiz[currentQ].c ? '✓ 正確！' : '✗ 不正確'}
+                                        </h4>
+                                        <p style={{margin: 0, lineHeight: 1.7}}>{quiz[currentQ].e}</p>
+                                    </div>
+                                )}
+                                {answered !== null && (
+                                    <button onClick={nextQuestion}
+                                        style={{
+                                            marginTop: '1.5rem', padding: '0.8rem 2rem', border: 'none', borderRadius: 8,
+                                            background: 'linear-gradient(135deg, #2E7D32, #388E3C)', color: 'white',
+                                            cursor: 'pointer', fontWeight: 600, fontSize: '1rem'
+                                        }}>
+                                        {currentQ < quiz.length - 1 ? '下一題 →' : '查看結果'}
+                                    </button>
+                                )}
+                            </>
+                        ) : (
+                            <div style={{textAlign: 'center', padding: '2rem 0'}}>
+                                <div style={{fontSize: '4rem', marginBottom: '1rem'}}>{score >= 8 ? '🎉' : score >= 6 ? '👍' : '💪'}</div>
+                                <h2 style={{margin: '0 0 0.5rem', color: '#2E7D32'}}>測驗完成！</h2>
+                                <p style={{fontSize: '1.5rem', fontWeight: 600, color: score >= 8 ? '#2E7D32' : score >= 6 ? '#FF9800' : '#f44336'}}>
+                                    {score} / {quiz.length} 分
+                                </p>
+                                <p style={{color: '#666', marginBottom: '2rem'}}>
+                                    {score >= 8 ? '太棒了！你已經掌握了肝硬化診斷評估的重點！' : score >= 6 ? '不錯！但還有進步空間，建議複習相關章節。' : '建議重新閱讀課程內容後再次測驗。'}
+                                </p>
+                                <div style={{display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap'}}>
+                                    <button onClick={resetQuiz}
+                                        style={{padding: '0.8rem 2rem', border: '2px solid #2E7D32', borderRadius: 8, background: 'white', color: '#2E7D32', cursor: 'pointer', fontWeight: 600}}>
+                                        重新測驗
+                                    </button>
+                                    <button onClick={() => { setShowQuiz(false); setActiveLesson(1); setSectionIdx(0); }}
+                                        style={{padding: '0.8rem 2rem', border: 'none', borderRadius: 8, background: 'linear-gradient(135deg, #2E7D32, #388E3C)', color: 'white', cursor: 'pointer', fontWeight: 600}}>
+                                        返回課程
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </main>
+
+            {/* Footer */}
+            <footer style={{background: '#37474F', color: 'white', padding: '2rem', textAlign: 'center'}}>
+                <p style={{margin: '0 0 0.5rem', opacity: 0.9}}>新竹台大分院教學部</p>
+                <p style={{margin: 0, fontSize: '0.9rem', opacity: 0.7}}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+
+            <style>{`
+                .content-area h4 { color: #6A1B9A; margin: 1.5rem 0 0.8rem; font-size: 1.1rem; }
+                .content-area p { line-height: 1.8; margin: 0.8rem 0; }
+                .content-area ul, .content-area ol { line-height: 1.8; padding-left: 1.5rem; }
+                .content-area li { margin: 0.4rem 0; }
+                .content-area table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.95rem; }
+                .content-area th, .content-area td { border: 1px solid #ddd; padding: 0.7rem; text-align: left; }
+                .content-area th { background: linear-gradient(135deg, #6A1B9A, #8E24AA); color: white; font-weight: 500; }
+                .content-area tr:nth-child(even) { background: #F3E5F5; }
+                .content-area tr:hover { background: #E1BEE7; }
+                .content-area .tip { background: linear-gradient(135deg, #E3F2FD, #BBDEFB); border-left: 4px solid #1976D2; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .good { background: linear-gradient(135deg, #E8F5E9, #C8E6C9); border-left: 4px solid #388E3C; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .info { background: linear-gradient(135deg, #E0F2F1, #B2DFDB); border-left: 4px solid #00796B; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .warning { background: linear-gradient(135deg, #FFF3E0, #FFE0B2); border-left: 4px solid #F57C00; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .danger { background: linear-gradient(135deg, #FFEBEE, #FFCDD2); border-left: 4px solid #C62828; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+                .content-area .formula { background: linear-gradient(135deg, #F3E5F5, #E1BEE7); border: 2px solid #8E24AA; padding: 1rem; border-radius: 8px; margin: 1rem 0; font-family: 'Crimson Pro', serif; }
+            `}</style>
+        </div>
+    );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
