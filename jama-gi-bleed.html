@@ -15,29 +15,156 @@
 <script type="text/babel">
 const MODULE_ID = 'jama-gi-bleed';
 
+const badgeDefs = {
+    'first-quiz': { name: '初試啼聲', icon: '🎯' },
+    'perfect-score': { name: '滿分達人', icon: '💯' },
+    'speed-demon': { name: '快速學習', icon: '⚡' },
+    'five-complete': { name: '五科精通', icon: '🌟' },
+    'ten-complete': { name: '十科達人', icon: '🏆' },
+    'master': { name: '全科大師', icon: '👑' },
+    'persistent': { name: '鍥而不捨', icon: '🔄' },
+    'night-owl': { name: '夜貓學習', icon: '🦉' },
+    'early-bird': { name: '早起學習', icon: '🌅' },
+    'weekend-warrior': { name: '週末戰士', icon: '📅' },
+    'cardio-master': { name: '心臟專家', icon: '❤️' },
+    'critical-master': { name: '重症達人', icon: '🏥' },
+    'neuro-master': { name: '神經專家', icon: '🧠' },
+    'pulm-master': { name: '胸腔專家', icon: '🫁' },
+    'core-master': { name: 'EBM核心達人', icon: '📊' },
+    'three-streak': { name: '三連勝', icon: '🔥' },
+    'five-streak': { name: '五連勝', icon: '🔥🔥' },
+    'triple-perfect': { name: '三連滿分', icon: '✨' },
+    'comeback-kid': { name: '逆轉勝', icon: '💪' },
+    'dedicated-learner': { name: '專注學習者', icon: '📚' },
+    'quick-learner': { name: '快速理解', icon: '🚀' },
+    'thorough-learner': { name: '深入學習', icon: '🔬' },
+    'consistent-learner': { name: '持之以恆', icon: '📈' },
+    'explorer': { name: '探索者', icon: '🧭' },
+    'completionist': { name: '完美主義', icon: '✅' },
+    'scholar': { name: '學者', icon: '🎓' },
+    'expert': { name: '專家', icon: '💼' },
+    'mentor': { name: '導師級', icon: '👨‍🏫' },
+    'legend': { name: '傳奇', icon: '🌠' },
+    'first-lesson': { name: '第一課', icon: '📖' },
+    'half-lessons': { name: '半程達成', icon: '🎯' },
+    'all-lessons': { name: '全課完成', icon: '📚' },
+    'quiz-taker': { name: '測驗參與', icon: '📝' },
+    'improver': { name: '進步獎', icon: '📈' },
+    'high-scorer': { name: '高分達人', icon: '🏅' },
+    'time-master': { name: '時間管理', icon: '⏰' },
+    'focused': { name: '專心致志', icon: '🎯' },
+    'resilient': { name: '屢敗屢戰', icon: '💪' },
+    'curious': { name: '求知若渴', icon: '🔍' },
+    'achiever': { name: '成就達人', icon: '🏆' }
+};
+
+const categoryModules = {
+    cardio: ['jama-chest-pain-acs', 'jama-syncope', 'jama-hypertension'],
+    critical: ['jama-bacteremia', 'jama-gi-bleed', 'jama-fluid-responsiveness', 'jama-difficult-intubation', 'jama-cirrhosis', 'jama-wound-infection'],
+    neuro: ['jama-head-trauma', 'jama-delirium', 'jama-decision-capacity'],
+    pulm: ['jama-pleural-effusion', 'jama-osa'],
+    core: ['critical-appraisal', 'diagnostic-study', 'prognosis-study', 'rct-appraisal', 'systematic-review', 'literature-search']
+};
+
 const ProgressTracker = {
+    STORAGE_KEY: 'ebm-progress',
+    newBadges: [],
     getProgress: () => {
         try {
-            const saved = localStorage.getItem(`progress_${MODULE_ID}`);
-            return saved ? JSON.parse(saved) : { lessonsCompleted: [], quizScores: [], lastVisit: null };
-        } catch { return { lessonsCompleted: [], quizScores: [], lastVisit: null }; }
+            const saved = localStorage.getItem(ProgressTracker.STORAGE_KEY);
+            return saved ? JSON.parse(saved) : { version: 1, modules: {}, badges: [], totalTimeSpent: 0, streakData: { currentStreak: 0, bestStreak: 0, lastPassDate: null, perfectStreak: 0 } };
+        } catch { return { version: 1, modules: {}, badges: [], totalTimeSpent: 0, streakData: { currentStreak: 0, bestStreak: 0, lastPassDate: null, perfectStreak: 0 } }; }
     },
     saveProgress: (progress) => {
         try {
-            localStorage.setItem(`progress_${MODULE_ID}`, JSON.stringify({...progress, lastVisit: new Date().toISOString()}));
+            localStorage.setItem(ProgressTracker.STORAGE_KEY, JSON.stringify({...progress, lastUpdated: new Date().toISOString()}));
         } catch {}
     },
     completeLesson: (lessonId) => {
         const progress = ProgressTracker.getProgress();
-        if (!progress.lessonsCompleted.includes(lessonId)) {
-            progress.lessonsCompleted.push(lessonId);
+        const mod = progress.modules[MODULE_ID] || { bestScore: 0, totalAttempts: 0, allAttempts: [], lessonsViewed: [], completed: false, firstCompleted: null };
+        if (!mod.lessonsViewed.includes(lessonId)) {
+            mod.lessonsViewed.push(lessonId);
+            progress.modules[MODULE_ID] = mod;
             ProgressTracker.saveProgress(progress);
         }
     },
-    saveQuizScore: (score, total) => {
+    saveQuizScore: (score, total, timeSpent) => {
+        ProgressTracker.newBadges = [];
         const progress = ProgressTracker.getProgress();
-        progress.quizScores.push({ score, total, date: new Date().toISOString() });
+        if (!progress.streakData) progress.streakData = { currentStreak: 0, bestStreak: 0, lastPassDate: null, perfectStreak: 0 };
+        const mod = progress.modules[MODULE_ID] || { bestScore: 0, totalAttempts: 0, allAttempts: [], lessonsViewed: [], completed: false, firstCompleted: null };
+        const previousBest = mod.bestScore;
+        const attempt = { date: new Date().toISOString(), score, timeSpent: timeSpent || 0 };
+        mod.allAttempts.push(attempt);
+        mod.totalAttempts++;
+        if (score > mod.bestScore) mod.bestScore = score;
+        const passingScore = Math.ceil(total * 0.7);
+        const passed = score >= passingScore;
+        if (passed && !mod.completed) { mod.completed = true; mod.firstCompleted = attempt.date; }
+        progress.modules[MODULE_ID] = mod;
+        progress.totalTimeSpent = (progress.totalTimeSpent || 0) + (timeSpent || 0);
+
+        const today = new Date().toDateString();
+        if (passed) {
+            const lastDate = progress.streakData.lastPassDate ? new Date(progress.streakData.lastPassDate).toDateString() : null;
+            if (lastDate !== today) {
+                const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+                if (lastDate === yesterday.toDateString()) { progress.streakData.currentStreak++; }
+                else if (lastDate !== today) { progress.streakData.currentStreak = 1; }
+                progress.streakData.lastPassDate = new Date().toISOString();
+                if (progress.streakData.currentStreak > progress.streakData.bestStreak) { progress.streakData.bestStreak = progress.streakData.currentStreak; }
+            }
+            if (score === total) { progress.streakData.perfectStreak = (progress.streakData.perfectStreak || 0) + 1; }
+            else { progress.streakData.perfectStreak = 0; }
+        } else { progress.streakData.currentStreak = 0; progress.streakData.perfectStreak = 0; }
+
+        ProgressTracker.checkBadges(progress, MODULE_ID, score, total, timeSpent || 0, previousBest);
         ProgressTracker.saveProgress(progress);
+    },
+    checkBadges: (progress, moduleId, score, total, timeSpent, previousBest) => {
+        const dominated = progress.badges || []; const ids = dominated.map(b => b.id); const now = new Date().toISOString();
+        const addBadge = (id) => { if (!ids.includes(id) && badgeDefs[id]) { dominated.push({ id, earnedAt: now }); ProgressTracker.newBadges.push({ id, ...badgeDefs[id] }); } };
+        addBadge('first-quiz');
+        if (score === total) addBadge('perfect-score');
+        if (timeSpent < 120) addBadge('speed-demon');
+        if (timeSpent < 60) addBadge('quick-learner');
+        if (timeSpent > 300 && score >= Math.ceil(total * 0.7)) addBadge('thorough-learner');
+        const completed = Object.values(progress.modules).filter(m => m.completed).length;
+        if (completed >= 5) addBadge('five-complete');
+        if (completed >= 10) addBadge('ten-complete');
+        if (completed >= 15) addBadge('scholar');
+        if (completed >= 18) addBadge('master');
+        if (completed >= 20) addBadge('legend');
+        const mod = progress.modules[moduleId];
+        if (mod && mod.totalAttempts >= 3) addBadge('persistent');
+        if (mod && mod.totalAttempts >= 5) addBadge('resilient');
+        if (mod && mod.totalAttempts >= 2 && score > previousBest) addBadge('improver');
+        if (previousBest < Math.ceil(total * 0.7) && score >= Math.ceil(total * 0.7)) addBadge('comeback-kid');
+        if (score >= total * 0.9) addBadge('high-scorer');
+        const hour = new Date().getHours();
+        if (hour >= 22 || hour < 5) addBadge('night-owl');
+        if (hour >= 5 && hour < 8) addBadge('early-bird');
+        const day = new Date().getDay();
+        if (day === 0 || day === 6) addBadge('weekend-warrior');
+        if (progress.streakData) {
+            if (progress.streakData.currentStreak >= 3) addBadge('three-streak');
+            if (progress.streakData.currentStreak >= 5) addBadge('five-streak');
+            if (progress.streakData.perfectStreak >= 3) addBadge('triple-perfect');
+        }
+        Object.entries(categoryModules).forEach(([cat, mods]) => {
+            const catCompleted = mods.filter(m => progress.modules[m] && progress.modules[m].completed).length;
+            if (catCompleted === mods.length) { const badgeId = cat + '-master'; addBadge(badgeId); }
+        });
+        const totalAttempts = Object.values(progress.modules).reduce((sum, m) => sum + (m.totalAttempts || 0), 0);
+        if (totalAttempts >= 10) addBadge('dedicated-learner');
+        if (totalAttempts >= 25) addBadge('consistent-learner');
+        if (totalAttempts >= 50) addBadge('expert');
+        if (totalAttempts >= 100) addBadge('mentor');
+        const modulesExplored = Object.keys(progress.modules).length;
+        if (modulesExplored >= 5) addBadge('explorer');
+        if (modulesExplored >= 10) addBadge('curious');
+        progress.badges = dominated;
     }
 };
 
@@ -468,6 +595,55 @@ const quiz = [
     }
 ];
 
+// BadgeToast Component
+function BadgeToast({ badges, onClose }) {
+    if (!badges || badges.length === 0) return null;
+    return (
+        React.createElement('div', {
+            style: {
+                position: 'fixed',
+                top: 20,
+                right: 20,
+                zIndex: 1000,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10
+            }
+        },
+            badges.map((badge, i) =>
+                React.createElement('div', {
+                    key: i,
+                    style: {
+                        background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                        borderRadius: 16,
+                        padding: '16px 20px',
+                        boxShadow: '0 8px 32px rgba(255, 165, 0, 0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        animation: 'slideIn 0.5s ease-out',
+                        cursor: 'pointer',
+                        minWidth: 200
+                    },
+                    onClick: () => onClose(i)
+                },
+                    React.createElement('span', { style: { fontSize: 32 } }, badge.icon),
+                    React.createElement('div', null,
+                        React.createElement('div', { style: { fontSize: 12, color: '#333', opacity: 0.8 } }, 'Achievement Unlocked!'),
+                        React.createElement('div', { style: { fontSize: 16, fontWeight: 700, color: '#333' } }, badge.name)
+                    )
+                )
+            ),
+            React.createElement('style', null, `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `)
+        )
+    );
+}
+
 // Same React components as template
 function App() {
     const [activeLesson, setActiveLesson] = React.useState(1);
@@ -479,8 +655,14 @@ function App() {
     const [showExplanation, setShowExplanation] = React.useState(false);
     const [progress, setProgress] = React.useState(ProgressTracker.getProgress());
     const [sectionIdx, setSectionIdx] = React.useState(0);
+    const [newBadges, setNewBadges] = React.useState([]);
+    const [quizStartTime, setQuizStartTime] = React.useState(null);
 
     const lesson = lessons.find(l => l.id === activeLesson);
+
+    const closeBadge = (index) => {
+        setNewBadges(prev => prev.filter((_, i) => i !== index));
+    };
 
     const handleAnswer = (idx) => {
         if (answered !== null) return;
@@ -495,7 +677,11 @@ function App() {
             setCurrentQ(c => c + 1);
             setAnswered(null);
         } else {
-            ProgressTracker.saveQuizScore(score + (answered === quiz[currentQ].c ? 0 : 0), quiz.length);
+            const timeSpent = quizStartTime ? Math.round((Date.now() - quizStartTime) / 1000) : 0;
+            ProgressTracker.saveQuizScore(score + (answered === quiz[currentQ].c ? 0 : 0), quiz.length, timeSpent);
+            if (ProgressTracker.newBadges && ProgressTracker.newBadges.length > 0) {
+                setNewBadges([...ProgressTracker.newBadges]);
+            }
             setShowResult(true);
         }
     };
@@ -520,13 +706,17 @@ function App() {
         ProgressTracker.completeLesson(activeLesson);
         setProgress(ProgressTracker.getProgress());
         setShowQuiz(true);
+        setQuizStartTime(Date.now());
         resetQuiz();
     };
 
-    const completionRate = Math.round((progress.lessonsCompleted.length / lessons.length) * 100);
+    const mod = progress.modules && progress.modules[MODULE_ID];
+    const lessonsCompleted = mod && mod.lessonsViewed ? mod.lessonsViewed.length : 0;
+    const completionRate = Math.round((lessonsCompleted / lessons.length) * 100);
 
     return (
         <div style={{fontFamily: "'Noto Sans TC', 'Source Sans Pro', sans-serif", background: 'linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%)', minHeight: '100vh'}}>
+            <BadgeToast badges={newBadges} onClose={closeBadge} />
             {/* Header */}
             <header style={{background: 'linear-gradient(135deg, #C62828 0%, #D84315 50%, #E65100 100%)', color: 'white', padding: '1rem 2rem', boxShadow: '0 2px 10px rgba(0,0,0,0.15)'}}>
                 <div style={{maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem'}}>

@@ -297,26 +297,149 @@
     <script type="text/babel">
         const MODULE_ID = 'jama-decision-capacity';
 
-        const ProgressTracker = {
-            getProgress: () => {
-                const saved = localStorage.getItem(`progress_${MODULE_ID}`);
-                return saved ? JSON.parse(saved) : { lessonComplete: [], quizScore: null, lastVisit: null };
+        // Badge definitions for notifications
+        const badgeDefs = {
+            'first-quiz': { name: '初試啼聲', icon: '🎯' },
+            'perfect-score': { name: '滿分達人', icon: '💯' },
+            'five-complete': { name: '小有成就', icon: '⭐' },
+            'ten-complete': { name: '學有專精', icon: '🌟' },
+            'master': { name: 'EBM大師', icon: '👑' },
+            'speed-demon': { name: '神速答題', icon: '⚡' },
+            'persistent': { name: '堅持不懈', icon: '💪' },
+            'three-streak': { name: '連勝三場', icon: '🔥' },
+            'five-streak': { name: '五連勝', icon: '🏆' },
+            'triple-perfect': { name: '三冠王', icon: '👑' },
+            'early-bird': { name: '早起的鳥', icon: '🐦' },
+            'night-owl': { name: '夜貓子', icon: '🦉' },
+            'weekend-warrior': { name: '假日戰士', icon: '📅' },
+            'comeback-kid': { name: '逆轉勝', icon: '🚀' },
+            'quick-learner': { name: '一點就通', icon: '💡' },
+            'improvement-king': { name: '進步王', icon: '📈' },
+            'marathon-runner': { name: '馬拉松學習者', icon: '🏃' },
+            'reviewer': { name: '溫故知新', icon: '📖' },
+            'almost-there': { name: '差一點點', icon: '😅' },
+            'generous-guesser': { name: '佛系答題', icon: '🙏' },
+            'learning-worm': { name: '學術蚯蚓', icon: '🪱' },
+            'eternal-student': { name: '永恆的學生', icon: '♾️' },
+            'speed-fail': { name: '光速陣亡', icon: '💫' },
+            'slow-and-wrong': { name: '想很久還是錯', icon: '🤔' },
+            'zero-hero': { name: '零分英雄', icon: '💀' },
+            'procrastinator': { name: '最後一秒', icon: '⏰' },
+            'deja-vu': { name: '既視感', icon: '👀' },
+            'coffee-needed': { name: '需要咖啡', icon: '☕' },
+            'wanderer': { name: '漫遊者', icon: '🧭' },
+            'consistent-output': { name: '穩定輸出', icon: '🎯' },
+            'heart-expert': { name: '心臟達人', icon: '❤️' },
+            'critical-master': { name: '急重症專家', icon: '🚨' },
+            'neuro-ninja': { name: '神經忍者', icon: '🧠' },
+            'pulm-pro': { name: '胸腔高手', icon: '🫁' },
+            'ebm-foundation': { name: 'EBM基石', icon: '🏛️' },
+            'jama-collector': { name: 'JAMA收藏家', icon: '📚' },
+            'achievement-hunter': { name: '成就獵人', icon: '🏅' },
+            'lucky-seven': { name: '幸運七', icon: '🍀' },
+            'completionist': { name: '全成就達成', icon: '🎖️' }
+        };
+
+        const categoryModules = {
+            cardio: ['jama-chest-pain-acs', 'jama-syncope', 'jama-hypertension'],
+            critical: ['jama-bacteremia', 'jama-gi-bleed', 'jama-fluid-responsiveness', 'jama-difficult-intubation', 'jama-cirrhosis', 'jama-wound-infection'],
+            neuro: ['jama-head-trauma', 'jama-delirium', 'jama-decision-capacity'],
+            pulm: ['jama-pleural-effusion', 'jama-osa'],
+            core: ['critical-appraisal', 'diagnostic-study', 'prognosis-study', 'rct-appraisal', 'systematic-review', 'literature-search']
+        };
+
+        const ProgressTracker={
+            STORAGE_KEY:'ebm-progress',
+            newBadges: [],
+            getProgress:()=>{try{const d=localStorage.getItem(ProgressTracker.STORAGE_KEY);return d?JSON.parse(d):{version:1,modules:{},badges:[],totalTimeSpent:0,streakData:{currentPassStreak:0,currentPerfectStreak:0},lastActivityDate:null}}catch{return{version:1,modules:{},badges:[],totalTimeSpent:0,streakData:{currentPassStreak:0,currentPerfectStreak:0},lastActivityDate:null}}},
+            saveQuizResult:(moduleId,score,total,timeSpent)=>{
+                ProgressTracker.newBadges = [];
+                const progress=ProgressTracker.getProgress();
+                const mod=progress.modules[moduleId]||{bestScore:0,totalAttempts:0,allAttempts:[],lessonsViewed:[],completed:false,firstCompleted:null};
+                const attempt={date:new Date().toISOString(),score,timeSpent};
+                mod.allAttempts.push(attempt);mod.totalAttempts++;
+                if(score>mod.bestScore)mod.bestScore=score;
+                const passingScore=Math.ceil(total*0.7);
+                if(score>=passingScore&&!mod.completed){mod.completed=true;mod.firstCompleted=attempt.date}
+                progress.modules[moduleId]=mod;progress.totalTimeSpent+=timeSpent;progress.lastUpdated=new Date().toISOString();
+                ProgressTracker.checkBadges(progress,moduleId,score,total,timeSpent);
+                localStorage.setItem(ProgressTracker.STORAGE_KEY,JSON.stringify(progress));return progress;
             },
-            saveProgress: (progress) => {
-                progress.lastVisit = new Date().toISOString();
-                localStorage.setItem(`progress_${MODULE_ID}`, JSON.stringify(progress));
-            },
-            markLessonComplete: (lessonId) => {
-                const progress = ProgressTracker.getProgress();
-                if (!progress.lessonComplete.includes(lessonId)) {
-                    progress.lessonComplete.push(lessonId);
-                    ProgressTracker.saveProgress(progress);
+            checkBadges:(progress,moduleId,score,total,timeSpent)=>{
+                const badges=progress.badges||[];const ids=badges.map(b=>b.id);const now=new Date();const nowStr=now.toISOString();
+                const hour=now.getHours();const day=now.getDay();
+                const passed=score>=Math.ceil(total*0.7);const perfect=score===total;
+                const addBadge=(id)=>{if(!ids.includes(id)){badges.push({id,earnedAt:nowStr});ids.push(id);ProgressTracker.newBadges.push(id);return true}return false};
+
+                addBadge('first-quiz');
+                if(perfect)addBadge('perfect-score');
+                if(timeSpent<120&&passed)addBadge('speed-demon');
+                const completed=Object.values(progress.modules).filter(m=>m.completed).length;
+                if(completed>=5)addBadge('five-complete');
+                if(completed>=10)addBadge('ten-complete');
+                if(completed>=18)addBadge('master');
+                const mod=progress.modules[moduleId];
+                if(mod&&mod.totalAttempts>=3)addBadge('persistent');
+
+                if(hour<6)addBadge('early-bird');
+                if(hour>=0&&hour<5)addBadge('night-owl');
+                if(day===0||day===6)addBadge('weekend-warrior');
+                if(hour>=2&&hour<5&&!passed)addBadge('coffee-needed');
+
+                const streakData=progress.streakData||{currentPassStreak:0,currentPerfectStreak:0};
+                if(passed){streakData.currentPassStreak++;if(perfect)streakData.currentPerfectStreak++;else streakData.currentPerfectStreak=0}
+                else{streakData.currentPassStreak=0;streakData.currentPerfectStreak=0}
+                if(streakData.currentPassStreak>=3)addBadge('three-streak');
+                if(streakData.currentPassStreak>=5)addBadge('five-streak');
+                if(streakData.currentPerfectStreak>=3)addBadge('triple-perfect');
+                progress.streakData=streakData;
+
+                if(mod){
+                    if(mod.totalAttempts===1&&perfect)addBadge('quick-learner');
+                    if(mod.totalAttempts===1&&score===7)addBadge('lucky-seven');
+                    if(mod.allAttempts&&mod.allAttempts.length>1){
+                        const firstScore=mod.allAttempts[0].score;
+                        if(firstScore<7&&perfect)addBadge('comeback-kid');
+                        if(score-firstScore>=5)addBadge('improvement-king');
+                        const lastThree=mod.allAttempts.slice(-3);
+                        if(lastThree.length===3&&lastThree[0].score===lastThree[1].score&&lastThree[1].score===lastThree[2].score)addBadge('deja-vu');
+                        if(lastThree.length===3&&lastThree.every(a=>a.score===score))addBadge('consistent-output');
+                    }
+                    if(mod.totalAttempts>=10)addBadge('learning-worm');
+                    if(mod.completed&&mod.totalAttempts>1&&passed)addBadge('reviewer');
                 }
-            },
-            saveQuizScore: (score, total) => {
-                const progress = ProgressTracker.getProgress();
-                progress.quizScore = { score, total, date: new Date().toISOString() };
-                ProgressTracker.saveProgress(progress);
+
+                if(score===6)addBadge('almost-there');
+                if(score===0)addBadge('zero-hero');
+                if(score>=2&&score<=3)addBadge('generous-guesser');
+                if(timeSpent<30&&!passed)addBadge('speed-fail');
+                if(timeSpent>600&&!passed)addBadge('slow-and-wrong');
+
+                const totalAttempts=Object.values(progress.modules).reduce((sum,m)=>sum+(m.totalAttempts||0),0);
+                if(totalAttempts>=50&&completed<18)addBadge('eternal-student');
+                const startedNotCompleted=Object.values(progress.modules).filter(m=>m.totalAttempts>0&&!m.completed).length;
+                if(startedNotCompleted>=5&&completed===0)addBadge('wanderer');
+
+                if(progress.lastActivityDate){
+                    const lastActivity=new Date(progress.lastActivityDate);
+                    const daysSince=(now-lastActivity)/(1000*60*60*24);
+                    if(daysSince>=7)addBadge('procrastinator');
+                }
+                progress.lastActivityDate=nowStr;
+
+                const checkCat=(cat,badgeId)=>{const mods=categoryModules[cat]||[];if(mods.length>0&&mods.every(id=>progress.modules[id]?.completed))addBadge(badgeId)};
+                checkCat('cardio','heart-expert');
+                checkCat('critical','critical-master');
+                checkCat('neuro','neuro-ninja');
+                checkCat('pulm','pulm-pro');
+                checkCat('core','ebm-foundation');
+                const jamaComplete=Object.keys(progress.modules).filter(k=>k.startsWith('jama-')&&progress.modules[k]?.completed).length;
+                if(jamaComplete>=12)addBadge('jama-collector');
+
+                if(badges.length>=10)addBadge('achievement-hunter');
+                if(badges.length>=39)addBadge('completionist');
+
+                progress.badges=badges;
             }
         };
 
@@ -702,6 +825,33 @@
             `
         };
 
+        const BadgeToast = ({ badges, onClose }) => {
+            if (!badges || badges.length === 0) return null;
+            return (
+                <div style={{position:'fixed',top:20,right:20,zIndex:9999,display:'flex',flexDirection:'column',gap:10}}>
+                    {badges.map((badgeId, i) => {
+                        const badge = badgeDefs[badgeId];
+                        if (!badge) return null;
+                        return (
+                            <div key={badgeId} style={{
+                                background:'linear-gradient(135deg, #FFD700, #FFA500)',
+                                padding:'16px 20px',borderRadius:16,boxShadow:'0 8px 32px rgba(0,0,0,0.2)',
+                                display:'flex',alignItems:'center',gap:12,animation:'slideIn 0.5s ease-out',minWidth:240
+                            }}>
+                                <span style={{fontSize:36}}>{badge.icon}</span>
+                                <div style={{flex:1}}>
+                                    <div style={{fontSize:12,fontWeight:600,color:'#5D4037'}}>新成就解鎖!</div>
+                                    <div style={{fontSize:16,fontWeight:700,color:'#3E2723'}}>{badge.name}</div>
+                                </div>
+                                <button onClick={()=>onClose(badgeId)} style={{background:'rgba(0,0,0,0.1)',border:'none',borderRadius:8,width:28,height:28,cursor:'pointer',fontSize:14}}>✕</button>
+                            </div>
+                        );
+                    })}
+                    <style>{`@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}`}</style>
+                </div>
+            );
+        };
+
         function App() {
             const [currentLesson, setCurrentLesson] = React.useState(1);
             const [quizStarted, setQuizStarted] = React.useState(false);
@@ -711,11 +861,22 @@
             const [score, setScore] = React.useState(0);
             const [quizComplete, setQuizComplete] = React.useState(false);
             const [progress, setProgress] = React.useState(ProgressTracker.getProgress());
+            const [quizStartTime, setQuizStartTime] = React.useState(null);
+            const [newBadges, setNewBadges] = React.useState([]);
 
             React.useEffect(() => {
-                ProgressTracker.markLessonComplete(currentLesson);
-                setProgress(ProgressTracker.getProgress());
-            }, [currentLesson]);
+                if (quizComplete && quizStartTime) {
+                    const t = Math.round((Date.now() - quizStartTime) / 1000);
+                    const finalScore = score + (selectedAnswer === quiz[currentQuestion].c ? 1 : 0);
+                    ProgressTracker.saveQuizResult(MODULE_ID, finalScore, quiz.length, t);
+                    if (ProgressTracker.newBadges.length > 0) {
+                        setNewBadges(ProgressTracker.newBadges);
+                        setTimeout(() => setNewBadges([]), 5000);
+                    }
+                }
+            }, [quizComplete]);
+
+            const closeBadge = (id) => setNewBadges(prev => prev.filter(b => b !== id));
 
             const handleAnswerSelect = (index) => {
                 if (showExplanation) return;
@@ -737,7 +898,6 @@
                     setShowExplanation(false);
                 } else {
                     setQuizComplete(true);
-                    ProgressTracker.saveQuizScore(score + (selectedAnswer === quiz[currentQuestion].c ? 1 : 0), quiz.length);
                 }
             };
 
@@ -748,12 +908,19 @@
                 setShowExplanation(false);
                 setScore(0);
                 setQuizComplete(false);
+                setQuizStartTime(null);
             };
 
-            const progressPercent = (progress.lessonComplete.length / lessons.length) * 100;
+            const startQuiz = () => {
+                setQuizStarted(true);
+                setQuizStartTime(Date.now());
+            };
+
+            const progressPercent = 0;
 
             return (
                 <div className="container">
+                    <BadgeToast badges={newBadges} onClose={closeBadge} />
                     <nav className="back-nav">
                         <a href="jama-rational-exam.html" className="back-btn">
                             ← 返回總覽
@@ -813,7 +980,7 @@
                                 <p style={{marginBottom: '20px', color: '#555'}}>
                                     共 {quiz.length} 題選擇題，測試您對醫療決策能力評估的了解程度
                                 </p>
-                                <button className="quiz-btn" onClick={() => setQuizStarted(true)}>
+                                <button className="quiz-btn" onClick={startQuiz}>
                                     開始測驗
                                 </button>
                             </div>

@@ -76,18 +76,72 @@ const allModules = [
 ];
 
 const badgeDefinitions = [
-    { id: 'first-quiz', name: '初試啼聲', desc: '完成第一次測驗', icon: '🎯' },
-    { id: 'perfect-score', name: '滿分達人', desc: '任一測驗獲得100分', icon: '💯' },
-    { id: 'five-complete', name: '小有成就', desc: '完成5個模組', icon: '⭐' },
-    { id: 'ten-complete', name: '學有專精', desc: '完成10個模組', icon: '🌟' },
-    { id: 'master', name: 'EBM大師', desc: '完成全部18個模組', icon: '👑' },
-    { id: 'speed-demon', name: '神速答題', desc: '2分鐘內完成測驗', icon: '⚡' },
-    { id: 'persistent', name: '堅持不懈', desc: '同一測驗重試3次以上', icon: '💪' }
+    // Milestone badges (existing)
+    { id: 'first-quiz', name: '初試啼聲', desc: '完成第一次測驗', icon: '🎯', category: 'milestone' },
+    { id: 'five-complete', name: '小有成就', desc: '完成5個模組', icon: '⭐', category: 'milestone' },
+    { id: 'ten-complete', name: '學有專精', desc: '完成10個模組', icon: '🌟', category: 'milestone' },
+    { id: 'master', name: 'EBM大師', desc: '完成全部18個模組', icon: '👑', category: 'milestone' },
+
+    // Achievement badges (existing + new)
+    { id: 'perfect-score', name: '滿分達人', desc: '任一測驗獲得100分', icon: '💯', category: 'achievement' },
+    { id: 'speed-demon', name: '神速答題', desc: '2分鐘內完成測驗', icon: '⚡', category: 'achievement' },
+    { id: 'persistent', name: '堅持不懈', desc: '同一測驗重試3次以上', icon: '💪', category: 'achievement' },
+    { id: 'three-streak', name: '連勝三場', desc: '連續三次測驗及格', icon: '🔥', category: 'achievement' },
+    { id: 'five-streak', name: '五連勝', desc: '連續五次測驗及格', icon: '🏆', category: 'achievement' },
+    { id: 'triple-perfect', name: '三冠王', desc: '連續三次測驗滿分', icon: '👑', category: 'achievement' },
+    { id: 'comeback-kid', name: '逆轉勝', desc: '從不及格進步到滿分', icon: '🚀', category: 'achievement' },
+    { id: 'quick-learner', name: '一點就通', desc: '首次測驗即滿分', icon: '💡', category: 'achievement' },
+    { id: 'improvement-king', name: '進步王', desc: '同一測驗進步5分以上', icon: '📈', category: 'achievement' },
+    { id: 'marathon-runner', name: '馬拉松學習者', desc: '單日學習超過60分鐘', icon: '🏃', category: 'achievement' },
+    { id: 'reviewer', name: '溫故知新', desc: '重測已完成模組並及格', icon: '📖', category: 'achievement' },
+
+    // Fun/time-based badges
+    { id: 'early-bird', name: '早起的鳥', desc: '早上六點前完成測驗', icon: '🐦', category: 'fun' },
+    { id: 'night-owl', name: '夜貓子', desc: '深夜十二點後完成測驗', icon: '🦉', category: 'fun' },
+    { id: 'weekend-warrior', name: '假日戰士', desc: '在週末完成測驗', icon: '📅', category: 'fun' },
+    { id: 'lucky-seven', name: '幸運七', desc: '首次測驗剛好70分', icon: '🍀', category: 'fun' },
+
+    // Humorous badges
+    { id: 'almost-there', name: '差一點點', desc: '測驗得到60分', icon: '😅', category: 'humor' },
+    { id: 'generous-guesser', name: '佛系答題', desc: '測驗得分20-30%', icon: '🙏', category: 'humor' },
+    { id: 'learning-worm', name: '學術蚯蚓', desc: '重複同一模組超過10次', icon: '🪱', category: 'humor' },
+    { id: 'eternal-student', name: '永恆的學生', desc: '測驗50次仍未畢業', icon: '♾️', category: 'humor' },
+    { id: 'speed-fail', name: '光速陣亡', desc: '30秒內完成測驗但不及格', icon: '💫', category: 'humor' },
+    { id: 'slow-and-wrong', name: '想很久還是錯', desc: '花超過10分鐘但不及格', icon: '🤔', category: 'humor' },
+    { id: 'zero-hero', name: '零分英雄', desc: '測驗得到0分', icon: '💀', category: 'humor' },
+    { id: 'procrastinator', name: '最後一秒', desc: '連續7天沒活動後回來', icon: '⏰', category: 'humor' },
+    { id: 'deja-vu', name: '既視感', desc: '同一模組連續三次同分', icon: '👀', category: 'humor' },
+    { id: 'coffee-needed', name: '需要咖啡', desc: '凌晨2-5點測驗不及格', icon: '☕', category: 'humor' },
+    { id: 'wanderer', name: '漫遊者', desc: '開始5個模組都未完成', icon: '🧭', category: 'humor' },
+    { id: 'consistent-output', name: '穩定輸出', desc: '連續三次同一分數', icon: '🎯', category: 'humor' },
+
+    // Specialty badges
+    { id: 'heart-expert', name: '心臟達人', desc: '完成所有心血管模組', icon: '❤️', category: 'specialty' },
+    { id: 'critical-master', name: '急重症專家', desc: '完成所有重症急診模組', icon: '🚨', category: 'specialty' },
+    { id: 'neuro-ninja', name: '神經忍者', desc: '完成所有神經科模組', icon: '🧠', category: 'specialty' },
+    { id: 'pulm-pro', name: '胸腔高手', desc: '完成所有胸腔模組', icon: '🫁', category: 'specialty' },
+    { id: 'ebm-foundation', name: 'EBM基石', desc: '完成所有基礎評讀課程', icon: '🏛️', category: 'specialty' },
+    { id: 'jama-collector', name: 'JAMA收藏家', desc: '完成所有JAMA系列', icon: '📚', category: 'specialty' },
+
+    // Meta badges
+    { id: 'achievement-hunter', name: '成就獵人', desc: '獲得10個成就', icon: '🏅', category: 'meta' },
+    { id: 'completionist', name: '全成就達成', desc: '獲得所有成就', icon: '🎖️', category: 'meta' }
+];
+
+const badgeCategories = [
+    { id: 'all', name: '全部', icon: '📋' },
+    { id: 'milestone', name: '里程碑', icon: '🏁' },
+    { id: 'achievement', name: '成就', icon: '🏆' },
+    { id: 'specialty', name: '專科', icon: '🩺' },
+    { id: 'fun', name: '趣味', icon: '🎉' },
+    { id: 'humor', name: '搞笑', icon: '😂' },
+    { id: 'meta', name: '元成就', icon: '🎖️' }
 ];
 
 const App=()=>{
     const [progress, setProgress] = useState(ProgressTracker.getProgress());
     const [showReset, setShowReset] = useState(false);
+    const [badgeCategory, setBadgeCategory] = useState('all');
 
     useEffect(() => {
         const handleStorage = () => setProgress(ProgressTracker.getProgress());
@@ -207,13 +261,27 @@ const App=()=>{
 
                     {/* Badges */}
                     <div className="card">
-                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:16}}>🏆 成就徽章</h3>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+                            <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)'}}>🏆 成就徽章</h3>
+                            <div style={{fontSize:13,color:'var(--suc)',fontWeight:600}}>{earnedBadges.length} / {badgeDefinitions.length}</div>
+                        </div>
+                        {/* Category tabs */}
+                        <div style={{display:'flex',gap:8,marginBottom:16,overflowX:'auto',paddingBottom:4}}>
+                            {badgeCategories.map(cat => (
+                                <button key={cat.id} onClick={()=>setBadgeCategory(cat.id)} style={{
+                                    padding:'6px 12px',border:'none',borderRadius:20,fontSize:12,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',
+                                    background:badgeCategory===cat.id?'var(--pri)':'#F0F0F0',color:badgeCategory===cat.id?'#fff':'var(--txt2)'
+                                }}>{cat.icon} {cat.name}</button>
+                            ))}
+                        </div>
                         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(100px, 1fr))',gap:12}}>
-                            {badgeDefinitions.map(badge => {
+                            {badgeDefinitions.filter(b=>badgeCategory==='all'||b.category===badgeCategory).map(badge => {
                                 const earned = earnedBadgeIds.includes(badge.id);
                                 const earnedData = earnedBadges.find(b => b.id === badge.id);
+                                const catInfo = badgeCategories.find(c=>c.id===badge.category);
                                 return (
-                                    <div key={badge.id} style={{textAlign:'center',padding:12,background:earned?'#F0FFF4':'#F5F5F5',borderRadius:12,opacity:earned?1:0.5}}>
+                                    <div key={badge.id} style={{textAlign:'center',padding:12,background:earned?'#F0FFF4':'#F5F5F5',borderRadius:12,opacity:earned?1:0.5,position:'relative'}}>
+                                        {badge.category==='humor'&&<div style={{position:'absolute',top:4,right:4,fontSize:10}}>😂</div>}
                                         <div style={{fontSize:32}}>{earned ? badge.icon : '🔒'}</div>
                                         <div style={{fontSize:12,fontWeight:600,marginTop:4,color:earned?'var(--suc)':'#999'}}>{badge.name}</div>
                                         <div style={{fontSize:10,color:'var(--txt2)',marginTop:2}}>{badge.desc}</div>
