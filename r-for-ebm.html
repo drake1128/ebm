@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R 語言 EBM 統計 | EBM 教學平台</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--pri:#00695C;--pri2:#004D40;--acc:#FF6B35;--suc:#2EC4B6;--warn:#FFBE0B;--err:#EF476F;--blue:#0077B6;--bg:#FAFBFC;--txt:#1A1A2E;--txt2:#6B7280}
+        body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+        .card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,105,92,0.08)}
+        .btn{padding:14px 24px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all 0.3s}
+        .btn:hover{transform:translateY(-2px)}
+        .btn-pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}
+        .btn-outline{background:#fff;border:2px solid var(--pri);color:var(--pri)}
+        table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+        th,td{padding:10px;text-align:left;border-bottom:1px solid #eee}
+        th{background:#E0F2F1;font-weight:600;color:var(--pri)}
+        .formula{background:linear-gradient(135deg,#E0F2F1,#B2DFDB);border:2px solid var(--pri);border-radius:12px;padding:16px;margin:12px 0;text-align:center;font-size:15px;color:#004D40;font-weight:600;font-family:'Consolas','Monaco',monospace}
+        .tip{background:#FFF9F0;border-left:4px solid var(--acc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .good{background:#F0FFF4;border-left:4px solid var(--suc);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .info{background:#F0F7FF;border-left:4px solid var(--blue);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .warn{background:#FFFDE7;border-left:4px solid var(--warn);border-radius:0 12px 12px 0;padding:14px;margin:12px 0}
+        .code-block{background:#263238;border-radius:12px;padding:16px;margin:12px 0;font-family:'Consolas','Monaco','Courier New',monospace;font-size:13px;color:#ECEFF1;overflow-x:auto;position:relative;line-height:1.6}
+        .code-block code{color:#ECEFF1}
+        .code-block .comment{color:#78909C}
+        .code-block .keyword{color:#80CBC4}
+        .code-block .string{color:#C5E1A5}
+        .code-block .number{color:#FFCC80}
+        .code-block .function{color:#82B1FF}
+        .copy-btn{position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;transition:all 0.2s}
+        .copy-btn:hover{background:rgba(255,255,255,0.2)}
+        .copy-btn.copied{background:var(--suc);border-color:var(--suc)}
+        .output-block{background:#FAFAFA;border:2px solid #E0E0E0;border-radius:12px;padding:16px;margin:12px 0;font-family:'Consolas','Monaco',monospace;font-size:12px;color:#37474F;white-space:pre-wrap;overflow-x:auto}
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState}=React;
+
+const MODULE_ID='r-for-ebm';
+
+const lessons=[
+    {id:1,title:'R 環境設置與基礎',sub:'Getting Started with R',color:'#00695C'},
+    {id:2,title:'診斷研究統計',sub:'Diagnostic Test Statistics',color:'#00897B'},
+    {id:3,title:'治療研究與統合分析',sub:'Treatment Effects & Meta-analysis',color:'#26A69A'}
+];
+
+const App=()=>{
+    const[page,setPage]=useState('home');
+    const[lessonId,setLessonId]=useState(1);
+    const[copiedId,setCopiedId]=useState(null);
+
+    const copyCode=(id,code)=>{
+        navigator.clipboard.writeText(code);
+        setCopiedId(id);
+        setTimeout(()=>setCopiedId(null),2000);
+    };
+
+    const CodeBlock=({id,code,title})=>(
+        <div style={{marginBottom:16}}>
+            {title && <div style={{fontSize:13,fontWeight:600,color:'var(--pri)',marginBottom:6}}>{title}</div>}
+            <div className="code-block">
+                <button className={`copy-btn ${copiedId===id?'copied':''}`} onClick={()=>copyCode(id,code)}>
+                    {copiedId===id?'已複製':'複製'}
+                </button>
+                <pre style={{margin:0,whiteSpace:'pre-wrap'}}>{code}</pre>
+            </div>
+        </div>
+    );
+
+    const Header=({title})=>(
+        <header style={{background:'#fff',borderBottom:'1px solid #eee',padding:'12px 16px',position:'sticky',top:0,zIndex:10}}>
+            <div style={{maxWidth:480,margin:'0 auto',display:'flex',alignItems:'center',gap:12}}>
+                <button onClick={()=>page==='home'?window.location.href='index.html':setPage('home')} style={{background:'#E0F2F1',border:'none',borderRadius:10,width:40,height:40,cursor:'pointer',color:'var(--pri)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <span style={{fontWeight:700,color:'#004D40'}}>{title}</span>
+            </div>
+        </header>
+    );
+
+    const Home=()=>(
+        <div>
+            <Header title="R 語言 EBM 統計"/>
+            <div style={{background:'linear-gradient(135deg,#00695C,#004D40)',padding:'32px 20px',color:'#fff'}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div style={{background:'rgba(255,255,255,0.2)',display:'inline-block',padding:'6px 14px',borderRadius:50,fontSize:12,fontWeight:600,marginBottom:16}}>R for EBM Statistics</div>
+                    <h1 style={{fontSize:26,fontWeight:700,marginBottom:12}}>R 語言 EBM 統計</h1>
+                    <p style={{opacity:0.9,fontSize:14}}>使用 R 語言進行診斷研究、治療研究與統合分析的統計計算</p>
+                </div>
+            </div>
+            <div style={{padding:'0 16px',marginTop:-20}}>
+                <div style={{maxWidth:480,margin:'0 auto'}}>
+                    <div className="card">
+                        <h3 style={{fontSize:16,fontWeight:700,color:'var(--pri)',marginBottom:12}}>學習目標</h3>
+                        {['安裝 R 與 RStudio，載入 epiR 與 meta 套件','計算診斷研究指標：Se, Sp, PPV, NPV, LR+, LR-','計算治療研究指標：RR, OR, ARR, NNT','執行基礎統合分析並繪製 Forest plot'].map((t,i)=>(
+                            <div key={i} style={{display:'flex',gap:10,marginBottom:8,fontSize:14}}>
+                                <span style={{background:'var(--suc)',color:'#fff',borderRadius:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,flexShrink:0}}>{i+1}</span>
+                                <span style={{color:'var(--txt2)'}}>{t}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="warn">
+                        <strong style={{color:'#F57F17'}}>使用方式</strong><br/>
+                        <span style={{fontSize:14,color:'var(--txt2)'}}>
+                        本模組提供 copy-paste 的 R 程式碼範例。請先安裝 R 與 RStudio，然後複製程式碼到 RStudio 執行。
+                        </span>
+                    </div>
+                    <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>課程內容</h3>
+                    {lessons.map(l=>(
+                        <div key={l.id} className="card" onClick={()=>{setLessonId(l.id);setPage('lesson')}} style={{cursor:'pointer'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:16}}>
+                                <div style={{width:48,height:48,borderRadius:12,background:`linear-gradient(135deg,${l.color},${l.color}88)`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700}}>{l.id}</div>
+                                <div style={{flex:1}}>
+                                    <div style={{fontSize:11,color:l.color,fontWeight:600}}>Lesson {l.id}</div>
+                                    <div style={{fontSize:16,fontWeight:700}}>{l.title}</div>
+                                    <div style={{fontSize:13,color:'var(--txt2)'}}>{l.sub}</div>
+                                </div>
+                                <svg viewBox="0 0 24 24" fill={l.color} width="20" height="20"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/></svg>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <footer style={{background:'#E0F2F1',padding:'24px 16px',textAlign:'center',marginTop:32}}>
+                <p style={{fontSize:13,color:'var(--txt2)'}}>新竹台大分院教學部</p>
+                <p style={{fontSize:12,color:'var(--txt2)'}}>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+            </footer>
+        </div>
+    );
+
+    const L1=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:16}}>Step 1: 安裝 R 與 RStudio</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:16}}>R 是免費的統計軟體，RStudio 是最常用的 R 整合開發環境。</p>
+                <table>
+                    <tbody>
+                        <tr><td style={{fontWeight:600}}>R 下載</td><td><a href="https://cran.r-project.org/" target="_blank" style={{color:'var(--pri)'}}>https://cran.r-project.org/</a></td></tr>
+                        <tr><td style={{fontWeight:600}}>RStudio 下載</td><td><a href="https://posit.co/download/rstudio-desktop/" target="_blank" style={{color:'var(--pri)'}}>https://posit.co/download/rstudio-desktop/</a></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:16}}>Step 2: 安裝必要套件</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>在 RStudio Console 中執行以下指令（只需執行一次）：</p>
+                <CodeBlock id="install" code={`# 安裝 EBM 相關套件（只需執行一次）
+install.packages("epiR")    # 流行病學計算
+install.packages("meta")    # 統合分析`} />
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:16}}>Step 3: 載入套件</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>每次開始分析前，需要載入套件：</p>
+                <CodeBlock id="library" code={`# 載入套件（每次使用前執行）
+library(epiR)
+library(meta)`} />
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:16}}>R 基礎語法速查</h3>
+                <table>
+                    <thead><tr><th>語法</th><th>說明</th><th>範例</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>&lt;-</code></td><td>賦值</td><td><code>x &lt;- 10</code></td></tr>
+                        <tr><td><code>c()</code></td><td>建立向量</td><td><code>c(1, 2, 3)</code></td></tr>
+                        <tr><td><code>matrix()</code></td><td>建立矩陣</td><td><code>matrix(c(1,2,3,4), nrow=2)</code></td></tr>
+                        <tr><td><code>data.frame()</code></td><td>建立資料框</td><td><code>data.frame(a=1:3, b=4:6)</code></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="good">
+                <strong style={{color:'var(--suc)'}}>Posit Cloud 替代方案</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                如果不想安裝軟體，可以使用線上版 RStudio：<br/>
+                <a href="https://posit.cloud/" target="_blank" style={{color:'var(--pri)'}}>https://posit.cloud/</a>（免費帳號可用）
+                </span>
+            </div>
+        </div>
+    );
+
+    const L2=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:16}}>2x2 Table 結構</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>診斷研究的核心是 2x2 列聯表。<strong>注意 epiR 的輸入順序！</strong></p>
+                <table style={{textAlign:'center'}}>
+                    <thead><tr><th></th><th style={{background:'#C8E6C9'}}>Disease +</th><th style={{background:'#FFCDD2'}}>Disease -</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{fontWeight:600,background:'#E3F2FD'}}>Test +</td><td>TP (a)</td><td>FP (b)</td></tr>
+                        <tr><td style={{fontWeight:600,background:'#E3F2FD'}}>Test -</td><td>FN (c)</td><td>TN (d)</td></tr>
+                    </tbody>
+                </table>
+                <div className="formula" style={{marginTop:16}}>epiR 輸入順序：TP, FP, FN, TN（按列填入）</div>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:16}}>使用 epi.tests() 計算診斷指標</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>一行指令計算所有診斷指標，包含 95% 信賴區間：</p>
+                <CodeBlock id="epitests" title="完整範例：Troponin 診斷 ACS" code={`library(epiR)
+
+# 範例數據：Troponin 檢測急性冠心症
+# TP=85, FP=15, FN=10, TN=90
+TP <- 85; FP <- 15; FN <- 10; TN <- 90
+
+# 建立 2x2 table（注意順序：TP, FP, FN, TN）
+dat <- as.table(matrix(c(TP, FP, FN, TN), nrow=2, byrow=TRUE))
+rownames(dat) <- c("Test+", "Test-")
+colnames(dat) <- c("Disease+", "Disease-")
+
+# 查看表格
+print(dat)
+
+# 計算所有診斷指標
+result <- epi.tests(dat, conf.level = 0.95)
+print(result)`} />
+                <div className="output-block">
+{`          Disease+ Disease-
+Test+           85       15
+Test-           10       90
+
+          est    lower    upper
+se      0.895    0.816    0.946   # Sensitivity
+sp      0.857    0.775    0.916   # Specificity
+pv.pos  0.850    0.767    0.910   # PPV
+pv.neg  0.900    0.825    0.949   # NPV
+lr.pos  6.271    3.957   9.934    # LR+
+lr.neg  0.122    0.068   0.220    # LR-
+...`}
+                </div>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:16}}>公式參考</h3>
+                <table>
+                    <thead><tr><th>指標</th><th>公式</th><th>臨床意義</th></tr></thead>
+                    <tbody>
+                        <tr><td>Sensitivity</td><td>TP / (TP + FN)</td><td>有病者測出陽性的比例</td></tr>
+                        <tr><td>Specificity</td><td>TN / (TN + FP)</td><td>無病者測出陰性的比例</td></tr>
+                        <tr><td>PPV</td><td>TP / (TP + FP)</td><td>陽性結果中真正有病的比例</td></tr>
+                        <tr><td>NPV</td><td>TN / (TN + FN)</td><td>陰性結果中真正無病的比例</td></tr>
+                        <tr><td>LR+</td><td>Se / (1 - Sp)</td><td>陽性結果增加疾病機率的倍數</td></tr>
+                        <tr><td>LR-</td><td>(1 - Se) / Sp</td><td>陰性結果降低疾病機率的倍數</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="tip">
+                <strong style={{color:'var(--acc)'}}>LR 解讀口訣</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                LR+ &gt; 10 或 LR- &lt; 0.1：強烈改變診斷機率<br/>
+                LR+ 5-10 或 LR- 0.1-0.2：中度改變<br/>
+                LR+ 2-5 或 LR- 0.2-0.5：輕度改變
+                </span>
+            </div>
+        </div>
+    );
+
+    const L3=()=>(
+        <div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:16}}>治療效果指標</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>RCT 和世代研究常用的效果指標：</p>
+                <table>
+                    <thead><tr><th>指標</th><th>全名</th><th>適用情境</th></tr></thead>
+                    <tbody>
+                        <tr><td style={{fontWeight:600}}>RR</td><td>Relative Risk</td><td>世代研究、RCT</td></tr>
+                        <tr><td style={{fontWeight:600}}>OR</td><td>Odds Ratio</td><td>病例對照研究</td></tr>
+                        <tr><td style={{fontWeight:600}}>ARR</td><td>Absolute Risk Reduction</td><td>RCT</td></tr>
+                        <tr><td style={{fontWeight:600}}>NNT</td><td>Number Needed to Treat</td><td>RCT（1/ARR）</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:16}}>使用 epi.2by2() 計算治療效果</h3>
+                <CodeBlock id="epi2by2" title="範例：Aspirin 預防心肌梗塞" code={`library(epiR)
+
+# 範例：Aspirin vs Placebo 預防 MI
+# 治療組：事件 20/1000，對照組：事件 40/1000
+a <- 20   # 治療組有事件
+b <- 980  # 治療組無事件
+c <- 40   # 對照組有事件
+d <- 960  # 對照組無事件
+
+# 建立 2x2 table
+dat <- as.table(matrix(c(a, b, c, d), nrow=2, byrow=TRUE))
+rownames(dat) <- c("Treatment", "Control")
+colnames(dat) <- c("Event+", "Event-")
+
+print(dat)
+
+# 計算治療效果（cohort.count 適用於 RCT）
+result <- epi.2by2(dat, method = "cohort.count",
+                   conf.level = 0.95, outcome = "as.columns")
+print(result)`} />
+                <div className="output-block">
+{`             Outcome +    Outcome -      Total
+Exposed +           20          980       1000
+Exposed -           40          960       1000
+
+Point estimates and 95% CIs:
+------------------------------------------------------------------
+Inc risk ratio (RR)                  0.50 (0.30, 0.85)
+Odds ratio (OR)                      0.49 (0.28, 0.85)
+Attrib risk (AR)                    -0.02 (-0.04, -0.01)
+Attrib risk in population (PAR)     -0.01 (-0.02, -0.00)
+------------------------------------------------------------------
+NNT: 1 / 0.02 = 50 (需治療 50 人才能預防 1 例事件)`}
+                </div>
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:18,fontWeight:700,color:'var(--pri)',marginBottom:16}}>統合分析：Forest Plot</h3>
+                <p style={{fontSize:14,color:'var(--txt2)',marginBottom:12}}>使用 meta 套件進行基礎統合分析：</p>
+                <CodeBlock id="metabin" title="範例：Statin 降低心血管死亡" code={`library(meta)
+
+# 建立研究資料
+study <- c("Study A", "Study B", "Study C", "Study D", "Study E")
+event.e <- c(15, 22, 18, 25, 12)   # 治療組事件數
+n.e <- c(200, 300, 250, 400, 150)  # 治療組人數
+event.c <- c(25, 35, 30, 45, 20)   # 對照組事件數
+n.c <- c(200, 300, 250, 400, 150)  # 對照組人數
+
+# 進行統合分析（二元結果）
+m <- metabin(event.e, n.e, event.c, n.c,
+             studlab = study,
+             sm = "RR",           # 效果量：RR
+             method = "MH",       # Mantel-Haenszel method
+             random = TRUE,       # 隨機效應模型
+             fixed = TRUE)        # 固定效應模型
+
+# 查看結果
+print(summary(m))
+
+# 繪製 Forest plot
+forest(m,
+       sortvar = TE,              # 依效果量排序
+       leftcols = c("studlab", "event.e", "n.e", "event.c", "n.c"),
+       leftlabs = c("Study", "Events", "Total", "Events", "Total"),
+       label.left = "Favours Treatment",
+       label.right = "Favours Control")`} />
+            </div>
+            <div className="info">
+                <strong style={{color:'var(--blue)'}}>統合分析輸出解讀</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                <strong>I² (I-squared)</strong>：異質性指標，&gt;50% 表示高異質性<br/>
+                <strong>Tau²</strong>：研究間變異量<br/>
+                <strong>Fixed effect</strong>：假設所有研究測量同一效果<br/>
+                <strong>Random effects</strong>：假設效果在研究間有變異（通常更保守）
+                </span>
+            </div>
+            <div className="good">
+                <strong style={{color:'var(--suc)'}}>完整程式碼下載</strong><br/>
+                <span style={{fontSize:14,color:'var(--txt2)'}}>
+                以上所有範例可以複製到 RStudio 直接執行。建議建立一個 .R 檔案保存常用的分析模板。
+                </span>
+            </div>
+        </div>
+    );
+
+    const Lesson=()=>{
+        const lesson=lessons.find(l=>l.id===lessonId);
+        return(
+            <div>
+                <Header title={lesson.title}/>
+                <div style={{background:`linear-gradient(135deg,${lesson.color},${lesson.color}88)`,padding:'24px 20px',color:'#fff'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{fontSize:12,opacity:0.9,marginBottom:4}}>Lesson {lessonId} / 3</div>
+                        <h1 style={{fontSize:22,fontWeight:700}}>{lesson.title}</h1>
+                        <p style={{fontSize:14,opacity:0.9}}>{lesson.sub}</p>
+                    </div>
+                </div>
+                <div style={{padding:'20px 16px'}}>
+                    <div style={{maxWidth:480,margin:'0 auto'}}>
+                        <div style={{display:'flex',gap:6,marginBottom:20,overflowX:'auto',paddingBottom:8}}>
+                            {lessons.map(l=>(
+                                <button key={l.id} onClick={()=>setLessonId(l.id)} style={{
+                                    padding:'8px 16px',borderRadius:20,border:'none',
+                                    background:lessonId===l.id?l.color:'#E5E5E5',
+                                    color:lessonId===l.id?'#fff':'var(--txt2)',
+                                    fontWeight:600,fontSize:13,cursor:'pointer',whiteSpace:'nowrap'
+                                }}>
+                                    L{l.id}
+                                </button>
+                            ))}
+                        </div>
+                        {lessonId===1 && L1()}
+                        {lessonId===2 && L2()}
+                        {lessonId===3 && L3()}
+                        <div style={{display:'flex',justifyContent:'space-between',marginTop:24,marginBottom:32}}>
+                            <button className="btn btn-outline" onClick={()=>lessonId>1?setLessonId(lessonId-1):setPage('home')} style={{flex:1,marginRight:8,justifyContent:'center'}}>
+                                ← {lessonId>1?'上一課':'返回首頁'}
+                            </button>
+                            <button className="btn btn-pri" onClick={()=>lessonId<3?setLessonId(lessonId+1):setPage('home')} style={{flex:1,marginLeft:8,justifyContent:'center'}}>
+                                {lessonId<3?'下一課 →':'完成課程 ✓'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return page==='home'?<Home/>:<Lesson/>;
+};
+
+ReactDOM.render(<App/>,document.getElementById('root'));
+</script>
+</body>
+</html>
