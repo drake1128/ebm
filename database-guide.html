@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>醫學資料庫指南 | EBM 實證醫學教學平台</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Crimson+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --pri: #1565C0;
+            --pri2: #42A5F5;
+            --sec: #00838F;
+            --sec2: #26C6DA;
+            --suc: #2E7D32;
+            --warn: #F9A825;
+            --danger: #C62828;
+            --info: #7B1FA2;
+            --bg: #F5F9FF;
+            --txt: #37474F;
+            --txt2: #607D8B;
+            --card-shadow: 0 4px 20px rgba(21, 101, 192, 0.08);
+        }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--bg);
+            color: var(--txt);
+            line-height: 1.8;
+            -webkit-font-smoothing: antialiased;
+        }
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(21, 101, 192, 0.08);
+        }
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .btn-pri { background: linear-gradient(135deg, var(--pri), var(--pri2)); color: #fff; }
+        .btn-pri:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(21, 101, 192, 0.3); }
+        .btn-sec { background: linear-gradient(135deg, var(--sec), var(--sec2)); color: #fff; }
+        .btn-sec:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 131, 143, 0.3); }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: linear-gradient(135deg, #E3F2FD, #BBDEFB); font-weight: 600; color: var(--pri); }
+        .tip {
+            background: linear-gradient(135deg, #FFF8E1, #FFECB3);
+            border-left: 4px solid var(--warn);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        .good {
+            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+            border-left: 4px solid var(--suc);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        .info {
+            background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
+            border-left: 4px solid var(--pri);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        .danger {
+            background: linear-gradient(135deg, #FFEBEE, #FFCDD2);
+            border-left: 4px solid var(--danger);
+            border-radius: 0 14px 14px 0;
+            padding: 16px;
+            margin: 14px 0;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .feature-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin: 4px;
+        }
+        .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 20px 0;
+        }
+        @media (max-width: 600px) {
+            .comparison-grid { grid-template-columns: 1fr; }
+        }
+        .database-card {
+            background: #fff;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+        }
+        .database-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(21, 101, 192, 0.15);
+        }
+        .database-header {
+            padding: 24px;
+            color: white;
+            text-align: center;
+        }
+        .database-content {
+            padding: 24px;
+        }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+const databases = [
+    {
+        id: 'openevidence',
+        name: 'OpenEvidence',
+        nameCh: 'OpenEvidence',
+        tagline: 'AI 臨床決策輔助工具',
+        taglineEn: 'AI Copilot for Doctors',
+        logo: 'https://www.openevidence.com/favicon.ico',
+        color: '#6366F1',
+        colorLight: '#818CF8',
+        url: 'https://www.openevidence.com/',
+        foundedYear: 2022,
+        founder: 'Daniel Nadler (哈佛大學博士、Kensho 創辦人)',
+        headquarters: '美國邁阿密',
+        description: 'OpenEvidence 是一款專為醫師設計的 AI 臨床決策輔助工具，利用人工智慧提供即時、實證導向的臨床答案。',
+        philosophy: [
+            { title: '即時查證', desc: '在臨床現場快速提供實證醫學答案', icon: '⚡' },
+            { title: '證據導向', desc: '答案來源於經過驗證的醫學文獻', icon: '📚' },
+            { title: '醫師專用', desc: '僅供經過驗證的醫療專業人員使用', icon: '👨‍⚕️' },
+            { title: '高可信度', desc: '與 NEJM、JAMA、AMA 等權威機構合作', icon: '🏆' }
+        ],
+        howToUse: [
+            { step: 1, title: '註冊驗證', desc: '以醫師身份註冊並通過驗證（需提供醫師執照或機構認證）' },
+            { step: 2, title: '提出問題', desc: '用自然語言輸入臨床問題，例如："What is the first-line treatment for community-acquired pneumonia?"' },
+            { step: 3, title: '獲取答案', desc: 'AI 會根據最新實證文獻提供答案，並附上參考文獻來源' },
+            { step: 4, title: '臨床應用', desc: '將答案整合至臨床決策過程中，輔助而非取代臨床判斷' }
+        ],
+        features: ['自然語言問答', '引用具體文獻', '複雜情境查詢', '即時更新', '免費使用'],
+        stats: [
+            { label: '美國醫師使用率', value: '40%+' },
+            { label: '估值', value: '$120億' },
+            { label: '合作機構', value: 'NEJM, JAMA, AMA' }
+        ],
+        pros: ['免費使用', '介面直覺', '答案附文獻來源', '針對醫療專業人員設計', '持續更新最新研究'],
+        cons: ['需要驗證醫師身份', '主要為英文介面', '部分問題可能無法回答', 'AI 仍有幻覺風險'],
+        references: [
+            { title: 'OpenEvidence 官網', url: 'https://www.openevidence.com/' },
+            { title: 'Wikipedia', url: 'https://en.wikipedia.org/wiki/OpenEvidence' }
+        ]
+    },
+    {
+        id: 'uptodate',
+        name: 'UpToDate',
+        nameCh: 'UpToDate',
+        tagline: '實證醫學臨床決策支援系統',
+        taglineEn: 'Evidence-Based Clinical Decision Support',
+        logo: 'https://www.uptodate.com/favicon.ico',
+        color: '#00838F',
+        colorLight: '#26C6DA',
+        url: 'https://www.uptodate.com/',
+        foundedYear: 1992,
+        founder: 'Dr. Burton "Bud" Rose (腎臟科醫師)',
+        headquarters: '美國麻州沃爾瑟姆 (Wolters Kluwer)',
+        description: 'UpToDate 是全球最廣泛使用的實證醫學臨床決策支援系統，由超過 7,600 位醫學專家編撰，涵蓋 25+ 專科領域。',
+        philosophy: [
+            { title: '由醫師為醫師設計', desc: '內容由超過 7,600 位醫學專家編撰審核', icon: '👨‍⚕️' },
+            { title: '持續更新', desc: '每日更新最新實證，確保內容時效性', icon: '🔄' },
+            { title: '涵蓋全科', desc: '超過 25 個專科領域的完整內容', icon: '📖' },
+            { title: '30 年信譽', desc: '自 1992 年以來持續服務全球臨床醫師', icon: '🏛️' }
+        ],
+        howToUse: [
+            { step: 1, title: '訂閱存取', desc: '透過醫院機構訂閱或個人訂閱取得帳號（台灣多數教學醫院皆有訂閱）' },
+            { step: 2, title: '搜尋主題', desc: '輸入疾病名稱、藥物或臨床問題進行搜尋' },
+            { step: 3, title: '閱讀專題', desc: '瀏覽由專家撰寫的系統性回顧文章，包含實證建議等級' },
+            { step: 4, title: '使用工具', desc: '利用 Lexicomp 藥物查詢、醫學計算機等輔助工具' }
+        ],
+        features: ['系統性回顧文章', '實證建議等級', '藥物交互作用查詢', '醫學計算機', 'UpToDate Expert AI'],
+        stats: [
+            { label: '建立年份', value: '1992' },
+            { label: '醫學專家', value: '7,600+' },
+            { label: '專科領域', value: '25+' },
+            { label: '全球使用者', value: '300萬+' }
+        ],
+        pros: ['內容全面深入', '實證等級標示清楚', '專家審核品質保證', '整合藥物查詢', '中文版支援'],
+        cons: ['需要付費訂閱', '資訊量龐大需時間消化', '非即時問答形式', '部分內容更新較慢'],
+        expertAI: {
+            title: 'UpToDate Expert AI (2025 新功能)',
+            description: 'Wolters Kluwer 於 2025 年第四季推出的生成式 AI 功能',
+            features: [
+                '自然語言問答：直接用自然語言提問，獲得結構化答案',
+                'Clinical Intelligence：模擬專家臨床推理過程',
+                '多層驗證：答案經過嚴格的驗證框架確保準確性',
+                '無縫整合：與現有 UpToDate 內容完美整合'
+            ]
+        },
+        references: [
+            { title: 'UpToDate 官網', url: 'https://www.uptodate.com/' },
+            { title: 'Wolters Kluwer', url: 'https://www.wolterskluwer.com/en/solutions/uptodate' }
+        ]
+    }
+];
+
+const App = () => {
+    const [activeDb, setActiveDb] = useState(null);
+    const [activeSection, setActiveSection] = useState('overview');
+
+    const Header = () => (
+        <header style={{
+            background: 'white',
+            padding: '16px 20px',
+            position: 'sticky',
+            top: 0,
+            zIndex: 100,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)'
+        }}>
+            <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <a href="index.html" style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    color: 'var(--pri)', textDecoration: 'none', fontWeight: '600', fontSize: '14px'
+                }}>
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                    返回首頁
+                </a>
+                <div style={{ flex: 1 }} />
+                <span style={{
+                    background: 'linear-gradient(135deg, var(--pri), var(--sec))',
+                    color: 'white',
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                }}>
+                    資源指南
+                </span>
+            </div>
+        </header>
+    );
+
+    const Hero = () => (
+        <section style={{
+            background: 'linear-gradient(135deg, #1565C0 0%, #00838F 50%, #00695C 100%)',
+            padding: '48px 20px 60px',
+            position: 'relative',
+            overflow: 'hidden'
+        }}>
+            <div style={{
+                position: 'absolute', top: '-50px', right: '-50px',
+                width: '200px', height: '200px', borderRadius: '50%',
+                background: 'rgba(255,255,255,0.1)'
+            }} />
+            <div style={{
+                position: 'absolute', bottom: '-30px', left: '-30px',
+                width: '120px', height: '120px', borderRadius: '50%',
+                background: 'rgba(255,255,255,0.08)'
+            }} />
+
+            <div style={{ maxWidth: '800px', margin: '0 auto', position: 'relative', zIndex: 1, textAlign: 'center', color: 'white' }}>
+                <div style={{
+                    display: 'inline-block',
+                    background: 'rgba(255,255,255,0.2)',
+                    padding: '8px 20px',
+                    borderRadius: '100px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    marginBottom: '20px',
+                    backdropFilter: 'blur(10px)'
+                }}>
+                    EBM Resources
+                </div>
+
+                <h1 style={{
+                    fontFamily: "'Crimson Pro', serif",
+                    fontSize: '36px',
+                    fontWeight: '700',
+                    marginBottom: '12px'
+                }}>
+                    醫學資料庫指南
+                </h1>
+
+                <h2 style={{
+                    fontSize: '18px',
+                    fontWeight: '400',
+                    opacity: 0.9,
+                    marginBottom: '20px'
+                }}>
+                    Clinical Decision Support Tools
+                </h2>
+
+                <p style={{
+                    fontSize: '15px',
+                    opacity: 0.85,
+                    lineHeight: '1.8',
+                    maxWidth: '500px',
+                    margin: '0 auto'
+                }}>
+                    認識現代臨床決策輔助工具<br/>
+                    提升實證醫學實踐效率
+                </p>
+
+                <div style={{ marginTop: '24px', fontSize: '13px', opacity: 0.7 }}>
+                    感謝 黃國良 建議
+                </div>
+            </div>
+        </section>
+    );
+
+    const DatabaseOverview = () => (
+        <section style={{ padding: '40px 20px' }}>
+            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                <h2 style={{
+                    fontSize: '24px', fontWeight: '700', color: 'var(--txt)',
+                    marginBottom: '12px', textAlign: 'center'
+                }}>
+                    本頁介紹的資料庫
+                </h2>
+                <p style={{
+                    fontSize: '14px', color: 'var(--txt2)',
+                    textAlign: 'center', marginBottom: '32px'
+                }}>
+                    點擊卡片查看詳細介紹
+                </p>
+
+                <div className="comparison-grid">
+                    {databases.map(db => (
+                        <div
+                            key={db.id}
+                            className="database-card"
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => setActiveDb(db.id)}
+                        >
+                            <div className="database-header" style={{
+                                background: `linear-gradient(135deg, ${db.color}, ${db.colorLight})`
+                            }}>
+                                <div style={{ fontSize: '48px', marginBottom: '12px' }}>
+                                    {db.id === 'openevidence' ? '🤖' : '📖'}
+                                </div>
+                                <h3 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '4px' }}>
+                                    {db.name}
+                                </h3>
+                                <p style={{ fontSize: '14px', opacity: 0.9 }}>{db.tagline}</p>
+                            </div>
+                            <div className="database-content">
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+                                    {db.features.slice(0, 3).map((f, i) => (
+                                        <span key={i} className="feature-badge" style={{
+                                            background: `${db.color}15`,
+                                            color: db.color
+                                        }}>
+                                            {f}
+                                        </span>
+                                    ))}
+                                </div>
+                                <p style={{ fontSize: '13px', color: 'var(--txt2)', marginBottom: '16px' }}>
+                                    {db.description}
+                                </p>
+                                <div style={{
+                                    display: 'flex', justifyContent: 'space-between',
+                                    borderTop: '1px solid #eee', paddingTop: '12px'
+                                }}>
+                                    <span style={{ fontSize: '12px', color: 'var(--txt2)' }}>
+                                        建立於 {db.foundedYear} 年
+                                    </span>
+                                    <span style={{ fontSize: '12px', color: db.color, fontWeight: '600' }}>
+                                        查看詳情 →
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+
+    const DatabaseDetail = ({ db }) => (
+        <section style={{ padding: '40px 20px' }}>
+            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                <button
+                    onClick={() => setActiveDb(null)}
+                    style={{
+                        background: 'white',
+                        border: '1px solid #ddd',
+                        borderRadius: '10px',
+                        padding: '10px 20px',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginBottom: '24px'
+                    }}
+                >
+                    ← 返回列表
+                </button>
+
+                {/* Header Card */}
+                <div className="card" style={{
+                    background: `linear-gradient(135deg, ${db.color}, ${db.colorLight})`,
+                    color: 'white',
+                    textAlign: 'center',
+                    padding: '32px'
+                }}>
+                    <div style={{ fontSize: '56px', marginBottom: '16px' }}>
+                        {db.id === 'openevidence' ? '🤖' : '📖'}
+                    </div>
+                    <h2 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '8px' }}>
+                        {db.name}
+                    </h2>
+                    <p style={{ fontSize: '16px', opacity: 0.9, marginBottom: '16px' }}>
+                        {db.tagline}
+                    </p>
+                    <a
+                        href={db.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn"
+                        style={{
+                            background: 'rgba(255,255,255,0.2)',
+                            color: 'white',
+                            backdropFilter: 'blur(10px)'
+                        }}
+                    >
+                        前往官網 ↗
+                    </a>
+                </div>
+
+                {/* Basic Info */}
+                <div className="card fade-in">
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px', color: db.color }}>
+                        基本資訊
+                    </h3>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td style={{ fontWeight: '600', width: '120px' }}>建立年份</td>
+                                <td>{db.foundedYear} 年</td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: '600' }}>創辦人</td>
+                                <td>{db.founder}</td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: '600' }}>總部位置</td>
+                                <td>{db.headquarters}</td>
+                            </tr>
+                            <tr>
+                                <td style={{ fontWeight: '600' }}>官方網站</td>
+                                <td>
+                                    <a href={db.url} target="_blank" rel="noopener noreferrer" style={{ color: db.color }}>
+                                        {db.url}
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Design Philosophy */}
+                <div className="card fade-in">
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '20px', color: db.color }}>
+                        設計理念
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                        {db.philosophy.map((p, i) => (
+                            <div key={i} style={{
+                                background: `${db.color}08`,
+                                borderRadius: '14px',
+                                padding: '16px',
+                                border: `1px solid ${db.color}20`
+                            }}>
+                                <div style={{ fontSize: '28px', marginBottom: '8px' }}>{p.icon}</div>
+                                <h4 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '4px', color: db.color }}>
+                                    {p.title}
+                                </h4>
+                                <p style={{ fontSize: '13px', color: 'var(--txt2)' }}>{p.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* How to Use */}
+                <div className="card fade-in">
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '20px', color: db.color }}>
+                        如何使用
+                    </h3>
+                    {db.howToUse.map((step, i) => (
+                        <div key={i} style={{
+                            display: 'flex',
+                            gap: '16px',
+                            padding: '16px 0',
+                            borderBottom: i < db.howToUse.length - 1 ? '1px solid #eee' : 'none'
+                        }}>
+                            <div className="step-number" style={{
+                                background: db.color,
+                                color: 'white'
+                            }}>
+                                {step.step}
+                            </div>
+                            <div>
+                                <h4 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '4px' }}>
+                                    {step.title}
+                                </h4>
+                                <p style={{ fontSize: '14px', color: 'var(--txt2)' }}>{step.desc}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* UpToDate Expert AI */}
+                {db.expertAI && (
+                    <div className="card fade-in" style={{
+                        background: 'linear-gradient(135deg, #E8F5E9, #C8E6C9)',
+                        border: '2px solid var(--suc)'
+                    }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '12px', color: 'var(--suc)' }}>
+                            {db.expertAI.title}
+                        </h3>
+                        <p style={{ fontSize: '14px', marginBottom: '16px', color: 'var(--txt)' }}>
+                            {db.expertAI.description}
+                        </p>
+                        <ul style={{ paddingLeft: '20px' }}>
+                            {db.expertAI.features.map((f, i) => (
+                                <li key={i} style={{ fontSize: '14px', marginBottom: '8px', color: 'var(--txt)' }}>
+                                    {f}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {/* Key Stats */}
+                <div className="card fade-in">
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '20px', color: db.color }}>
+                        關鍵數據
+                    </h3>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+                        {db.stats.map((stat, i) => (
+                            <div key={i} style={{
+                                flex: '1 1 calc(50% - 8px)',
+                                minWidth: '120px',
+                                background: `${db.color}08`,
+                                borderRadius: '12px',
+                                padding: '16px',
+                                textAlign: 'center'
+                            }}>
+                                <div style={{ fontSize: '24px', fontWeight: '700', color: db.color }}>
+                                    {stat.value}
+                                </div>
+                                <div style={{ fontSize: '12px', color: 'var(--txt2)' }}>
+                                    {stat.label}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Pros & Cons */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="card fade-in">
+                        <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '12px', color: 'var(--suc)' }}>
+                            優點
+                        </h3>
+                        <ul style={{ paddingLeft: '20px' }}>
+                            {db.pros.map((p, i) => (
+                                <li key={i} style={{ fontSize: '14px', marginBottom: '6px' }}>{p}</li>
+                            ))}
+                        </ul>
+                    </div>
+                    <div className="card fade-in">
+                        <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '12px', color: 'var(--danger)' }}>
+                            限制
+                        </h3>
+                        <ul style={{ paddingLeft: '20px' }}>
+                            {db.cons.map((c, i) => (
+                                <li key={i} style={{ fontSize: '14px', marginBottom: '6px' }}>{c}</li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+
+                {/* Important Tips */}
+                <div className="tip">
+                    <strong>使用提醒：</strong>無論使用任何臨床決策輔助工具，最終的醫療決策仍應由醫師根據患者個別情況做出判斷。AI 與資料庫是輔助工具，而非替代臨床專業判斷。
+                </div>
+
+                {/* References */}
+                <div className="card fade-in">
+                    <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '12px', color: 'var(--txt)' }}>
+                        參考資料
+                    </h3>
+                    <ul style={{ paddingLeft: '20px' }}>
+                        {db.references.map((ref, i) => (
+                            <li key={i} style={{ marginBottom: '8px' }}>
+                                <a href={ref.url} target="_blank" rel="noopener noreferrer" style={{ color: db.color }}>
+                                    {ref.title}
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+        </section>
+    );
+
+    const ComparisonSection = () => (
+        <section style={{ padding: '40px 20px', background: 'white' }}>
+            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                <h2 style={{
+                    fontSize: '24px', fontWeight: '700', color: 'var(--txt)',
+                    marginBottom: '24px', textAlign: 'center'
+                }}>
+                    功能比較
+                </h2>
+
+                <div style={{ overflowX: 'auto' }}>
+                    <table style={{ minWidth: '500px' }}>
+                        <thead>
+                            <tr>
+                                <th>比較項目</th>
+                                <th style={{ textAlign: 'center' }}>OpenEvidence</th>
+                                <th style={{ textAlign: 'center' }}>UpToDate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>費用</strong></td>
+                                <td style={{ textAlign: 'center', color: 'var(--suc)' }}>免費</td>
+                                <td style={{ textAlign: 'center', color: 'var(--warn)' }}>付費訂閱</td>
+                            </tr>
+                            <tr>
+                                <td><strong>主要形式</strong></td>
+                                <td style={{ textAlign: 'center' }}>AI 問答</td>
+                                <td style={{ textAlign: 'center' }}>專題文章</td>
+                            </tr>
+                            <tr>
+                                <td><strong>AI 功能</strong></td>
+                                <td style={{ textAlign: 'center' }}>核心功能</td>
+                                <td style={{ textAlign: 'center' }}>Expert AI (新增)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>內容深度</strong></td>
+                                <td style={{ textAlign: 'center' }}>精準回答</td>
+                                <td style={{ textAlign: 'center' }}>全面深入</td>
+                            </tr>
+                            <tr>
+                                <td><strong>使用情境</strong></td>
+                                <td style={{ textAlign: 'center' }}>快速查詢</td>
+                                <td style={{ textAlign: 'center' }}>深入學習</td>
+                            </tr>
+                            <tr>
+                                <td><strong>藥物查詢</strong></td>
+                                <td style={{ textAlign: 'center' }}>有限</td>
+                                <td style={{ textAlign: 'center' }}>Lexicomp 整合</td>
+                            </tr>
+                            <tr>
+                                <td><strong>台灣醫院訂閱</strong></td>
+                                <td style={{ textAlign: 'center' }}>無需</td>
+                                <td style={{ textAlign: 'center' }}>多數教學醫院有</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div className="good" style={{ marginTop: '24px' }}>
+                    <strong>建議：</strong>兩者可互補使用。OpenEvidence 適合在診間快速查詢特定問題；UpToDate 適合系統性學習疾病診治流程與深入理解證據。
+                </div>
+            </div>
+        </section>
+    );
+
+    const Footer = () => (
+        <footer style={{
+            background: 'linear-gradient(135deg, #1A237E, #0D47A1)',
+            color: 'white',
+            padding: '32px 20px',
+            textAlign: 'center'
+        }}>
+            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>
+                    EBM 實證醫學教學平台
+                </h3>
+                <p style={{ fontSize: '14px', opacity: 0.8, marginBottom: '16px' }}>
+                    新竹台大分院教學部
+                </p>
+                <div style={{ fontSize: '12px', opacity: 0.6, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px' }}>
+                    <p>謝慕揚 MD, PhD, FESC | 黃沛銓 MD | 黃國良</p>
+                    <p style={{ marginTop: '8px' }}>© 2025 NTUH Hsinchu Branch</p>
+                </div>
+            </div>
+        </footer>
+    );
+
+    const selectedDb = databases.find(d => d.id === activeDb);
+
+    return (
+        <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+            <Header />
+            <Hero />
+            {!activeDb ? (
+                <>
+                    <DatabaseOverview />
+                    <ComparisonSection />
+                </>
+            ) : (
+                <DatabaseDetail db={selectedDb} />
+            )}
+            <Footer />
+        </div>
+    );
+};
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>
